@@ -1,3 +1,5 @@
+import Lean
+
 -- int or -∞
 inductive IntLow where
   | int (n : Int)
