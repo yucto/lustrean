@@ -80,3 +80,59 @@ instance : BoundedLattice Integers where
   meet_bot := by
     intro x
     cases x <;> dsimp
+
+def map_int (x y : Integers) (f : Int → Int →  Integers) : Integers :=
+  match x, y with
+  | .bot, _ | _, .bot => .bot
+  | .top, _ | _, .top => .top
+  | .int n, .int m => f n m
+
+instance : Add Integers where
+  add x y := map_int x y
+    fun n m => .int (n + m)
+
+instance : Sub Integers where
+  sub x y := map_int x y
+    fun n m => .int (n - m)
+
+instance : Mul Integers where
+  mul x y := match x, y with
+  | .bot, _ | _, .bot => .bot
+  | .int 0, _ | _, .int 0 => .int 0
+  | .top, _ | _, .top => .top
+  | .int n, .int m => .int (n * m)
+
+  instance : ToString Integers where
+    toString x := match x with
+    | .bot => "⊥"
+    | .top => "⊤"
+    | .int n => toString n
+
+instance: ValueDomain Integers where
+  new := .int 0
+  from_const := .int
+  rand a b := if a = b then .int a else .top
+  widen _ a b := match a, b with
+  | .bot, c | c, .bot => c
+  | .int n, .int m => if n = m then .int n else .top
+  | _, _ => .top
+  narrow _ a b := match a, b with
+  | .bot, c | c, .bot => c
+  | .int n, .int m => if n = m then .int n else .top
+  | _, _ => .top
+  subset a b := match a, b with
+  | .bot, _ | _, .top => true
+  | .int n, .int m => if n = m then true else false
+  | _, _ => false
+  subset_correct := by
+    intro x y; dsimp
+    cases x <;> cases y <;> simp
+    <;> try solve | assumption | constructor
+    simp [BoundedLattice.meet]
+  is_bottom a := match a with
+  | .bot => true
+  | _ => false
+  is_bottom_correct := by
+    intro a; dsimp
+    split <;> simp [BoundedLattice.bot]
+    assumption

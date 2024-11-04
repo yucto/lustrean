@@ -15,7 +15,7 @@ class BoundedLattice (α : Type) where
   meet_bot : ∀ (x : α), meet x bot = bot
 
 class Domain (α : Type)
-extends Add α, Mul α, Sub α, Div α, Mod α, BoundedLattice α, ToString α
+extends Add α, Mul α, Sub α, BoundedLattice α, ToString α
 where
   new : α
   -- Nat : number of iterations
@@ -31,7 +31,7 @@ where
   -- TODO: guard, assign
 
 class ValueDomain (α : Type)
-extends Add α, Mul α, Sub α, Div α, Mod α, BoundedLattice α, ToString α
+extends Add α, Mul α, Sub α, BoundedLattice α, ToString α
 where
   new : α
   from_const : Int → α
