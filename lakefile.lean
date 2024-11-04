@@ -1,6 +1,8 @@
 import Lake
 open Lake DSL
 
+require batteries from git "https://github.com/leanprover-community/batteries" @ "main"
+
 package "lustrean" where
   version := v!"0.1.0"
 
