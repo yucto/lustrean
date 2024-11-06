@@ -42,10 +42,10 @@ instance : BoundedLattice Integers where
     next x y =>
       by_cases h : (x = y) <;>
       simp [h]
-  join_top := by
+  join_bot := by
     intro x
     cases x <;> dsimp
-  join_bot := by
+  join_top := by
     intro x
     cases x <;> dsimp
   meet_commutative := by
@@ -74,10 +74,10 @@ instance : BoundedLattice Integers where
     next x y =>
       by_cases h : (x = y) <;>
       simp [h]
-  meet_top := by
+  meet_bot := by
     intro x
     cases x <;> dsimp
-  meet_bot := by
+  meet_top := by
     intro x
     cases x <;> dsimp
 
@@ -120,19 +120,5 @@ instance: ValueDomain Integers where
   | .bot, c | c, .bot => c
   | .int n, .int m => if n = m then .int n else .top
   | _, _ => .top
-  subset a b := match a, b with
-  | .bot, _ | _, .top => true
-  | .int n, .int m => if n = m then true else false
-  | _, _ => false
-  subset_correct := by
-    intro x y; dsimp
-    cases x <;> cases y <;> simp
-    <;> try solve | assumption | constructor
-    simp [BoundedLattice.meet]
-  is_bottom a := match a with
-  | .bot => true
-  | _ => false
-  is_bottom_correct := by
-    intro a; dsimp
-    split <;> simp [BoundedLattice.bot]
-    assumption
+  subset_dec := sorry
+  is_bot_dec := sorry
