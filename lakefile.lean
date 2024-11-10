@@ -1,12 +1,17 @@
 import Lake
 open Lake DSL
 
-require batteries from git "https://github.com/leanprover-community/batteries" @ "main"
+require batteries from git "https://github.com/leanprover-community/batteries" @ "v4.12.0"
 
 package "lustrean" where
   version := v!"0.1.0"
 
-lean_lib «Lustrean» where
+lean_lib Misc where
+  leanOptions := #[
+    ⟨`autoImplicit, false⟩
+  ]
+
+lean_lib Lustrean where
   leanOptions := #[
     ⟨`autoImplicit, false⟩
   ]
