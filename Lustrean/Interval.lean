@@ -1,3 +1,5 @@
+import Aesop
+
 import Lustrean.Domain
 import Lustrean.Facts
 
@@ -13,6 +15,48 @@ namespace IntLow
 
   instance : LE IntLow where
     le := Le
+
+  @[simp]
+  theorem Le_refl : ∀ (l : IntLow), Le l l :=
+  by
+    intros l
+    cases l <;> constructor
+    apply Int.le_refl
+
+  theorem Le_total : ∀ (l₁ l₂ : IntLow), Le l₁ l₂ ∨ Le l₂ l₁ :=
+  by
+    intros l₁ l₂
+    cases l₁ <;> cases l₂ <;>
+    try (next => solve | left ; constructor | right ; constructor)
+    rename_i n m
+    cases (Int.le_total n m) <;>
+    try (next => solve | left ; constructor ; assumption | right ; constructor ; assumption)
+
+  theorem Le_trans : ∀ {h₁ h₂ h₃ : IntLow},
+    Le h₁ h₂ → Le h₂ h₃ → Le h₁ h₃ :=
+  by
+    intros h₁ h₂ h₃ hyp hyp'
+    cases hyp <;> (try constructor) <;>
+    cases hyp' <;> try constructor
+    apply Int.le_trans <;> assumption
+
+  instance (n m : IntLow) : Decidable (Le n m) := by
+    cases n
+    · cases m
+      · rename_i n m
+        by_cases h : n ≤ m
+        · apply Decidable.isTrue
+          constructor
+          assumption
+        · apply Decidable.isFalse
+          intros h'
+          cases h'
+          contradiction
+      · apply Decidable.isFalse
+        intros h
+        cases h
+    · apply Decidable.isTrue
+      constructor
 
   def add (n m : IntLow) : IntLow :=
     match n, m with
@@ -133,10 +177,31 @@ namespace IntLow
     cases l₁ <;> cases l₂ <;> simp [min, max]
     apply Int.max_min_absorb
 
+  theorem Le_max_right : ∀ (h₁ h₂ : IntLow), Le h₂ (max h₁ h₂) :=
+  by
+    intros h₁ h₂
+    cases h₁ <;> cases h₂ <;> simp [max] <;> constructor
+    apply Int.le_max_right
+
+  theorem max_eq_left : ∀ {h₁ h₂ : IntLow},
+    Le h₂ h₁ → h₁.max h₂ = h₁ :=
+  by
+    intros h₁ h₂ hle
+    cases hle
+    · simp
+    · simp [max]
+      apply Int.max_eq_left
+      assumption
+
   instance : ToString IntLow where
     toString n := match n with
     | .minf => "-∞"
     | .int n => toString n
+
+  instance : DecidableEq IntLow := by
+    intros x y
+    cases x <;> cases y <;> simp <;>
+    exact inferInstance
 end IntLow
 
 -- int or +∞
@@ -151,6 +216,48 @@ namespace IntHigh
 
   instance : LE IntHigh where
     le := Le
+
+  @[simp]
+  theorem Le_refl : ∀ (l : IntHigh), Le l l :=
+  by
+    intros l
+    cases l <;> constructor
+    apply Int.le_refl
+
+  theorem Le_total : ∀ (h₁ h₂ : IntHigh), Le h₁ h₂ ∨ Le h₂ h₁ :=
+  by
+    intros h₁ h₂
+    cases h₁ <;> cases h₂ <;>
+    try (next => solve | left ; constructor | right ; constructor)
+    rename_i n m
+    cases (Int.le_total n m) <;>
+    try (next => solve | left ; constructor ; assumption | right ; constructor ; assumption)
+
+  theorem Le_trans : ∀ {h₁ h₂ h₃ : IntHigh},
+    Le h₁ h₂ → Le h₂ h₃ → Le h₁ h₃ :=
+  by
+    intros h₁ h₂ h₃ hyp hyp'
+    cases hyp <;> (try constructor) <;>
+    cases hyp' <;> try constructor
+    apply Int.le_trans <;> assumption
+
+  instance (n m : IntHigh) : Decidable (Le n m) := by
+    cases m
+    · cases n
+      · rename_i m n
+        by_cases h : n ≤ m
+        · apply Decidable.isTrue
+          constructor
+          assumption
+        · apply Decidable.isFalse
+          intros h'
+          cases h'
+          contradiction
+      · apply Decidable.isFalse
+        intros h
+        cases h
+    · apply Decidable.isTrue
+      constructor
 
   def add (n m : IntHigh) : IntHigh :=
     match n, m with
@@ -272,10 +379,31 @@ namespace IntHigh
     cases h₁ <;> cases h₂ <;> simp [min, max]
     apply Int.min_max_absorb
 
+  theorem Le_min_right : ∀ (h₁ h₂ : IntHigh), Le (min h₁ h₂) h₂ :=
+  by
+    intros h₁ h₂
+    cases h₁ <;> cases h₂ <;> simp [min] <;> constructor
+    apply Int.min_le_right
+
+  theorem min_eq_left : ∀ {h₁ h₂ : IntHigh},
+    Le h₁ h₂ → h₁.min h₂ = h₁ :=
+  by
+    intros h₁ h₂ hle
+    cases hle
+    · simp
+    · simp [min]
+      apply Int.min_eq_left
+      assumption
+
   instance : ToString IntHigh where
     toString n := match n with
     | .pinf => "+∞"
     | .int n => toString n
+
+  instance : DecidableEq IntHigh := by
+    intros x y
+    cases x <;> cases y <;> simp <;>
+    exact inferInstance
 end IntHigh
 
 inductive HLe : IntLow → IntHigh → Prop where
@@ -285,6 +413,18 @@ inductive HLe : IntLow → IntHigh → Prop where
 
 namespace HLe
   infix:30 " ≤∘ " => HLe
+
+  @[simp]
+  theorem HLe_Le : ∀ (l₁ l₂ : IntLow) (h₁ h₂ : IntHigh),
+    IntLow.Le l₂ l₁ → IntHigh.Le h₁ h₂ →
+    HLe l₁ h₁ → HLe l₂ h₂ :=
+  by
+    intros l₁ l₂ h₁ h₂ lel leh hle
+    cases lel <;> try constructor
+    cases leh <;> try constructor
+    cases hle
+    apply Int.le_trans <;> try assumption
+    apply Int.le_trans <;> try assumption
 
   @[simp]
   theorem hle_int : ∀ n m, .int n ≤∘ .int m ↔ n ≤ m := by
@@ -474,12 +614,73 @@ namespace Interval
     add := add
 
   def sub : Interval constants :=
-  Interval.map_empty x y <| fun l₁ l₂ h₁ h₂ le₁ le₂ =>
-    .interval (IntLow.sub_l_h l₁ h₂) (IntHigh.sub_h_l h₁ l₂)
-      <| by apply HLe.sub_monotone <;> assumption
+    map_empty x y <| fun l₁ l₂ h₁ h₂ le₁ le₂ =>
+      .interval (IntLow.sub_l_h l₁ h₂) (IntHigh.sub_h_l h₁ l₂)
+        <| by apply HLe.sub_monotone <;> assumption
 
   instance : Sub (Interval constants) where
     sub := sub
+
+  def get_min_mul_bound_opt (l₁ l₂ : IntLow) (h₁ h₂ : IntHigh) : Option IntLow :=
+    List.foldl (
+      fun x y => match x, y with
+      | none, none => none
+      | none, some z | some z, none => some z
+      | some x, some y => IntLow.min x y
+    ) none [
+      l₁.mul_l_h h₂, l₁.mul_l_l l₂, l₂.mul_l_h h₁, IntLow.mul_h_h h₁ h₂
+    ]
+
+  theorem get_min_mul_bound_opt_not_none : ∀ (l₁ l₂ : IntLow) (h₁ h₂ : IntHigh)
+    (o₁ : l₁ ≤∘ h₁) (o₂ : l₂ ≤∘ h₂),
+    get_min_mul_bound_opt l₁ l₂ h₁ h₂ ≠ none :=
+  by
+    intros l₁ l₂ h₁ h₂ o₁ o₂ hcontra
+    cases l₁ <;> cases l₂ <;> cases h₁ <;> cases h₂ <;>
+    dsimp [get_min_mul_bound_opt, IntLow.mul_l_h, IntLow.mul_l_l, IntLow.mul_h_h] at hcontra <;>
+    sorry
+
+  def get_min_mul_bound (l₁ l₂ : IntLow) (h₁ h₂ : IntHigh)
+    (o₁ : l₁ ≤∘ h₁) (o₂ : l₂ ≤∘ h₂) : IntLow :=
+  by
+    cases h : get_min_mul_bound_opt l₁ l₂ h₁ h₂
+    · exfalso
+      apply get_min_mul_bound_opt_not_none l₁ l₂ <;> try assumption
+    · rename_i val
+      exact val
+
+  def get_max_mul_bound_opt (l₁ l₂ : IntLow) (h₁ h₂ : IntHigh) : Option IntHigh :=
+    List.foldl (
+      fun x y => match x, y with
+      | none, none => none
+      | none, some z | some z, none => some z
+      | some x, some y => IntHigh.max x y
+    ) none [
+      h₁.mul_h_l l₂, h₁.mul_h_h h₂, h₂.mul_h_l l₁, IntHigh.mul_l_l l₁ l₂
+    ]
+
+  theorem get_max_mul_bound_opt_not_none : ∀ (l₁ l₂ : IntLow) (h₁ h₂ : IntHigh)
+    (o₁ : l₁ ≤∘ h₁) (o₂ : l₂ ≤∘ h₂),
+    get_max_mul_bound_opt l₁ l₂ h₁ h₂ ≠ none :=
+  by sorry
+
+  def get_max_mul_bound (l₁ l₂ : IntLow) (h₁ h₂ : IntHigh)
+    (o₁ : l₁ ≤∘ h₁) (o₂ : l₂ ≤∘ h₂) : IntHigh :=
+  by
+    cases h : get_max_mul_bound_opt l₁ l₂ h₁ h₂
+    · exfalso
+      apply get_max_mul_bound_opt_not_none l₁ l₂ <;> try assumption
+    · rename_i val
+      exact val
+
+  def mul : Interval constants :=
+    .map_empty x y <| fun l₁ l₂ h₁ h₂ o₁ o₂ =>
+      let l := get_min_mul_bound l₁ l₂ h₁ h₂ o₁ o₂
+      let h := get_max_mul_bound l₁ l₂ h₁ h₂ o₁ o₂
+      .interval l h <| by sorry
+
+  instance : Mul (Interval constants) where
+    mul := mul
 
   def bot : Interval constants := .empty
 
@@ -592,7 +793,7 @@ namespace Interval
     rename_i h
     rw [dif_pos h]
 
-  instance : BoundedLattice (Interval constants) where
+  instance BoundedLatticeInterval : BoundedLattice (Interval constants) where
     bot := bot
     top := top
     join := join
@@ -614,83 +815,217 @@ namespace Interval
 
   instance : ToString (Interval constants) where
     toString := toString
+
+  instance : DecidableEq (Interval constants) := by
+    intros a b
+    cases a <;> cases b <;> simp <;>
+    exact inferInstance
+
+  def extract_max_gt (l : List Int) (h : IntLow) : IntLow :=
+    match l with
+    | [] => .minf
+    | m :: l => if IntLow.Le h (.int m) -- if h <= m
+        then extract_max_gt l h
+        else max (.int m) (extract_max_gt l h)
+
+  def extract_max_gt_correct : ∀ (l : List Int) (n : IntLow),
+    IntLow.Le (extract_max_gt l n) n :=
+  by
+    clear x y z
+    intros l h
+    induction l
+    case nil => constructor
+    case cons hd tl IH =>
+      dsimp [extract_max_gt]
+      split <;> rename_i hle
+      · assumption
+      · generalize heq : extract_max_gt tl h = x
+        rw [heq] at IH
+        cases IH
+        · simp [max]
+          cases h
+          · constructor
+            rename_i h
+            have htot : hd ≤ h ∨ h ≤ hd := by apply Int.le_total
+            cases htot <;> try assumption
+            exfalso
+            apply hle
+            constructor
+            assumption
+          · exfalso
+            apply hle
+            constructor
+        · dsimp [max, IntLow.max]
+          constructor
+          rw [Int.max_le]
+          apply And.intro <;> try assumption
+          rename_i n m a
+          have htot : hd ≤ m ∨ m ≤ hd := by apply Int.le_total
+          cases htot <;> try assumption
+          exfalso
+          apply hle
+          constructor
+          assumption
+
+  def extract_min_ge (l : List Int) (h : IntHigh) : IntHigh :=
+    match l with
+    | [] => .pinf
+    | m :: l => if IntHigh.Le (.int m) h -- if m <= h
+        then extract_min_ge l h
+        else min (.int m) (extract_min_ge l h)
+
+  def extract_min_ge_correct : ∀ (l : List Int) (h : IntHigh),
+    IntHigh.Le h (extract_min_ge l h) :=
+  by
+    clear x y z
+    intros l h
+    induction l
+    case nil => constructor
+    case cons hd tl IH =>
+      dsimp [extract_min_ge]
+      split <;> rename_i hle
+      · assumption
+      · generalize heq : extract_min_ge tl h = x
+        rw [heq] at IH
+        cases IH
+        · simp [min]
+          cases h
+          · constructor
+            rename_i h
+            have htot : hd ≤ h ∨ h ≤ hd := by apply Int.le_total
+            cases htot <;> try assumption
+            exfalso
+            apply hle
+            constructor
+            assumption
+          · exfalso
+            apply hle
+            constructor
+        · dsimp [min, IntHigh.min]
+          constructor
+          rw [Int.le_min]
+          apply And.intro <;> try assumption
+          rename_i n m a
+          have htot : hd ≤ n ∨ n ≤ hd := by apply Int.le_total
+          cases htot <;> try assumption
+          exfalso
+          apply hle
+          constructor
+          assumption
+
+  def widen (n : Nat) : Interval constants :=
+    if n <= 100
+    then x.join y
+    else match x, y with
+    | .empty, z
+    | z, .empty => z
+    | .interval l₁ h₁ _, .interval l₂ h₂ o₂ =>
+      let l := if IntLow.Le l₁ l₂
+        then l₁
+        else extract_max_gt constants l₂
+      let h := if IntHigh.Le h₂ h₁
+        then h₁
+        else extract_min_ge constants h₂
+      .interval l h <| by
+        dsimp [l, h]
+        apply HLe.HLe_Le
+        · by_cases hl : IntLow.Le l₁ l₂ <;> simp [hl]
+          · assumption
+          · apply extract_max_gt_correct constants l₂
+        · by_cases hr : IntHigh.Le h₂ h₁ <;> simp [hr]
+          · assumption
+          · apply extract_min_ge_correct constants h₂
+        · assumption
+
+  theorem covering_left : ∀ (n : Nat),
+    BoundedLattice.is_subset x (x.widen y n) :=
+  by
+    intros n
+    cases x <;> simp [BoundedLattice.is_subset, BoundedLattice.meet, meet, widen] <;>
+    by_cases h : n ≤ 100 <;> simp [h, join] <;>
+    cases y <;> rename_i hle <;> simp [max, min, hle] <;> clear h
+    · simp [IntLow.max_min_absorb, IntHigh.min_max_absorb]
+      rename_i hle' _ _
+      simp [hle']
+    · rename_i l' h' hle' l h
+      split <;> split <;> try simp
+      · rw [dif_pos hle']
+      · have hyph : h'.Le h := by
+          cases (IntHigh.Le_total h' h) <;> [ assumption ; contradiction ]
+        have hyph' : h'.min (extract_min_ge constants h) = h' := by
+          apply IntHigh.min_eq_left
+          apply IntHigh.Le_trans <;> [
+            assumption ;
+            apply extract_min_ge_correct ;
+            skip
+          ]
+        simp [hyph']
+        rw [dif_pos hle']
+      · have hypl : l.Le l' := by
+          cases (IntLow.Le_total l l') <;> [ assumption ; contradiction ]
+        have hypl' : l'.max (extract_max_gt constants l) = l' := by
+          apply IntLow.max_eq_left
+          apply IntLow.Le_trans <;> [
+            apply extract_max_gt_correct ;
+            assumption ;
+            skip
+          ]
+        simp [hypl']
+        rw [dif_pos hle']
+      · have hypl : l.Le l' := by
+          cases (IntLow.Le_total l l') <;> [ assumption ; contradiction ]
+        have hypl' : l'.max (extract_max_gt constants l) = l' := by
+          apply IntLow.max_eq_left
+          apply IntLow.Le_trans <;> [
+            apply extract_max_gt_correct ;
+            assumption ;
+            skip
+          ]
+        have hyph : h'.Le h := by
+          cases (IntHigh.Le_total h' h) <;> [ assumption ; contradiction ]
+        have hyph' : h'.min (extract_min_ge constants h) = h' := by
+          apply IntHigh.min_eq_left
+          apply IntHigh.Le_trans <;> [
+            assumption ;
+            apply extract_min_ge_correct ;
+            skip
+          ]
+        simp [hypl', hyph']
+        rw [dif_pos hle']
+
+  theorem covering_right : ∀ (n : Nat),
+    BoundedLattice.is_subset y (x.widen y n) :=
+  by
+    intros n
+    sorry
+
+  theorem widen_termination : ∀ (x : Nat → Interval constants),
+    BoundedLattice.is_increasing x →
+    let y : Nat → Interval constants := Nat.recAux (x 0) (
+      fun m y => widen y (x (.succ m)) (.succ m)
+    )
+    ∃ (n : Nat), y (.succ n) = y n :=
+  by
+    intros x Hincr y
+    sorry
+
+  instance : Widen (Interval constants) where
+    widen := widen
+    covering_left := covering_left
+    covering_right := covering_right
+    widen_termination := widen_termination
+
+  instance : Narrow (Interval constants) where
+    narrow := sorry
+    bounding_low := sorry
+    bounding_high := sorry
+    narrow_termination := sorry
+
+  instance : ValueDomain (Interval constants) where
+    new := .interval (.int 0) (.int 0) <| by simp
+    from_const x := .interval (.int x) (.int x) <| by simp
+    rand x y := if h : x ≤ y
+      then .interval (.int x) (.int y) <| by constructor; assumption
+      else .empty
+    eq_dec := inferInstance
 end Interval
-
-def get_min_mul_bound_opt (l₁ l₂ : IntLow) (h₁ h₂ : IntHigh) : Option IntLow :=
-  List.foldl (
-    fun x y => match x, y with
-    | none, none => none
-    | none, some z | some z, none => some z
-    | some x, some y => IntLow.min x y
-  ) none [
-    l₁.mul_l_h h₂, l₁.mul_l_l l₂, l₂.mul_l_h h₁, IntLow.mul_h_h h₁ h₂
-  ]
-
-theorem get_min_mul_bound_opt_not_none : ∀ (l₁ l₂ : IntLow) (h₁ h₂ : IntHigh)
-  (o₁ : l₁ ≤∘ h₁) (o₂ : l₂ ≤∘ h₂),
-  get_min_mul_bound_opt l₁ l₂ h₁ h₂ ≠ none :=
-by
-  intros l₁ l₂ h₁ h₂ o₁ o₂ hcontra
-  cases l₁ <;> cases l₂ <;> cases h₁ <;> cases h₂ <;>
-  dsimp [get_min_mul_bound_opt, IntLow.mul_l_h, IntLow.mul_l_l, IntLow.mul_h_h] at hcontra <;>
-  sorry
-
-def get_min_mul_bound (l₁ l₂ : IntLow) (h₁ h₂ : IntHigh)
-  (o₁ : l₁ ≤∘ h₁) (o₂ : l₂ ≤∘ h₂) : IntLow :=
-by
-  cases h : get_min_mul_bound_opt l₁ l₂ h₁ h₂
-  · exfalso
-    apply get_min_mul_bound_opt_not_none l₁ l₂ <;> try assumption
-  · rename_i val
-    exact val
-
-def get_max_mul_bound_opt (l₁ l₂ : IntLow) (h₁ h₂ : IntHigh) : Option IntHigh :=
-  List.foldl (
-    fun x y => match x, y with
-    | none, none => none
-    | none, some z | some z, none => some z
-    | some x, some y => IntHigh.max x y
-  ) none [
-    h₁.mul_h_l l₂, h₁.mul_h_h h₂, h₂.mul_h_l l₁, IntHigh.mul_l_l l₁ l₂
-  ]
-
-theorem get_max_mul_bound_opt_not_none : ∀ (l₁ l₂ : IntLow) (h₁ h₂ : IntHigh)
-  (o₁ : l₁ ≤∘ h₁) (o₂ : l₂ ≤∘ h₂),
-  get_max_mul_bound_opt l₁ l₂ h₁ h₂ ≠ none :=
-by sorry
-
-def get_max_mul_bound (l₁ l₂ : IntLow) (h₁ h₂ : IntHigh)
-  (o₁ : l₁ ≤∘ h₁) (o₂ : l₂ ≤∘ h₂) : IntHigh :=
-by
-  cases h : get_max_mul_bound_opt l₁ l₂ h₁ h₂
-  · exfalso
-    apply get_max_mul_bound_opt_not_none l₁ l₂ <;> try assumption
-  · rename_i val
-    exact val
-
-instance {constants : List Int} : Mul (Interval constants) where
-  mul x y := .map_empty x y <| fun l₁ l₂ h₁ h₂ o₁ o₂ =>
-    let l := get_min_mul_bound l₁ l₂ h₁ h₂ o₁ o₂
-    let h := get_max_mul_bound l₁ l₂ h₁ h₂ o₁ o₂
-    .interval l h <| by sorry
-
-instance {constants : List Int}
-  [ι : BoundedLattice (Interval constants)] :
-  DecidableRel (fun x y => x = ι.meet x y) :=
-by
-  sorry
-
-instance {constants : List Int} : ValueDomain (Interval constants) where
-  new := .interval (.int 0) (.int 0) <| by simp
-  from_const x := .interval (.int x) (.int x) <| by simp
-  rand x y := if h : x ≤ y
-    then .interval (.int x) (.int y) <| by constructor; assumption
-    else .empty
-  widen n x y := if n <= 100
-    then
-      x.join y
-    else
-      sorry
-  narrow _ _ _ := sorry
-  subset_dec := sorry
-  is_bot_dec := sorry

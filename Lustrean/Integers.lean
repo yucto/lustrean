@@ -1,3 +1,5 @@
+import Aesop
+
 import Lustrean.Domain
 
 inductive Integers where
@@ -102,13 +104,18 @@ instance : Mul Integers where
   | .top, _ | _, .top => .top
   | .int n, .int m => .int (n * m)
 
-  instance : ToString Integers where
-    toString x := match x with
-    | .bot => "⊥"
-    | .top => "⊤"
-    | .int n => toString n
+instance : ToString Integers where
+  toString x := match x with
+  | .bot => "⊥"
+  | .top => "⊤"
+  | .int n => toString n
 
-instance: ValueDomain Integers where
+instance : DecidableEq Integers := by
+  intros x y
+  cases x <;> cases y <;> simp <;>
+  exact inferInstance
+
+instance : ValueDomain Integers where
   new := .int 0
   from_const := .int
   rand a b := if a = b then .int a else .top
@@ -120,5 +127,36 @@ instance: ValueDomain Integers where
   | .bot, c | c, .bot => c
   | .int n, .int m => if n = m then .int n else .top
   | _, _ => .top
-  subset_dec := sorry
-  is_bot_dec := sorry
+  eq_dec := inferInstance
+
+def widen_seq [ι: ValueDomain Integers] (x : Nat -> Integers) (n : Nat) : Integers :=
+  match n with
+  | 0 => x 0
+  | .succ n => ι.widen (.succ n) (widen_seq x n) (x (.succ n))
+
+def increasing [ι: ValueDomain Integers] (x : Nat -> Integers) : Prop
+  := ∀ (n : Nat), ι.meet (x n) (x (.succ n)) = x n
+
+theorem widen_terminates : ∀ (x : Nat -> Integers), increasing x -> ∃ (n : Nat),
+  widen_seq x (.succ n) = widen_seq x n :=
+by
+  intros x H
+  have H₀ := H 0
+  have H₁ := H 1
+  have H₂ := H 2
+
+  dsimp [BoundedLattice.meet] at H₀ H₁ H₂
+
+  cases h₀ : x 0 <;>
+  cases h₁ : x 1 <;>
+  cases h₂ : x 2 <;>
+  cases h₃ : x 3 <;>
+  simp [h₀] at H₀ <;>
+  simp [h₁] at H₀ H₁ <;>
+  simp [h₂] at H₁ H₂ <;>
+  simp [h₃] at H₂ <;>
+
+  solve
+  | exists 0; simp [widen_seq, ValueDomain.widen, h₀, h₁, h₂, h₃, H₀, H₁, H₂]
+  | exists 1; simp [widen_seq, ValueDomain.widen, h₀, h₁, h₂, h₃, H₀, H₁, H₂]
+  | exists 2; simp [widen_seq, ValueDomain.widen, h₀, h₁, h₂, h₃, H₀, H₁, H₂]
