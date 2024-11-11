@@ -1,6 +1,7 @@
 import Aesop
 
 import Lustrean.Domain
+import Lustrean.NonRelational
 import Lustrean.Facts
 
 -- int or -∞
@@ -177,16 +178,16 @@ namespace IntLow
     cases l₁ <;> cases l₂ <;> simp [min, max]
     apply Int.max_min_absorb
 
-  theorem Le_max_right : ∀ (h₁ h₂ : IntLow), Le h₂ (max h₁ h₂) :=
+  theorem Le_max_right : ∀ (l₁ l₂ : IntLow), Le l₂ (max l₁ l₂) :=
   by
-    intros h₁ h₂
-    cases h₁ <;> cases h₂ <;> simp [max] <;> constructor
+    intros l₁ l₂
+    cases l₁ <;> cases l₂ <;> simp [max] <;> constructor
     apply Int.le_max_right
 
-  theorem max_eq_left : ∀ {h₁ h₂ : IntLow},
-    Le h₂ h₁ → h₁.max h₂ = h₁ :=
+  theorem max_eq_left : ∀ {l₁ l₂ : IntLow},
+    Le l₂ l₁ → l₁.max l₂ = l₁ :=
   by
-    intros h₁ h₂ hle
+    intros l₁ l₂ hle
     cases hle
     · simp
     · simp [max]
@@ -892,8 +893,7 @@ namespace Interval
           cases h
           · constructor
             rename_i h
-            have htot : hd ≤ h ∨ h ≤ hd := by apply Int.le_total
-            cases htot <;> try assumption
+            cases (Int.le_total hd h) <;> try assumption
             exfalso
             apply hle
             constructor
@@ -906,8 +906,7 @@ namespace Interval
           rw [Int.le_min]
           apply And.intro <;> try assumption
           rename_i n m a
-          have htot : hd ≤ n ∨ n ≤ hd := by apply Int.le_total
-          cases htot <;> try assumption
+          cases (Int.le_total hd n) <;> try assumption
           exfalso
           apply hle
           constructor
@@ -997,17 +996,98 @@ namespace Interval
     BoundedLattice.is_subset y (x.widen y n) :=
   by
     intros n
-    sorry
+    cases x <;> simp [BoundedLattice.is_subset, BoundedLattice.meet, meet, widen] <;>
+    by_cases h : n ≤ 100 <;> cases y <;>
+    simp [h, join] <;> clear h <;>
+    rename_i l h hle  <;> simp [max, min, hle] <;>
+    rename_i l' h' hle'
+    · rw [dif_pos] <;> (try simp) <;>
+      rw [IntLow.min_comm, IntHigh.max_comm, IntLow.max_min_absorb, IntHigh.min_max_absorb] <;>
+      aesop
+    · have hypl : l = l.max (extract_max_gt constants l) := by
+          rw [IntLow.max_eq_left]
+          apply extract_max_gt_correct
+      have hyph : h = h.min (extract_min_ge constants h) := by
+          rw [IntHigh.min_eq_left]
+          apply extract_min_ge_correct
+      split <;> split <;> rename_i hyp' hyp <;>
+      rw [dif_pos] <;> (try simp) <;>
+      (repeat first
+        | rw [IntLow.max_eq_left hyp']
+        | rw [IntHigh.min_eq_left hyp]
+        | rw [← hypl]
+        | rw [← hyph]
+      ) <;> solve | simp | assumption
 
-  theorem widen_termination : ∀ (x : Nat → Interval constants),
+  inductive LE : Interval constants → Interval constants → Prop :=
+  | LE_empty : ∀ (i : Interval constants), LE empty i
+  | LE_inf : ∀ (l₁ l₂ : IntLow) (h₁ h₂ : IntHigh)
+    (o₁ : l₁ ≤∘ h₁) (o₂ : l₂ ≤∘ h₂),
+    l₂.Le l₁ → h₁.Le h₂ →
+    LE (.interval l₁ h₁ o₁) (.interval l₂ h₂ o₂)
+
+  theorem LE_iff_subset : LE x y ↔ BoundedLattice.is_subset x y :=
+  by
+    constructor <;> simp [BoundedLattice.is_subset, BoundedLattice.meet, meet] <;> intros H
+    · cases H <;> simp
+      rw [dif_pos] <;> simp [max, min] <;>
+      rw [IntLow.max_eq_left, IntHigh.min_eq_left] <;>
+      solve | simp | assumption
+    · cases x <;> cases y <;> simp at H <;>
+      try (next => constructor)
+      split at H ; rename_i hyp
+      · simp [max, min] at *
+        cases H <;>
+        rename_i l h hle l' h' hle' Hl Hr
+        constructor
+        · cases l <;> cases l' <;>
+          simp [IntLow.max] at Hl <;>
+          constructor
+          rw [Hl]
+          apply Int.le_max_right
+        · cases h <;> cases h' <;>
+          simp [IntHigh.min] at Hr <;>
+          constructor
+          rw [Hr]
+          apply Int.min_le_right
+      · cases H
+
+  def widen_termination : ∀ (x : Nat → Interval constants),
     BoundedLattice.is_increasing x →
     let y : Nat → Interval constants := Nat.recAux (x 0) (
-      fun m y => widen y (x (.succ m)) (.succ m)
+      fun m y => widen y (x (.succ m)) m
     )
-    ∃ (n : Nat), y (.succ n) = y n :=
+    { n : Nat // y (.succ n) = y n } :=
   by
+    clear x y z
     intros x Hincr y
+    have min : Option Int := List.foldl (fun acc x => match acc with
+    | some y => some (min x y)
+    | none => x
+    ) none constants
+    have max : Option Int := List.foldl (fun acc x => match acc with
+    | some y => some (max x y)
+    | none => x
+    ) none constants
+    have decr_l : Int := match x 0 with
+    | .empty | .interval .minf _ _ => 0
+    | .interval (.int l) _ _ => match min with
+      | some x => x - l
+      | none => 0
+    have decr_r : Int := match x 0 with
+    | .empty | .interval _ .pinf _ => 0
+    | .interval _ (.int h) _ => match max with
+      | some x => h - x
+      | none => 0
+    have decr := decr_l + decr_r + 2
+    clear min max decr_l decr_r
+    have h : LE (x 0) (x 1) := by
+      rw [LE_iff_subset]
+      apply Hincr
+    try cases h
     sorry
+
+  termination_by sorry
 
   instance : Widen (Interval constants) where
     widen := widen
@@ -1028,4 +1108,15 @@ namespace Interval
       then .interval (.int x) (.int y) <| by constructor; assumption
       else .empty
     eq_dec := inferInstance
+
+    -- TODO: pourquoi ça n'infère pas ??
+    widen := Widen.widen
+    covering_left := Widen.covering_left
+    covering_right := Widen.covering_right
+    widen_termination := Widen.widen_termination
+
+    narrow := Narrow.narrow
+    bounding_low := Narrow.bounding_low
+    bounding_high := Narrow.bounding_high
+    narrow_termination := Narrow.narrow_termination
 end Interval

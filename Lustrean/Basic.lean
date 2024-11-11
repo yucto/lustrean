@@ -1,5 +1,6 @@
 import Lean
 import Lustrean.Domain
+import Lustrean.NonRelational
 import Lustrean.Parsing
 
 open Lean Meta Elab
@@ -8,11 +9,6 @@ elab_rules : command
   | `(command| lustre $nodes:lustre_node*) => do
     for _n in nodes do
       pure ()
-
-class Domain (α : Type _) extends Add α, Mul α, Sub α where
-  from_nat : Nat → α
-  initial_value : α
-export Domain (from_nat initial_value)
 
 inductive Expr (α : Type _) [Domain α] (n : Nat) where
   | Var (k : Fin n)

@@ -38,9 +38,9 @@ where
   widen_termination : ∀ (x : Nat → α),
     BoundedLattice.is_increasing x →
     let y : Nat → α := Nat.recAux (x 0) (
-      fun m y => widen y (x (.succ m)) (.succ m)
+      fun m y => widen y (x (.succ m)) m
     )
-    ∃ (n : Nat), y (.succ n) = y n
+    { n : Nat // y (.succ n) = y n }
 
 class Narrow (α : Type)
 extends BoundedLattice α
@@ -54,9 +54,9 @@ where
   narrow_termination : ∀ (x : Nat → α),
     BoundedLattice.is_decreasing x →
     let y : Nat → α := Nat.recAux (x 0) (
-      fun m y => narrow y (x (.succ m)) (.succ m)
+      fun m y => narrow y (x (.succ m)) m
     )
-    ∃ (n : Nat), y (.succ n) = y n
+    { n : Nat // y (.succ n) = y n }
 
 class Domain (α : Type)
 extends Add α, Mul α, Sub α, BoundedLattice α,
@@ -65,21 +65,3 @@ where
   new : α
   eq_dec : DecidableEq α
   -- TODO: guard, assign
-
-class ValueDomain (α : Type)
-extends Add α, Mul α, Sub α, BoundedLattice α,
-  ToString α, Widen α, Narrow α
-where
-  new : α
-  from_const : Int → α
-  -- interval [a, b]
-  rand : Int → Int → α
-  eq_dec : DecidableEq α
-  -- TODO: backward operations, comparisons
-
--- TODO:
--- constants, intervals, build a non-relational domain from value domains
-
--- TODO:
--- should the classes be parameterized by the constants and variables
--- of the program, or should it go into the type ?

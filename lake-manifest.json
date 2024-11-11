@@ -20,6 +20,6 @@
    "manifestFile": "lake-manifest.json",
    "inputRev": "v4.12.0",
    "inherited": false,
-   "configFile": "lakefile.lean"}],
+   "configFile": "lakefile.toml"}],
  "name": "lustrean",
  "lakeDir": ".lake"}

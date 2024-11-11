@@ -1,3 +1,5 @@
+import Aesop
+
 namespace Int
   theorem min_assoc : ∀ (n m o : Int),
     min (min n m) o = min n (min m o) :=
