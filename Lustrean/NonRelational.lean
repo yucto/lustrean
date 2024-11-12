@@ -60,66 +60,24 @@ namespace NonRelational
       fun i => ι.join (x.env i) (y.env i)
     meet x y := NonRelational.mk
       fun i => ι.meet (x.env i) (y.env i)
-    join_commutative := by
-      intros
-      simp
-      apply funext
-      intros
-      apply ι.join_commutative
-    join_associative := by
-      intros
-      simp
-      apply funext
-      intros
-      apply ι.join_associative
-    join_absorption := by
-      intros x y
-      cases x <;> simp
-      apply funext
-      intros
-      apply ι.join_absorption
+    join_commutative := by simp
+    join_associative := by simp
+    join_absorption := by simp
     join_bot := by
       intros x
       cases x <;> simp
-      apply funext
-      intros
-      apply ι.join_bot
     join_top := by
       intros x
       cases x <;> simp
-      apply funext
-      intros
-      apply ι.join_top
-    meet_commutative := by
-      intros
-      simp
-      apply funext
-      intros
-      apply ι.meet_commutative
-    meet_associative := by
-      intros
-      simp
-      apply funext
-      intros
-      apply ι.meet_associative
-    meet_absorption := by
-      intros x y
-      cases x <;> simp
-      apply funext
-      intros
-      apply ι.meet_absorption
+    meet_commutative := by simp
+    meet_associative := by simp
+    meet_absorption := by simp
     meet_top := by
       intros x
       cases x <;> simp
-      apply funext
-      intros
-      apply ι.meet_top
     meet_bot := by
       intros x
       cases x <;> simp
-      apply funext
-      intros
-      apply ι.meet_bot
 
   instance : Widen (NonRelational α n) where
     widen x y n := NonRelational.mk
@@ -128,17 +86,15 @@ namespace NonRelational
   instance : WidenLawful (NonRelational α n) where
     covering_left := by
       intros x y n
-      simp [BoundedLattice.is_subset, BoundedLattice.meet]
+      simp
       cases x <;> simp
-      apply funext
-      intros
+      funext
       apply ι.covering_left
     covering_right := by
       intros x y n
-      simp [BoundedLattice.is_subset, BoundedLattice.meet]
+      simp
       cases y <;> simp
-      apply funext
-      intros
+      funext
       apply ι.covering_right
 
   instance : Narrow (NonRelational α n) where
@@ -147,35 +103,15 @@ namespace NonRelational
 
   instance : NarrowLawful (NonRelational α n) where
     bounding_low := by
-      intros x y n H
-      simp [BoundedLattice.is_subset, BoundedLattice.meet] at *
-      cases x <;> simp
-      apply funext
-      intros
+      intros x y n
+      simp [-BoundedLattice.meet_associative]
+      funext
       apply ι.bounding_low
-      rename_i env i
-      have : env = fun i => BoundedLattice.meet (env i) (y.env i) :=
-      by
-        simp [mk.injEq] at H
-        assumption
-      simp [BoundedLattice.is_subset]
-      apply congrFun
-      assumption
     bounding_high := by
-      intros x y n H
-      simp [Narrow.narrow, BoundedLattice.is_subset, BoundedLattice.meet] at *
-      cases x <;> simp
-      apply funext
-      intros
+      intros x y n
+      simp [-BoundedLattice.meet_commutative, Narrow.narrow]
+      funext
       apply ι.bounding_high
-      rename_i env i
-      have : env = fun i => BoundedLattice.meet (env i) (y.env i) :=
-      by
-        simp [mk.injEq] at H
-        assumption
-      simp [BoundedLattice.is_subset]
-      apply congrFun
-      assumption
 
   instance : DecidableEq (NonRelational α n) := fun x y => by
     cases x <;> cases y <;> rename_i env env'

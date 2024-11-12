@@ -1019,39 +1019,6 @@ namespace Interval
         | rw [← hyph]
       ) <;> solve | simp | assumption
 
-  inductive LE : Interval constants → Interval constants → Prop :=
-  | LE_empty : ∀ (i : Interval constants), LE empty i
-  | LE_inf : ∀ (l₁ l₂ : IntLow) (h₁ h₂ : IntHigh)
-    (o₁ : l₁ ≤∘ h₁) (o₂ : l₂ ≤∘ h₂),
-    l₂.Le l₁ → h₁.Le h₂ →
-    LE (.interval l₁ h₁ o₁) (.interval l₂ h₂ o₂)
-
-  theorem LE_iff_subset : LE x y ↔ BoundedLattice.is_subset x y :=
-  by
-    constructor <;> simp [BoundedLattice.is_subset, BoundedLattice.meet, meet] <;> intros H
-    · cases H <;> simp
-      rw [dif_pos] <;> simp [max, min] <;>
-      rw [IntLow.max_eq_left, IntHigh.min_eq_left] <;>
-      solve | simp | assumption
-    · cases x <;> cases y <;> simp at H <;>
-      try (next => constructor)
-      split at H ; rename_i hyp
-      · simp [max, min] at *
-        cases H <;>
-        rename_i l h hle l' h' hle' Hl Hr
-        constructor
-        · cases l <;> cases l' <;>
-          simp [IntLow.max] at Hl <;>
-          constructor
-          rw [Hl]
-          apply Int.le_max_right
-        · cases h <;> cases h' <;>
-          simp [IntHigh.min] at Hr <;>
-          constructor
-          rw [Hr]
-          apply Int.min_le_right
-      · cases H
-
   instance : Widen (Interval constants) where
     widen := widen
 
@@ -1059,12 +1026,48 @@ namespace Interval
     covering_left := covering_left
     covering_right := covering_right
 
+  def narrow (_ : Nat) : Interval constants :=
+    BoundedLattice.meet x y
+
+  theorem bounding_low :
+    ∀ (x y : Interval constants) (n : Nat),
+    BoundedLattice.is_subset (BoundedLattice.meet x y) (narrow x y n) :=
+  by
+    intros x y n
+    have hx : x.meet x = x := BoundedLattice.meet_idempotent x
+    have hy : y.meet y = y := BoundedLattice.meet_idempotent y
+    simp [narrow]
+    conv =>
+      rhs
+      arg 2
+      rw [meet_commutative]
+    rw [meet_associative]
+    conv =>
+      rhs
+      arg 2
+      rw [←meet_associative, hy, meet_commutative]
+    rw [←meet_associative, hx]
+
+  theorem bounding_high :
+    ∀ (x y : Interval constants) (n : Nat),
+    BoundedLattice.is_subset (narrow x y n) x :=
+  by
+    intros x y n
+    have hx : x.meet x = x := BoundedLattice.meet_idempotent x
+    simp [narrow]
+    rw [meet_associative]
+    conv =>
+      rhs
+      arg 2
+      rw [meet_commutative]
+    rw [←meet_associative, hx]
+
   instance : Narrow (Interval constants) where
-    narrow := sorry
+    narrow := narrow
 
   instance : NarrowLawful (Interval constants) where
-    bounding_low := sorry
-    bounding_high := sorry
+    bounding_low := bounding_low
+    bounding_high := bounding_high
 
   instance : ValueDomain (Interval constants) where
     new := .interval (.int 0) (.int 0) <| by simp
