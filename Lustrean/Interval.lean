@@ -1052,54 +1052,19 @@ namespace Interval
           apply Int.min_le_right
       · cases H
 
-  def widen_termination : ∀ (x : Nat → Interval constants),
-    BoundedLattice.is_increasing x →
-    let y : Nat → Interval constants := Nat.recAux (x 0) (
-      fun m y => widen y (x (.succ m)) m
-    )
-    { n : Nat // y (.succ n) = y n } :=
-  by
-    clear x y z
-    intros x Hincr y
-    have min : Option Int := List.foldl (fun acc x => match acc with
-    | some y => some (min x y)
-    | none => x
-    ) none constants
-    have max : Option Int := List.foldl (fun acc x => match acc with
-    | some y => some (max x y)
-    | none => x
-    ) none constants
-    have decr_l : Int := match x 0 with
-    | .empty | .interval .minf _ _ => 0
-    | .interval (.int l) _ _ => match min with
-      | some x => x - l
-      | none => 0
-    have decr_r : Int := match x 0 with
-    | .empty | .interval _ .pinf _ => 0
-    | .interval _ (.int h) _ => match max with
-      | some x => h - x
-      | none => 0
-    have decr := decr_l + decr_r + 2
-    clear min max decr_l decr_r
-    have h : LE (x 0) (x 1) := by
-      rw [LE_iff_subset]
-      apply Hincr
-    try cases h
-    sorry
-
-  termination_by sorry
-
   instance : Widen (Interval constants) where
     widen := widen
+
+  instance : WidenLawful (Interval constants) where
     covering_left := covering_left
     covering_right := covering_right
-    widen_termination := widen_termination
 
   instance : Narrow (Interval constants) where
     narrow := sorry
+
+  instance : NarrowLawful (Interval constants) where
     bounding_low := sorry
     bounding_high := sorry
-    narrow_termination := sorry
 
   instance : ValueDomain (Interval constants) where
     new := .interval (.int 0) (.int 0) <| by simp
@@ -1110,13 +1075,9 @@ namespace Interval
     eq_dec := inferInstance
 
     -- TODO: pourquoi ça n'infère pas ??
-    widen := Widen.widen
-    covering_left := Widen.covering_left
-    covering_right := Widen.covering_right
-    widen_termination := Widen.widen_termination
+    covering_left := WidenLawful.covering_left
+    covering_right := WidenLawful.covering_right
 
-    narrow := Narrow.narrow
-    bounding_low := Narrow.bounding_low
-    bounding_high := Narrow.bounding_high
-    narrow_termination := Narrow.narrow_termination
+    bounding_low := NarrowLawful.bounding_low
+    bounding_high := NarrowLawful.bounding_high
 end Interval

@@ -4,7 +4,7 @@ import Lustrean.Domain
 
 class ValueDomain (α : Type)
 extends Add α, Mul α, Sub α, BoundedLattice α,
-  ToString α, Widen α, Narrow α
+  ToString α, WidenLawful α, NarrowLawful α
 where
   new : α
   from_const : Int → α
@@ -124,6 +124,8 @@ namespace NonRelational
   instance : Widen (NonRelational α n) where
     widen x y n := NonRelational.mk
       fun i => ι.widen (x.env i) (y.env i) n
+
+  instance : WidenLawful (NonRelational α n) where
     covering_left := by
       intros x y n
       simp [BoundedLattice.is_subset, BoundedLattice.meet]
@@ -138,13 +140,12 @@ namespace NonRelational
       apply funext
       intros
       apply ι.covering_right
-    widen_termination := by
-      intros x Hincr y
-      sorry
 
   instance : Narrow (NonRelational α n) where
     narrow x y n := NonRelational.mk
       fun i => ι.narrow (x.env i) (y.env i) n
+
+  instance : NarrowLawful (NonRelational α n) where
     bounding_low := by
       intros x y n H
       simp [BoundedLattice.is_subset, BoundedLattice.meet] at *
@@ -162,7 +163,7 @@ namespace NonRelational
       assumption
     bounding_high := by
       intros x y n H
-      simp [BoundedLattice.is_subset, BoundedLattice.meet] at *
+      simp [Narrow.narrow, BoundedLattice.is_subset, BoundedLattice.meet] at *
       cases x <;> simp
       apply funext
       intros
@@ -175,9 +176,6 @@ namespace NonRelational
       simp [BoundedLattice.is_subset]
       apply congrFun
       assumption
-    narrow_termination := by
-      intros x Hincr y
-      sorry
 
   instance : DecidableEq (NonRelational α n) := fun x y => by
     cases x <;> cases y <;> rename_i env env'
@@ -213,13 +211,9 @@ namespace NonRelational
     new := NonRelational.mk fun _ => ValueDomain.new
     eq_dec := inferInstance
     -- TODO: pourquoi ça n'infère pas ??
-    widen := Widen.widen
-    covering_left := Widen.covering_left
-    covering_right := Widen.covering_right
-    widen_termination := Widen.widen_termination
+    covering_left := WidenLawful.covering_left
+    covering_right := WidenLawful.covering_right
 
-    narrow := Narrow.narrow
-    bounding_low := Narrow.bounding_low
-    bounding_high := Narrow.bounding_high
-    narrow_termination := Narrow.narrow_termination
+    bounding_low := NarrowLawful.bounding_low
+    bounding_high := NarrowLawful.bounding_high
 end NonRelational

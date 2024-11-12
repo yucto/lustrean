@@ -15,52 +15,72 @@ class BoundedLattice (α : Type) where
   meet_bot : ∀ (x : α), meet x bot = bot
 
 namespace BoundedLattice
-  def is_bot {α : Type} [ι : BoundedLattice α] : α → Prop :=
+  variable {α : Type} [ι : BoundedLattice α]
+
+  def is_bot : α → Prop :=
     (· = ι.bot)
 
-  def is_subset {α : Type} [ι : BoundedLattice α] : α → α → Prop :=
+  def is_subset : α → α → Prop :=
     fun x y => x = ι.meet x y
 
-  def is_increasing {α : Type} [BoundedLattice α] : (Nat → α) → Prop :=
+  def is_increasing : (Nat → α) → Prop :=
     fun x => ∀ (n : Nat), is_subset (x n) (x (.succ n))
 
-  def is_decreasing {α : Type} [BoundedLattice α] : (Nat → α) → Prop :=
+  def is_decreasing : (Nat → α) → Prop :=
     fun x => ∀ (n : Nat), is_subset (x (.succ n)) (x n)
 end BoundedLattice
 
-class Widen (α : Type)
-extends BoundedLattice α
-where
+class Widen (α : Type) where
   -- Nat : number of iterations
   widen : α → α → Nat → α
+
+namespace Widen
+  variable {α : Type} [Widen α]
+
+  def widen_seq (x : Nat → α) (n : Nat) : α := match n with
+  | 0 => x 0
+  | .succ n => Widen.widen (widen_seq x n) (x n.succ) n
+end Widen
+
+class WidenLawful (α : Type)
+extends Widen α, BoundedLattice α
+where
   covering_left : ∀  (x y : α) (n : Nat), BoundedLattice.is_subset x (widen x y n)
   covering_right : ∀  (x y : α) (n : Nat), BoundedLattice.is_subset y (widen x y n)
+  /- trust Adrien
   widen_termination : ∀ (x : Nat → α),
     BoundedLattice.is_increasing x →
-    let y : Nat → α := Nat.recAux (x 0) (
-      fun m y => widen y (x (.succ m)) m
-    )
-    { n : Nat // y (.succ n) = y n }
+    { n : Nat // Widen.widen_seq x n.succ = Widen.widen_seq x n }
+  -/
 
-class Narrow (α : Type)
-extends BoundedLattice α
-where
+class Narrow (α : Type) where
   -- Nat : number of iterations
   narrow : α → α → Nat → α
+
+namespace Narrow
+  variable {α : Type} [Narrow α]
+
+  def narrow_seq (x : Nat → α) (n : Nat) : α := match n with
+  | 0 => x 0
+  | .succ n => Narrow.narrow (narrow_seq x n) (x n.succ) n
+end Narrow
+
+class NarrowLawful (α : Type)
+extends Narrow α, BoundedLattice α
+where
   bounding_low : ∀  (x y : α) (n : Nat), BoundedLattice.is_subset x y ->
     BoundedLattice.is_subset x (narrow x y n)
   bounding_high : ∀  (x y : α) (n : Nat), BoundedLattice.is_subset x y ->
     BoundedLattice.is_subset (narrow x y n) y
+  /- trust Adrien
   narrow_termination : ∀ (x : Nat → α),
     BoundedLattice.is_decreasing x →
-    let y : Nat → α := Nat.recAux (x 0) (
-      fun m y => narrow y (x (.succ m)) m
-    )
-    { n : Nat // y (.succ n) = y n }
+    { n : Nat // Narrow.narrow_seq x n.succ = Narrow.narrow_seq x n }
+  -/
 
 class Domain (α : Type)
 extends Add α, Mul α, Sub α, BoundedLattice α,
-  ToString α, Widen α, Narrow α
+  ToString α, WidenLawful α, NarrowLawful α
 where
   new : α
   eq_dec : DecidableEq α
