@@ -622,7 +622,7 @@ namespace Interval
   instance : Sub (Interval constants) where
     sub := sub
 
-  def get_min_mul_bound_opt (l₁ l₂ : IntLow) (h₁ h₂ : IntHigh) : Option IntLow :=
+  def get_min_mul_bound? (l₁ l₂ : IntLow) (h₁ h₂ : IntHigh) : Option IntLow :=
     List.foldl (
       fun x y => match x, y with
       | none, none => none
@@ -632,47 +632,65 @@ namespace Interval
       l₁.mul_l_h h₂, l₁.mul_l_l l₂, l₂.mul_l_h h₁, IntLow.mul_h_h h₁ h₂
     ]
 
-  theorem get_min_mul_bound_opt_not_none : ∀ (l₁ l₂ : IntLow) (h₁ h₂ : IntHigh)
-    (o₁ : l₁ ≤∘ h₁) (o₂ : l₂ ≤∘ h₂),
-    get_min_mul_bound_opt l₁ l₂ h₁ h₂ ≠ none :=
-  by
-    intros l₁ l₂ h₁ h₂ o₁ o₂ hcontra
-    cases l₁ <;> cases l₂ <;> cases h₁ <;> cases h₂ <;>
-    dsimp [get_min_mul_bound_opt, IntLow.mul_l_h, IntLow.mul_l_l, IntLow.mul_h_h] at hcontra <;>
-    sorry
+  theorem get_min_mul_bound?_not_none : ∀ (l₁ l₂ : IntLow) (h₁ h₂ : IntHigh),
+    l₁ ≤∘ h₁ → l₂ ≤∘ h₂ → get_min_mul_bound? l₁ l₂ h₁ h₂ ≠ none := by
+    intros l₁ l₂ h₁ h₂ o₁ o₂
+    (cases l₁ <;> [rename_i ln₁; skip])
+      <;> (cases l₂ <;> [rename_i ln₂; skip])
+      <;> (cases h₁ <;> [rename_i hn₁; skip])
+      <;> (cases h₂ <;> [rename_i hn₂; skip])
+      <;> dsimp [get_min_mul_bound?, IntLow.mul_l_h, IntLow.mul_l_l, IntLow.mul_h_h, IntLow.min]
+      <;> (try intro; contradiction)
+      <;> (try cases compare ln₁ 0)
+      <;> (try cases compare ln₂ 0)
+      <;> (try cases compare hn₁ 0)
+      <;> (try cases compare hn₂ 0)
+      <;> simp
 
   def get_min_mul_bound (l₁ l₂ : IntLow) (h₁ h₂ : IntHigh)
     (o₁ : l₁ ≤∘ h₁) (o₂ : l₂ ≤∘ h₂) : IntLow :=
   by
-    cases h : get_min_mul_bound_opt l₁ l₂ h₁ h₂
-    · exfalso
-      apply get_min_mul_bound_opt_not_none l₁ l₂ <;> try assumption
-    · rename_i val
-      exact val
+    cases h : get_min_mul_bound? l₁ l₂ h₁ h₂ with
+    | none =>
+      exfalso
+      apply get_min_mul_bound?_not_none l₁ l₂ <;> assumption
+    | some val => exact val
 
-  def get_max_mul_bound_opt (l₁ l₂ : IntLow) (h₁ h₂ : IntHigh) : Option IntHigh :=
-    List.foldl (
-      fun x y => match x, y with
+  def get_max_mul_bound? (l₁ l₂ : IntLow) (h₁ h₂ : IntHigh) : Option IntHigh :=
+    [h₁.mul_h_l l₂,
+     h₁.mul_h_h h₂,
+     h₂.mul_h_l l₁,
+     IntHigh.mul_l_l l₁ l₂
+    ].foldl
+      fun
       | none, none => none
       | none, some z | some z, none => some z
-      | some x, some y => IntHigh.max x y
-    ) none [
-      h₁.mul_h_l l₂, h₁.mul_h_h h₂, h₂.mul_h_l l₁, IntHigh.mul_l_l l₁ l₂
-    ]
+      | some x, some y => x.max y
+      none 
 
-  theorem get_max_mul_bound_opt_not_none : ∀ (l₁ l₂ : IntLow) (h₁ h₂ : IntHigh)
-    (o₁ : l₁ ≤∘ h₁) (o₂ : l₂ ≤∘ h₂),
-    get_max_mul_bound_opt l₁ l₂ h₁ h₂ ≠ none :=
-  by sorry
+  theorem get_max_mul_bound?_not_none : ∀ (l₁ l₂ : IntLow) (h₁ h₂ : IntHigh),
+    l₁ ≤∘ h₁ → l₂ ≤∘ h₂ → get_max_mul_bound? l₁ l₂ h₁ h₂ ≠ none := by
+    intros l₁ l₂ h₁ h₂ o₁ o₂
+    (cases l₁ <;> [rename_i ln₁; skip])
+      <;> (cases l₂ <;> [rename_i ln₂; skip])
+      <;> (cases h₁ <;> [rename_i hn₁; skip])
+      <;> (cases h₂ <;> [rename_i hn₂; skip])
+      <;> dsimp [get_max_mul_bound?, IntHigh.mul_h_h, IntHigh.mul_h_l, IntHigh.mul_l_l, IntHigh.max]
+      <;> (try intro; contradiction)
+      <;> (try cases compare ln₁ 0)
+      <;> (try cases compare ln₂ 0)
+      <;> (try cases compare hn₁ 0)
+      <;> (try cases compare hn₂ 0)
+      <;> simp
 
   def get_max_mul_bound (l₁ l₂ : IntLow) (h₁ h₂ : IntHigh)
     (o₁ : l₁ ≤∘ h₁) (o₂ : l₂ ≤∘ h₂) : IntHigh :=
   by
-    cases h : get_max_mul_bound_opt l₁ l₂ h₁ h₂
-    · exfalso
-      apply get_max_mul_bound_opt_not_none l₁ l₂ <;> try assumption
-    · rename_i val
-      exact val
+    cases h : get_max_mul_bound? l₁ l₂ h₁ h₂ with
+    | none =>
+      exfalso
+      apply get_max_mul_bound?_not_none l₁ l₂ <;> assumption
+    | some val => exact val
 
   def mul : Interval constants :=
     .map_empty x y <| fun l₁ l₂ h₁ h₂ o₁ o₂ =>
