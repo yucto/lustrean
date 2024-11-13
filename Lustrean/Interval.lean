@@ -622,85 +622,6 @@ namespace Interval
   instance : Sub (Interval constants) where
     sub := sub
 
-  def get_min_mul_bound? (l₁ l₂ : IntLow) (h₁ h₂ : IntHigh) : Option IntLow :=
-    List.foldl (
-      fun x y => match x, y with
-      | none, none => none
-      | none, some z | some z, none => some z
-      | some x, some y => IntLow.min x y
-    ) none [
-      l₁.mul_l_h h₂, l₁.mul_l_l l₂, l₂.mul_l_h h₁, IntLow.mul_h_h h₁ h₂
-    ]
-
-  theorem get_min_mul_bound?_not_none : ∀ (l₁ l₂ : IntLow) (h₁ h₂ : IntHigh),
-    l₁ ≤∘ h₁ → l₂ ≤∘ h₂ → get_min_mul_bound? l₁ l₂ h₁ h₂ ≠ none := by
-    intros l₁ l₂ h₁ h₂ o₁ o₂
-    (cases l₁ <;> [rename_i ln₁; skip])
-      <;> (cases l₂ <;> [rename_i ln₂; skip])
-      <;> (cases h₁ <;> [rename_i hn₁; skip])
-      <;> (cases h₂ <;> [rename_i hn₂; skip])
-      <;> dsimp [get_min_mul_bound?, IntLow.mul_l_h, IntLow.mul_l_l, IntLow.mul_h_h, IntLow.min]
-      <;> (try intro; contradiction)
-      <;> (try cases compare ln₁ 0)
-      <;> (try cases compare ln₂ 0)
-      <;> (try cases compare hn₁ 0)
-      <;> (try cases compare hn₂ 0)
-      <;> simp
-
-  def get_min_mul_bound (l₁ l₂ : IntLow) (h₁ h₂ : IntHigh)
-    (o₁ : l₁ ≤∘ h₁) (o₂ : l₂ ≤∘ h₂) : IntLow :=
-  by
-    cases h : get_min_mul_bound? l₁ l₂ h₁ h₂ with
-    | none =>
-      exfalso
-      apply get_min_mul_bound?_not_none l₁ l₂ <;> assumption
-    | some val => exact val
-
-  def get_max_mul_bound? (l₁ l₂ : IntLow) (h₁ h₂ : IntHigh) : Option IntHigh :=
-    [h₁.mul_h_l l₂,
-     h₁.mul_h_h h₂,
-     h₂.mul_h_l l₁,
-     IntHigh.mul_l_l l₁ l₂
-    ].foldl
-      fun
-      | none, none => none
-      | none, some z | some z, none => some z
-      | some x, some y => x.max y
-      none 
-
-  theorem get_max_mul_bound?_not_none : ∀ (l₁ l₂ : IntLow) (h₁ h₂ : IntHigh),
-    l₁ ≤∘ h₁ → l₂ ≤∘ h₂ → get_max_mul_bound? l₁ l₂ h₁ h₂ ≠ none := by
-    intros l₁ l₂ h₁ h₂ o₁ o₂
-    (cases l₁ <;> [rename_i ln₁; skip])
-      <;> (cases l₂ <;> [rename_i ln₂; skip])
-      <;> (cases h₁ <;> [rename_i hn₁; skip])
-      <;> (cases h₂ <;> [rename_i hn₂; skip])
-      <;> dsimp [get_max_mul_bound?, IntHigh.mul_h_h, IntHigh.mul_h_l, IntHigh.mul_l_l, IntHigh.max]
-      <;> (try intro; contradiction)
-      <;> (try cases compare ln₁ 0)
-      <;> (try cases compare ln₂ 0)
-      <;> (try cases compare hn₁ 0)
-      <;> (try cases compare hn₂ 0)
-      <;> simp
-
-  def get_max_mul_bound (l₁ l₂ : IntLow) (h₁ h₂ : IntHigh)
-    (o₁ : l₁ ≤∘ h₁) (o₂ : l₂ ≤∘ h₂) : IntHigh :=
-  by
-    cases h : get_max_mul_bound? l₁ l₂ h₁ h₂ with
-    | none =>
-      exfalso
-      apply get_max_mul_bound?_not_none l₁ l₂ <;> assumption
-    | some val => exact val
-
-  def mul : Interval constants :=
-    .map_empty x y <| fun l₁ l₂ h₁ h₂ o₁ o₂ =>
-      let l := get_min_mul_bound l₁ l₂ h₁ h₂ o₁ o₂
-      let h := get_max_mul_bound l₁ l₂ h₁ h₂ o₁ o₂
-      .interval l h <| by sorry
-
-  instance : Mul (Interval constants) where
-    mul := mul
-
   def bot : Interval constants := .empty
 
   def top : Interval constants := .interval .minf .pinf <| by constructor
@@ -827,6 +748,50 @@ namespace Interval
     meet_absorption := meet_absorption
     meet_bot := meet_bot
     meet_top := meet_top
+
+
+  def split_at_zero : Interval constants × Interval constants :=
+    (
+      x.meet (.interval .minf (.int 0) <| by constructor),
+      x.meet (.interval (.int 0) .pinf <| by constructor),
+    )
+
+  def mul_neg_neg : Interval constants := map_empty x y
+  fun l₁ l₂ h₁ h₂ _ _ =>
+  match IntLow.mul_h_h h₁ h₂, IntHigh.mul_l_l l₁ l₂ with
+  | .none, _
+  | _, .none => .empty
+  | .some l, .some h => if hyp : l ≤∘ h
+    then .interval l h hyp
+    else .empty
+
+  def mul_neg_pos : Interval constants := map_empty x y
+  fun l₁ l₂ h₁ h₂ _ _ =>
+  match IntLow.mul_l_h l₁ h₂, IntHigh.mul_h_l h₁ l₂ with
+  | .none, _
+  | _, .none => .empty
+  | .some l, .some h => if hyp : l ≤∘ h
+    then .interval l h hyp
+    else .empty
+
+  def mul_pos_pos : Interval constants := map_empty x y
+  fun l₁ l₂ h₁ h₂ _ _ =>
+  match IntLow.mul_l_l l₁ l₂, IntHigh.mul_h_h h₁ h₂ with
+  | .none, _
+  | _, .none => .empty
+  | .some l, .some h => if hyp : l ≤∘ h
+    then .interval l h hyp
+    else .empty
+
+  def mul : Interval constants :=
+    let (x₁, x₂) := split_at_zero x
+    let (y₁, y₂) := split_at_zero y
+    join
+      ((mul_neg_neg x₁ y₁).join (mul_neg_pos x₁ y₂))
+      ((mul_neg_pos y₁ x₂).join (mul_pos_pos x₂ y₂))
+
+  instance : Mul (Interval constants) where
+    mul := mul
 
   def toString := match x with
   | .empty => "∅"
