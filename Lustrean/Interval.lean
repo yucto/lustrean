@@ -1,6 +1,5 @@
 import Aesop
 
-import Lustrean.Domain
 import Lustrean.NonRelational
 import Lustrean.Facts
 
