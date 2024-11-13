@@ -1,7 +1,5 @@
-import Aesop
-
-import Lustrean.NonRelational
 import Lustrean.Facts
+import Lustrean.Domain.NonRelational
 
 -- int or -∞
 inductive IntLow where
@@ -984,8 +982,10 @@ namespace Interval
     rename_i l h hle  <;> simp [max, min, hle] <;>
     rename_i l' h' hle'
     · rw [dif_pos] <;> (try simp) <;>
-      rw [IntLow.min_comm, IntHigh.max_comm, IntLow.max_min_absorb, IntHigh.min_max_absorb] <;>
-      aesop
+      rw [IntLow.min_comm, IntHigh.max_comm, IntLow.max_min_absorb, IntHigh.min_max_absorb] <;> [
+        constructor <;> rfl ;
+        assumption
+      ]
     · have hypl : l = l.max (extract_max_gt constants l) := by
           rw [IntLow.max_eq_left]
           apply extract_max_gt_correct

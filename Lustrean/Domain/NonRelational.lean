@@ -1,6 +1,4 @@
-import Aesop
-
-import Lustrean.Domain
+import Lustrean.Domain.Domain
 
 class ValueDomain (α : Type)
 extends Add α, Mul α, Sub α, BoundedLattice α,

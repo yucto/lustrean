@@ -1,6 +1,4 @@
-import Aesop
-
-import Lustrean.NonRelational
+import Lustrean.Domain.NonRelational
 
 inductive Integers where
 | bot : Integers
