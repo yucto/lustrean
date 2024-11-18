@@ -1,6 +1,5 @@
 import Lean
 import Lustrean.Domain
-import Lustrean.NonRelational
 import Lustrean.Parsing
 
 open Lean Meta Elab

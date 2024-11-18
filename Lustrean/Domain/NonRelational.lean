@@ -9,6 +9,10 @@ where
   -- interval [a, b]
   rand : Int → Int → α
   eq_dec : DecidableEq α
+  -- compare op x y = (x', y') where
+  -- x' = { v ∈ x | ∃ v' ∈ y, v op v' }
+  -- y' = { v' ∈ y | ∃ v ∈ x, v op v' }
+  compare : compare_op → α → α → α × α
   -- TODO: backward operations, comparisons
 
 structure NonRelational (α : Type) [ValueDomain α] (n : Nat)

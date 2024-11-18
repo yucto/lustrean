@@ -1051,6 +1051,49 @@ namespace Interval
     bounding_low := bounding_low
     bounding_high := bounding_high
 
+  def measure (op : compare_op) : Nat :=
+    match op with
+    | .ceq => 0
+    | .cneq => 2
+    | .cle => 0
+    | .clt => 1
+    | .cge => 2
+    | .cgt => 1
+
+  def compare (op : compare_op) (x y : Interval constants) :
+    Interval constants × Interval constants
+  :=
+    match x, y with
+    | .empty, _
+    | _, .empty => (.empty, .empty)
+    | .interval l₁ h₁ o₁, .interval l₂ h₂ o₂ =>
+      match op with
+      | .ceq => (x.meet y, x.meet y)
+      | .cneq =>
+        let (x', y') := compare .clt x y
+        let (x'', y'') := compare .cgt x y
+        (x'.join x'', y'.join y'')
+      | .cle =>
+        let l := l₁.max l₂
+        let h := h₁.min h₂
+        (
+          if hyp₁ : l₁ ≤∘ h
+          then .interval l₁ h hyp₁
+          else .empty,
+          if hyp₂ : l ≤∘ h₂
+          then .interval l h₂ hyp₂
+          else .empty
+        )
+      | .clt => compare .cle (x + (.interval (.int 1) (.int 1) <| by simp)) y
+      | .cge =>
+        let (y', x') := compare .clt y x
+        (x', y')
+      | .cgt =>
+        let (y', x') := compare .cle y x
+        (y', x')
+    termination_by measure op
+    decreasing_by all_goals simp [measure]
+
   instance : ValueDomain (Interval constants) where
     new := .interval (.int 0) (.int 0) <| by simp
     from_const x := .interval (.int x) (.int x) <| by simp
@@ -1058,6 +1101,7 @@ namespace Interval
       then .interval (.int x) (.int y) <| by constructor; assumption
       else .empty
     eq_dec := inferInstance
+    compare := compare
 
     -- TODO: pourquoi ça n'infère pas ??
     covering_left := WidenLawful.covering_left

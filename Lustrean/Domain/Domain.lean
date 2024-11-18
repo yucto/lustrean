@@ -114,3 +114,11 @@ where
   -- TODO: guard, assign
 
 attribute [simp] Domain.eq_dec
+
+inductive compare_op : Type :=
+| ceq
+| cneq
+| cle
+| clt
+| cge
+| cgt

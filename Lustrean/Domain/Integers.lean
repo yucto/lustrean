@@ -152,11 +152,37 @@ namespace Integers
       rename_i x y
       by_cases h : (x = y) <;> simp [h]
 
+  def compare_int (op : compare_op) (a b : Int) :
+    Integers × Integers
+  :=
+    let cond := match op with
+    | .ceq => decide (a = b)
+    | .cneq => decide (a ≠ b)
+    | .cle => decide (a ≤ b)
+    | .clt => decide (a < b)
+    | .cge => decide (a ≥ b)
+    | .cgt => decide (a > b)
+    if cond
+    then (.int a, .int b)
+    else (bot, bot)
+
+  def compare (op : compare_op) (x y : Integers) :
+    Integers × Integers
+  :=
+    match op, x, y with
+    | _, .bot, _
+    | _, _, .bot => (bot, bot)
+    | _, .int a, .int b => compare_int op a b
+    | .ceq, .top, z
+    | .ceq, z, .top => (z, z)
+    | _, _, _ => (x, y)
+
   instance IntegersValueDomain : ValueDomain Integers where
     new := .int 0
     from_const := .int
     rand a b := if a = b then .int a else .top
     eq_dec := inferInstance
+    compare := compare
 
     -- TODO: pourquoi ça n'infère pas ??
     covering_left := WidenLawful.covering_left
