@@ -1,7 +1,7 @@
 import Lustrean.Domain.Domain
 
 class ValueDomain (α : Type)
-extends Add α, Mul α, Sub α, BoundedLattice α,
+extends Add α, Mul α, Sub α, Div α, BoundedLattice α,
   ToString α, WidenLawful α, NarrowLawful α
 where
   new : α
@@ -13,7 +13,6 @@ where
   -- x' = { v ∈ x | ∃ v' ∈ y, v op v' }
   -- y' = { v' ∈ y | ∃ v ∈ x, v op v' }
   compare : compare_op → α → α → α × α
-  -- TODO: backward operations, comparisons
 
 structure NonRelational (α : Type) [ValueDomain α] (n : Nat)
 where
@@ -33,6 +32,10 @@ namespace NonRelational
 
   instance : Mul (NonRelational α n) where
     mul x y := NonRelational.mk
+      fun i => ι.mul (x.env i) (y.env i)
+
+  instance : Div (NonRelational α n) where
+    div x y := NonRelational.mk
       fun i => ι.mul (x.env i) (y.env i)
 
   instance : ToString (NonRelational α n) where

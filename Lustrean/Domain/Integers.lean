@@ -107,6 +107,13 @@ namespace Integers
     | .top, _ | _, .top => .top
     | .int n, .int m => .int (n * m)
 
+  instance : Div Integers where
+    div x y := match x, y with
+    | .bot, _ | _, .bot | _, .int 0 => .bot
+    | .int 0, _ => .int 0
+    | .int n, .int m => .int (n / m)
+    | _, _ => .top
+
   instance : ToString Integers where
     toString x := match x with
     | .bot => "⊥"

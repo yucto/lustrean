@@ -106,12 +106,32 @@ where
 attribute [simp] NarrowLawful.bounding_low NarrowLawful.bounding_high
 
 class Domain (α : Type)
-extends Add α, Mul α, Sub α, BoundedLattice α,
+extends Add α, Mul α, Sub α, Div α, BoundedLattice α,
   ToString α, WidenLawful α, NarrowLawful α
 where
   new : α
   eq_dec : DecidableEq α
   -- TODO: guard, assign
+
+namespace Domain
+  variable (α : Type) [Domain α]
+
+  -- backward operations :
+  -- backward_op x y r = (x', y') where
+  -- x' = { v ∈ x | ∃ v' ∈ y, v op v' ∈ r }
+  -- y' = { v' ∈ y | ∃ v ∈ x, v op v' ∈ r }
+  def backward_add (x y r : α) : α × α :=
+    (Sub.sub r y, Sub.sub r x)
+
+  def backward_sub (x y r : α) : α × α :=
+    (Add.add r y, Sub.sub x r)
+
+  def backward_mul (x y r : α) : α × α :=
+    (Div.div r y, Div.div r x)
+
+  def backward_div (x y r : α) : α × α :=
+    (Mul.mul r y, Div.div x r)
+end Domain
 
 attribute [simp] Domain.eq_dec
 

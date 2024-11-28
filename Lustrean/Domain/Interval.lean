@@ -516,6 +516,11 @@ namespace HLe
 end HLe
 
 namespace IntLow
+  def neg (l : IntLow) : IntHigh :=
+  match l with
+  | .minf => .pinf
+  | .int n => .int (-n)
+
   def mul_l_h (l : IntLow) (h : IntHigh) : Option IntLow :=
     match l, h with
     | .minf, .pinf => some .minf
@@ -551,6 +556,11 @@ namespace IntLow
 end IntLow
 
 namespace IntHigh
+  def neg (l : IntHigh) : IntLow :=
+  match l with
+  | .pinf => .minf
+  | .int n => .int (-n)
+
   def mul_h_l (h : IntHigh) (l : IntLow) : Option IntHigh :=
     match h, l with
     | .pinf, .minf => some .pinf
@@ -585,6 +595,17 @@ namespace IntHigh
       | .gt => none
 end IntHigh
 
+namespace HLe
+  @[simp]
+  theorem neg_rev_hle : ∀ (l : IntLow) (h : IntHigh),
+    l ≤∘ h → h.neg ≤∘ l.neg
+  := by
+    intros l h hyp
+    cases hyp <;> try constructor
+    apply Int.neg_le_neg
+    assumption
+end HLe
+
 -- Parameterized by the list of constants
 -- in the source program, in order to do
 -- a better widening
@@ -618,6 +639,10 @@ namespace Interval
 
   instance : Sub (Interval constants) where
     sub := sub
+
+  def neg : Interval constants :=
+    let zero := .interval (.int 0) (.int 0) <| by constructor <;> simp
+    zero - x
 
   def bot : Interval constants := .empty
 
@@ -789,6 +814,35 @@ namespace Interval
 
   instance : Mul (Interval constants) where
     mul := mul
+
+  def div_pos_pos : Interval constants := map_empty x y
+  fun _ _ h₁ h₂ _ _ =>
+  match h₁, h₂ with
+  | _, .int 0 => .bot
+  | .pinf, _ => .interval (.int 0) .pinf <| by constructor
+  | .int _, .pinf => .interval (.int 0) (.int 0) <| by constructor <;> simp
+  | .int n, .int m => if hyp : 0 ≤ n / m
+    then .interval (.int 0) (.int (n / m)) <| by constructor <;> assumption
+    else .bot
+
+  def div_neg_pos : Interval constants :=
+    neg (div_pos_pos (neg x) y)
+
+  def div_pos_neg : Interval constants :=
+    neg (div_pos_pos x (neg y))
+
+  def div_neg_neg : Interval constants :=
+    div_pos_pos (neg x) (neg y)
+
+  def div : Interval constants :=
+    let (x₁, x₂) := split_at_zero x
+    let (y₁, y₂) := split_at_zero y
+    join
+      ((div_neg_neg x₁ y₁).join (div_neg_pos x₁ y₂))
+      ((div_neg_pos y₁ x₂).join (div_pos_pos x₂ y₂))
+
+  instance : Div (Interval constants) where
+    div := div
 
   def toString := match x with
   | .empty => "∅"
@@ -1066,7 +1120,7 @@ namespace Interval
     match x, y with
     | .empty, _
     | _, .empty => (.empty, .empty)
-    | .interval l₁ h₁ o₁, .interval l₂ h₂ o₂ =>
+    | .interval l₁ h₁ _, .interval l₂ h₂ _ =>
       match op with
       | .ceq => (x.meet y, x.meet y)
       | .cneq =>
