@@ -632,6 +632,15 @@ namespace Interval
   instance : Add (Interval constants) where
     add := add
 
+  def neg : Interval constants := match x with
+  | .empty => .empty
+  | .interval l h o => .interval h.neg l.neg <| by
+    apply HLe.neg_rev_hle
+    assumption
+
+  instance : Neg (Interval constants) where
+    neg := neg
+
   def sub : Interval constants :=
     map_empty x y <| fun l₁ l₂ h₁ h₂ le₁ le₂ =>
       .interval (IntLow.sub_l_h l₁ h₂) (IntHigh.sub_h_l h₁ l₂)
@@ -639,10 +648,6 @@ namespace Interval
 
   instance : Sub (Interval constants) where
     sub := sub
-
-  def neg : Interval constants :=
-    let zero := .interval (.int 0) (.int 0) <| by constructor <;> simp
-    zero - x
 
   def bot : Interval constants := .empty
 

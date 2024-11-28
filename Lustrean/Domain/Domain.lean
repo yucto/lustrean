@@ -32,6 +32,16 @@ namespace BoundedLattice
   def is_subset : α → α → Prop :=
     fun x y => x = ι.meet x y
 
+  instance is_bot_dec [DecidableEq α] : DecidablePred (@is_bot α ι) := by
+    rename_i ι'
+    intros _
+    apply ι'
+
+  instance is_subset_dec [DecidableEq α] : DecidableRel (@is_subset α ι) := by
+    rename_i ι'
+    intros _ _
+    apply ι'
+
   def is_increasing : (Nat → α) → Prop :=
     fun x => ∀ (n : Nat), is_subset (x n) (x (.succ n))
 
@@ -105,40 +115,45 @@ where
 
 attribute [simp] NarrowLawful.bounding_low NarrowLawful.bounding_high
 
+inductive int_op : Type :=
+| iadd : int_op
+| isub : int_op
+| imul : int_op
+| idiv : int_op
+
+-- n : number of variable
+inductive iexpr (n : Nat) : Type :=
+| var : Fin n → iexpr n
+| rand : Int → Int → iexpr n
+| const : Int → iexpr n
+| neg : iexpr n → iexpr n
+| binop : iexpr n → int_op → iexpr n → iexpr n
+
+inductive compare_op : Type :=
+| ceq : compare_op
+| cneq : compare_op
+| cle : compare_op
+| clt : compare_op
+| cge : compare_op
+| cgt : compare_op
+
+-- no negated expression. it must be eliminated by simplification
+inductive bexpr (n : Nat) : Type :=
+| random : bexpr n
+| const : Bool → bexpr n
+| compare : iexpr n → compare_op → iexpr n → bexpr n
+| and : bexpr n → bexpr n → bexpr n
+| or : bexpr n → bexpr n → bexpr n
+
 class Domain (α : Type)
 extends Add α, Mul α, Sub α, Div α, BoundedLattice α,
   ToString α, WidenLawful α, NarrowLawful α
 where
   new : α
+  nb_var : Nat
   eq_dec : DecidableEq α
-  -- TODO: guard, assign
-
-namespace Domain
-  variable (α : Type) [Domain α]
-
-  -- backward operations :
-  -- backward_op x y r = (x', y') where
-  -- x' = { v ∈ x | ∃ v' ∈ y, v op v' ∈ r }
-  -- y' = { v' ∈ y | ∃ v ∈ x, v op v' ∈ r }
-  def backward_add (x y r : α) : α × α :=
-    (Sub.sub r y, Sub.sub r x)
-
-  def backward_sub (x y r : α) : α × α :=
-    (Add.add r y, Sub.sub x r)
-
-  def backward_mul (x y r : α) : α × α :=
-    (Div.div r y, Div.div r x)
-
-  def backward_div (x y r : α) : α × α :=
-    (Mul.mul r y, Div.div x r)
-end Domain
+  -- keep only elements satisfying the boolean expression
+  guard : α → bexpr nb_var → α
+  assign : α → Fin nb_var → iexpr nb_var → α
 
 attribute [simp] Domain.eq_dec
-
-inductive compare_op : Type :=
-| ceq
-| cneq
-| cle
-| clt
-| cge
-| cgt

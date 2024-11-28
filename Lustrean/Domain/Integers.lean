@@ -96,6 +96,12 @@ namespace Integers
     add x y := map_int x y
       fun n m => .int (n + m)
 
+  instance : Neg Integers where
+    neg x := match x with
+    | .bot => .bot
+    | .top => .top
+    | .int n => .int (-n)
+
   instance : Sub Integers where
     sub x y := map_int x y
       fun n m => .int (n - m)
