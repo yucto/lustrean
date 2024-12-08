@@ -1,23 +1,88 @@
 import Lean
 
 declare_syntax_cat lustre_node
-declare_syntax_cat lustre_type
 declare_syntax_cat lustre_expr
 declare_syntax_cat lustre_node_decl
 declare_syntax_cat lustre_binding
+declare_syntax_cat lustre_assertion
+declare_syntax_cat lustre_lower_bound
+declare_syntax_cat lustre_upper_bound
 
 syntax (name := lustre_command) "lustre " lustre_node* : command
-syntax "node " ident "(" lustre_binding,* ")" (" = " (ident),+)?
-  " where" (lustre_node_decl)* : lustre_node
+syntax "node " ident "(" ident,* ")" (" = " (ident),+)?
+  (" guard" lustre_assertion*)? " where" lustre_node_decl*
+  (" assert" lustre_assertion*)? : lustre_node
 
-syntax ident " : " lustre_type : lustre_binding
-syntax ident (" : " lustre_type)? " = " lustre_expr : lustre_node_decl
-syntax ident : lustre_type
-syntax num : lustre_expr
+syntax ident : lustre_binding
+syntax ident,+ " = " lustre_expr : lustre_node_decl
+
+syntax num : lustre_lower_bound
+syntax "-∞" : lustre_lower_bound
+
+syntax num : lustre_upper_bound
+syntax "∞" : lustre_upper_bound
+
+syntax:max "[" lustre_lower_bound ", " lustre_upper_bound "]" : lustre_expr
+-- sugar
+syntax:max num : lustre_expr
+syntax:max ident : lustre_expr
 syntax "-" lustre_expr : lustre_expr
-syntax:5 lustre_expr:5 " → " lustre_expr:6 : lustre_expr
-syntax:10 lustre_expr:10 " + " lustre_expr:11 : lustre_expr
-syntax:10 lustre_expr:10 " - " lustre_expr:11 : lustre_expr
-syntax:20 lustre_expr:20 " * " lustre_expr:21 : lustre_expr
-syntax:50 " pre " lustre_expr:50 : lustre_expr
-syntax ident : lustre_expr
+syntax:max " if " lustre_assertion:0 " then " lustre_expr:0 " else " lustre_expr:0 : lustre_expr
+syntax:35 lustre_expr:36 " fby " lustre_expr:35 : lustre_expr
+syntax:40 lustre_expr:40 " + " lustre_expr:41 : lustre_expr
+syntax:40 lustre_expr:40 " - " lustre_expr:41 : lustre_expr
+syntax:50 lustre_expr:50 " * " lustre_expr:51 : lustre_expr
+syntax:60 ident "(" lustre_expr:0,* ")" : lustre_expr
+syntax:max " if " lustre_assertion:0 " then " lustre_expr:0 " else " lustre_expr:0 : lustre_expr
+macro:max " (" e:lustre_expr:0 ") " : lustre_expr => pure e
+
+syntax:max lustre_expr " = " lustre_expr : lustre_assertion
+-- sugar
+syntax:max lustre_expr " ≠ " lustre_expr : lustre_assertion
+syntax:max lustre_expr " ≤ " lustre_expr : lustre_assertion
+syntax:max lustre_expr " < " lustre_expr : lustre_assertion
+-- sugar
+syntax:max lustre_expr " ≥ " lustre_expr : lustre_assertion
+-- sugar
+syntax:max lustre_expr " > " lustre_expr : lustre_assertion
+syntax:50 lustre_assertion:50 " ∨ " lustre_assertion:51 : lustre_assertion
+syntax:60 lustre_assertion:60 " ∧ " lustre_assertion:61 : lustre_assertion
+-- sugar
+syntax:65 " ¬" lustre_assertion:65 : lustre_assertion
+-- sugar
+syntax:max " (" lustre_assertion:0 ") " : lustre_assertion
+
+macro_rules
+  | `(lustre_expr| $k:num) => `(lustre_expr| [$k:num, $k:num])
+  | `(lustre_assertion| ¬ $e:lustre_assertion) => do
+    match e with
+    | `(lustre_assertion| $left ∨ $right) =>
+      `(lustre_assertion| ¬$left ∧ ¬$right)
+    | `(lustre_assertion| $left ∧ $right) =>
+      `(lustre_assertion| ¬$left ∨ ¬$right)
+    | `(lustre_assertion| $left:lustre_expr = $right) =>
+      `(lustre_assertion| $left:lustre_expr ≠ $right)
+    | `(lustre_assertion| $left:lustre_expr ≠ $right) =>
+      `(lustre_assertion| $left:lustre_expr = $right)
+    | `(lustre_assertion| $left:lustre_expr < $right) =>
+      `(lustre_assertion| $left:lustre_expr ≥ $right)
+    | `(lustre_assertion| $left:lustre_expr ≤ $right) =>
+      `(lustre_assertion| $left:lustre_expr > $right)
+    | `(lustre_assertion| $left:lustre_expr > $right) =>
+      `(lustre_assertion| $left:lustre_expr ≤ $right)
+    | `(lustre_assertion| $left:lustre_expr ≥ $right) =>
+      `(lustre_assertion| $left:lustre_expr < $right)
+    | `(lustre_assertion| ¬$b) =>
+      `(lustre_assertion| $b)
+    | _ => Lean.Macro.throwUnsupported
+  | `(lustre_assertion| $left:lustre_expr ≠ $right:lustre_expr) =>
+    `(lustre_assertion| $left:lustre_expr > $right ∨ $left:lustre_expr < $right)
+  | `(lustre_assertion| $left:lustre_expr ≥ $right:lustre_expr) =>
+    `(lustre_assertion| $right:lustre_expr ≤ $left)
+  | `(lustre_assertion| $left:lustre_expr > $right:lustre_expr) =>
+    `(lustre_assertion| $right:lustre_expr < $left)
+  | `(lustre_assertion| ($e)) => pure e
+
+-- if
+-- booléens (juste dans les expression, pas dans les variables)
+-- typage
