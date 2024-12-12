@@ -50,6 +50,9 @@ namespace LowerBound
 
   instance : ToString LowerBound where
     toString := LowerBound.toString
+
+  instance (n : Nat) : OfNat LowerBound n where
+    ofNat := .nat n
 end LowerBound
 
 inductive UpperBound where
@@ -64,8 +67,10 @@ namespace UpperBound
 
   instance : ToString UpperBound where
     toString := UpperBound.toString
-end UpperBound
 
+  instance (n : Nat) : OfNat UpperBound n where
+    ofNat := .nat n
+end UpperBound
 
 inductive MonOp where
   | neg
