@@ -3,7 +3,6 @@ import Lean
 declare_syntax_cat lustre_node
 declare_syntax_cat lustre_expr
 declare_syntax_cat lustre_node_decl
-declare_syntax_cat lustre_binding
 declare_syntax_cat lustre_assertion
 declare_syntax_cat lustre_lower_bound
 declare_syntax_cat lustre_upper_bound
@@ -13,7 +12,6 @@ syntax "node " ident "(" ident,* ")" (" = " (ident),+)?
   (" guard" lustre_assertion*)? " where" lustre_node_decl*
   (" assert" lustre_assertion*)? : lustre_node
 
-syntax ident : lustre_binding
 syntax ident,+ " = " lustre_expr : lustre_node_decl
 
 syntax num : lustre_lower_bound
@@ -82,7 +80,3 @@ macro_rules
   | `(lustre_assertion| $left:lustre_expr > $right:lustre_expr) =>
     `(lustre_assertion| $right:lustre_expr < $left)
   | `(lustre_assertion| ($e)) => pure e
-
--- if
--- booléens (juste dans les expression, pas dans les variables)
--- typage
