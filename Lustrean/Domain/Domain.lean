@@ -15,6 +15,12 @@ class BoundedLattice (α : Type) where
   meet_absorption : ∀ (x y : α), meet x (join x y) = x
   meet_top : ∀ (x : α), meet x top = x
   meet_bot : ∀ (x : α), meet x bot = bot
+export BoundedLattice (bot top join meet)
+
+notation " ⊤ " => top
+notation " ⊥ " => bot
+infixr:60 " ⊔ " => join
+infixr:70 " ⊓ " => meet
 
 namespace BoundedLattice
   variable {α : Type} [ι : BoundedLattice α]
@@ -28,11 +34,14 @@ namespace BoundedLattice
 
   @[simp]
   def is_bot : α → Prop :=
-    (· = ι.bot)
+    (· = ⊥)
 
   @[simp]
   def is_subset : α → α → Prop :=
-    fun x y => x = ι.meet x y
+    fun x y => x = meet x y
+
+  infixr:50 " ⊑ " => is_subset
+
 
   instance is_bot_dec [DecidableEq α] : DecidablePred (@is_bot α ι) := by
     rename_i ι'
@@ -45,14 +54,13 @@ namespace BoundedLattice
     apply ι'
 
   def is_increasing : (Nat → α) → Prop :=
-    fun x => ∀ (n : Nat), is_subset (x n) (x (.succ n))
+    fun x => ∀ n, x n ⊑ x (n+1)
 
   def is_decreasing : (Nat → α) → Prop :=
-    fun x => ∀ (n : Nat), is_subset (x (.succ n)) (x n)
+    fun x => ∀ n, x (n+1) ⊑ x n
 
   @[simp]
-  def join_idempotent : ∀ (x : α), ι.join x x = x :=
-  by
+  def join_idempotent : ∀ x : α, x ⊔ x = x := by
     intros x
     conv =>
       lhs
@@ -61,8 +69,7 @@ namespace BoundedLattice
     apply join_absorption
 
   @[simp]
-  def meet_idempotent : ∀ (x : α), ι.meet x x = x :=
-  by
+  def meet_idempotent : ∀ x : α, x ⊓ x = x := by
     intros x
     conv =>
       lhs
@@ -74,6 +81,9 @@ end BoundedLattice
 class Widen (α : Type) where
   -- Nat : number of iterations
   widen : α → α → Nat → α
+export Widen (widen)
+
+macro l:term " ∇_" n:term:max r:term : term => ``(widen $l $r $n)
 
 namespace Widen
   variable {α : Type} [Widen α]
@@ -81,14 +91,14 @@ namespace Widen
   @[simp]
   def widen_seq (x : Nat → α) (n : Nat) : α := match n with
   | 0 => x 0
-  | .succ n => Widen.widen (widen_seq x n) (x n.succ) n
+  | .succ n => (widen_seq x n) ∇_n (x n.succ)
 end Widen
 
 class WidenLawful (α : Type)
 extends Widen α, BoundedLattice α
 where
-  covering_left : ∀  (x y : α) (n : Nat), BoundedLattice.is_subset x (widen x y n)
-  covering_right : ∀  (x y : α) (n : Nat), BoundedLattice.is_subset y (widen x y n)
+  covering_left : ∀  (x y : α) (n : Nat), BoundedLattice.is_subset x (x ∇_n y)
+  covering_right : ∀  (x y : α) (n : Nat), BoundedLattice.is_subset y (x ∇_n y)
   -- trust Adrien for termination
 
 attribute [simp] WidenLawful.covering_left WidenLawful.covering_right
@@ -127,5 +137,9 @@ where
   -- keep only elements satisfying the boolean expression
   guard : α → bexpr nb_var → α
   assign : α → Fin nb_var → iexpr nb_var → α
+export Domain (guard assign)
+
+instance (α : Type) [Domain α] : DecidableEq α := Domain.eq_dec
+  
 
 attribute [simp] Domain.eq_dec

@@ -36,10 +36,10 @@ namespace Cfg
       List.foldl (fun n pn => n + pn.out_nodes.length) n l ≤
         List.foldl (fun n pn => n + pn.out_nodes.length) m l
     := by
-      intros l
-      induction l <;> intros n m H
-      case nil => assumption
-      case cons _ _ IH =>
+      intros l n m H
+      induction l generalizing n m with
+      | nil => assumption
+      | cons _ _ IH =>
         apply IH
         simp
         assumption
@@ -48,18 +48,13 @@ namespace Cfg
       List.foldl (fun n pn => n + pn.out_nodes.length) n l + m
         = List.foldl (fun n pn => n + pn.out_nodes.length) (n + m) l
     := by
-      intros l
-      induction l <;> intros n m <;> simp
-      case cons pn' l IH =>
-        rw [IH]
-        have : n + pn'.out_nodes.length + m = n + m + pn'.out_nodes.length := by
-          conv =>
-            lhs
-            rw [Nat.add_assoc]
-            arg 2
-            rw [Nat.add_comm]
-          rw [←Nat.add_assoc]
-        rw [this]
+      intros l n m
+      induction l generalizing n m with
+      | nil => simp
+      | cons pn' l IH =>
+        simp [IH]
+        congr 1
+        omega
 
     theorem find_nb_arcs_cons : ∀ (l : List (PreNode nb_var)) (pn : PreNode nb_var),
       find_nb_arcs l + pn.out_nodes.length = find_nb_arcs (pn :: l) :=
@@ -101,18 +96,18 @@ namespace Cfg
     :=
       let dst := .mk out_node Hout
       let arc := .mk i dst out_inst
-      let H : cfg.arcs.size < nb_arcs := by
+      have H : cfg.arcs.size < nb_arcs := by
         rw [←cfg.Harcs]
         assumption
       let arc_idx := .mk cfg.arcs.size H
       let arcs := cfg.arcs.push arc
-      let Harcs : find_nb_arcs l + ((out_node, out_inst) :: out_nodes).length = arcs.size := by
+      have Harcs : find_nb_arcs l + ((out_node, out_inst) :: out_nodes).length = arcs.size := by
         simp [arcs, ←Nat.add_assoc]
         apply cfg.Harcs
       let old_in_arcs := (cfg.nodes.get (cfg.Hnodes ▸ dst)).in_nodes
       let new_node := .mk (arc_idx :: old_in_arcs)
       let nodes := cfg.nodes.set (cfg.Hnodes ▸ dst) new_node
-      let Hnodes : nb_nodes = nodes.size := by
+      have Hnodes : nb_nodes = nodes.size := by
         simp [nodes, cfg.Hnodes]
       .mk nodes Hnodes arcs Harcs
 
@@ -126,21 +121,15 @@ namespace Cfg
     | [] => step.init nb_nodes nb_arcs l cfg
     | (out_node, out_inst) :: out_nodes =>
       let Hl : find_nb_arcs l + out_nodes.length ≤ nb_arcs := by
-        simp at Harcs
-        rw [←Nat.add_assoc] at Harcs
-        apply Nat.le_trans
-        · apply Nat.le_succ
-        · assumption
+        dsimp at Harcs
+        omega
       let cfg := step.run l i out_nodes (by
         intros p Hp
         apply Hn
         simp [Hp]
       ) Hl cfg
-      step.aux nb_nodes nb_arcs l i out_node out_inst (by
-        let H := Hn (out_node, out_inst)
-        simp at H
-        assumption
-      ) out_nodes Harcs cfg
+      step.aux nb_nodes nb_arcs l i out_node out_inst (by simpa using Hn (out_node, out_inst))
+        out_nodes Harcs cfg
 
     def step (l : List (PreNode nb_var))
       (i : Fin nb_nodes) (cfg : NewAux nb_var nb_nodes nb_arcs l)
@@ -164,57 +153,31 @@ namespace Cfg
     := match l with
     | [] => init nb_nodes nb_arcs
     | pn :: l =>
-      let Ha : find_nb_arcs l ≤ nb_arcs := by
-        simp [find_nb_arcs] at Harcs
-        simp [find_nb_arcs]
-        apply Nat.le_trans
-        · apply find_nb_arcs_incr
-          apply Nat.zero_le pn.out_nodes.length
-        · assumption
-      let Hl : l.length ≤ nb_nodes := by
-        apply Nat.le_trans
-        · apply Nat.le_succ
-        · assumption
+      have Ha : find_nb_arcs l ≤ nb_arcs := by
+        dsimp [find_nb_arcs] at Harcs ⊢
+        calc
+          _ ≤ _ := by
+            apply find_nb_arcs_incr
+            apply Nat.zero_le
+          _ ≤ _ := Harcs
+      have Hl : l.length ≤ nb_nodes := calc l.length
+        _ ≤ _ := by apply Nat.le_succ
+        _ ≤ _ := Hlength
       let cfg := aux l Hl Ha (by
         intros i
-        let H := Hsorted i.succ
-        simp at Hlength
-        have Hl' : l.length + 1 ≤ nb_nodes + 1 := by
-          rw [Nat.add_le_add_iff_right]
-          assumption
         have : i + nb_nodes - l.length = i.succ + nb_nodes - (pn :: l).length := by
-          simp
-          conv =>
-            rhs
-            rw [Nat.add_assoc]
-            lhs
-            rhs
-            rw [Nat.add_comm]
-          conv =>
-            rhs
-            rw [Nat.add_sub_assoc Hl']
-            simp
-            rw [←Nat.add_sub_assoc Hl]
-        simp at H
-        simp
-        rw [this]
-        assumption
+          dsimp
+          omega
+        simpa [this] using Hsorted i.succ
       )
       let i : Fin nb_nodes := .mk (nb_nodes - List.length (pn :: l)) <| by
-        simp [Hsorted]
-        apply Nat.sub_lt
-        · apply Nat.le_trans
-          · apply Nat.zero_lt_succ l.length
-          · assumption
-        · simp
-      let Heq : find_nb_arcs l + pn.out_nodes.length = find_nb_arcs (pn :: l) := by
+        dsimp at Hlength ⊢
+        omega
+      have Heq : find_nb_arcs l + pn.out_nodes.length = find_nb_arcs (pn :: l) := by
         apply find_nb_arcs_cons
       step nb_nodes nb_arcs l i cfg pn (by
-        simp at Hsorted
-        let H := Hsorted 0
-        simp at H
-        simp
-        assumption
+        dsimp at Hsorted
+        simpa using Hsorted 0
       ) (Heq ▸ Harcs)
   end new
 
@@ -246,7 +209,7 @@ namespace Cfg
     let arr := Array.mkArray cfg.nb_nodes true
     let Harr : arr.size = cfg.nb_nodes := by
       simp [arr]
-    ⟨ arr, Harr ⟩
+    ⟨arr, Harr⟩
 end Cfg
 
 structure State (α : Type) [ι : Domain α] (cfg : Cfg ι.nb_var) where
@@ -289,29 +252,25 @@ namespace State
     let old_env := s.get_arc_env arc_idx
     let new_env := match arc.inst with
     | .skip => src_env
-    | .assign var expr => ι.assign src_env var expr
-    | .guard b  => ι.guard src_env b
+    | .assign var expr => assign src_env var expr
+    | .guard b  => guard src_env b
     set_arc_env arc_idx new_env
-    let _ := ι.eq_dec
-    let _ := ι.is_subset_dec
-    let modified := decide ¬ ι.is_subset old_env new_env
-    return modified
+    return decide ¬old_env ⊑ new_env
 
   def iter_node (node_idx : Fin cfg.nb_nodes) : StateM (State α cfg) Unit := do
     let s ← get
     let node := cfg.nodes.get (cfg.Hnodes.symm ▸ node_idx)
     let in_env := List.foldl (fun acc_env arc_idx =>
       let env := s.get_arc_env arc_idx
-      ι.join acc_env env
-    ) ι.bot node.in_nodes
+      acc_env ⊔ env
+    ) ⊥ node.in_nodes
     let s ← get
     if s.widening_points.get (s.Hwidening_points ▸ node_idx)
     then
       let old_env := s.get_node_env node_idx
-      set_node_env node_idx (ι.widen old_env in_env s.nb_step)
+      set_node_env node_idx (old_env ∇_(s.nb_step) in_env)
     else
       set_node_env node_idx in_env
-    return
 
   def iter : StateM (State α cfg) Bool := do
     let mut result := false
@@ -327,18 +286,14 @@ namespace State
         · assumption
         · rfl
     let s ← get
-    set ({ s with nb_step := s.nb_step.succ })
+    set { s with nb_step := s.nb_step.succ }
     return result
 
-  partial def loop : StateM (State α cfg) Unit := do
-    let b ← iter
-    if b then loop
-
   def init : State α cfg :=
-    let node_env := Array.mkArray cfg.nb_nodes ι.bot
+    let node_env := Array.mkArray cfg.nb_nodes ⊥
     let Hnode_env : node_env.size = cfg.nb_nodes := by
       simp [node_env]
-    let arc_env := Array.mkArray cfg.nb_arcs ι.bot
+    let arc_env := Array.mkArray cfg.nb_arcs ⊥
     let Harc_env : arc_env.size = cfg.nb_arcs := by
       simp [arc_env]
     let widening_points := cfg.get_widening_points
@@ -346,6 +301,10 @@ namespace State
       arc_env Harc_env
       widening_points.val widening_points.property 0
 
-  def run (cfg : Cfg ι.nb_var) : State α cfg :=
+  partial def run (cfg : Cfg ι.nb_var) : State α cfg :=
     (StateT.run loop init).2
+  where
+    loop : StateM (State α cfg) Unit := do
+      let b ← iter
+      if b then loop
 end State

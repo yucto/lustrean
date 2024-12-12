@@ -61,7 +61,6 @@ namespace Decidable
     cases H <;>
     solve | apply h <;> assumption | apply h' <;> assumption
 end Decidable
-
 namespace Array
   def All {α : Type} (P : α → Prop) (as : Array α) : Prop :=
     ∀ (i : Fin as.size), P (as.get i)
@@ -122,18 +121,11 @@ namespace Array
   | n + 1 => f (Heq ▸ 0) (foldip.aux P n (as.extract 1 as.size)
     (by apply All.extract <;> assumption)
     (fun i =>
-      let Hi : (as.extract 1 as.size).size = n := by
-        simp
-        rw [Heq]
-        simp
+      have Hi : (as.extract 1 as.size).size = n := by simp [Heq]
       (Heq ▸ f) (Hi ▸ i).succ
     )
     init
-    (by
-      simp
-      rw [Heq]
-      simp
-    )
+    (by simp [Heq])
   ) (as.get (Heq ▸ 0)) (HAll (Heq ▸ 0))
 
   def foldip {α : Type} (as : Array α) (P : α → Prop) (HAll : All P as)
@@ -167,12 +159,12 @@ namespace List
         apply H
         apply List.Mem.tail
         assumption
-    · cases H
-      rename_i Ha Hl
+    · have ⟨Ha, Hl⟩ := H
       intros a' Ha'
-      cases Ha'
-      · assumption
-      · apply Hl
+      cases Ha' with
+      | head => assumption
+      | tail =>
+        apply Hl
         assumption
 
   def foldip {α β : Type} (l : List α) (P : α → Prop) (HAll : All P l)
