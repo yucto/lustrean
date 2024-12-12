@@ -74,36 +74,8 @@ namespace Inline
     asserts : Array (&BoolExpr)
     deriving Repr, Inhabited
 
-  structure NodeAdd where
-    vars : List BoundVar
-    guards : List (&BoolExpr)
-    asserts : List (&BoolExpr)
-    deriving Repr, Inhabited
-
-  namespace NodeAdd
-    protected def append (left : NodeAdd) (right : NodeAdd) : NodeAdd := {
-      vars := left.vars ++ right.vars
-      guards := left.guards ++ right.guards
-      asserts := left.asserts ++ right.asserts
-    }
-
-    instance : Append NodeAdd where
-      append := NodeAdd.append
-
-    @[simp]
-    theorem append_right_nil : ∀ na : NodeAdd, na ++ ⟨[], [], []⟩ = na := by
-      intro ⟨vars, guards, asserts⟩
-      show ⟨vars ++ [], guards ++ [], asserts ++ []⟩ = {vars, guards, asserts : NodeAdd}
-      simp
-
-    @[simp]
-    theorem append_left_nil : ∀ na : NodeAdd, ⟨[], [], []⟩ ++ na = na := by
-      intros
-      rfl
-  end NodeAdd
-
   def NodeAddT := StateT Node
-  
+
   namespace NodeAddT
     variable {m : Type _ → Type _} [Monad m]
     variable {α β}
