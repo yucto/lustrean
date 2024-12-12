@@ -174,8 +174,8 @@ namespace Inline
           do_bounds <| .bin_op op left right
         | .ite cond tb eb => do
           let cond ← elab_boolexpr_aux var_name cond
-          let tb ← elab_expr_aux bounds var_name tb
-          let eb ← elab_expr_aux bounds var_name eb
+          let tb ← elab_expr_aux none var_name tb
+          let eb ← elab_expr_aux none var_name eb
           do_bounds <| .ite cond tb eb
         | .node nod args => do
           let .some node_def := env.get? nod | throw <| .undefined_node nod
