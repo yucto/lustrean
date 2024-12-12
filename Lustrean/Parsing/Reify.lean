@@ -256,7 +256,6 @@ namespace Reify
       let asserts ← asserts.getD #[] |>.mapM elab_bool_expr
       return ⟨{name, input_vars, bound_vars, output_vars, guards, asserts}, s⟩
     | _ =>
-      println! "good bye"
       throwUnsupportedSyntax
 
   def elab_lustre (nodes : TSyntaxArray `lustre_node) : CoreM (Array (&Node)) :=
