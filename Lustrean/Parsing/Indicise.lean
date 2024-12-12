@@ -18,6 +18,10 @@ namespace Indicise
     | bound_var (k : Fin m)
     deriving Repr
 
+  def VarRef.upcast {n m m' : Nat} (h : m ≤ m') : VarRef n m → VarRef n m'
+    | .input_var k => .input_var k
+    | .bound_var k => .bound_var (k.castLE h)
+
   mutual
     inductive Expr (n m : Nat) where
       | interval (lb : &LowerBound) (up : &UpperBound)
@@ -32,6 +36,22 @@ namespace Indicise
       | bin_op (op : BoolBinOp) (left right : &BoolExpr n m)
       deriving Repr, Inhabited
   end
+
+  mutual
+    variable {n m m' : Nat} (h : m ≤ m')
+
+    def Expr.upcast : Expr n m → Expr n m'
+      | .interval lb up => .interval lb up
+      | .var ⟨v, ref⟩ => .var ⟨v.upcast h, ref⟩
+      | .mon_op op ⟨e, ref⟩ => .mon_op op ⟨e.upcast, ref⟩
+      | .bin_op op ⟨e₁, ref₁⟩ ⟨e₂, ref₂⟩ => .bin_op op ⟨e₁.upcast, ref₁⟩ ⟨e₂.upcast, ref₂⟩
+      | .ite ⟨cond, ref_c⟩ ⟨e₁, ref₁⟩ ⟨e₂, ref₂⟩ => .ite ⟨cond.upcast, ref_c⟩ ⟨e₁.upcast, ref₁⟩ ⟨e₂.upcast, ref₂⟩
+
+    def BoolExpr.upcast : BoolExpr n m → BoolExpr n m'
+      | .cmp_op op ⟨l, ref_l⟩ ⟨r, ref_r⟩ => .cmp_op op ⟨l.upcast, ref_l⟩ ⟨r.upcast, ref_r⟩
+      | .bin_op op ⟨l, ref_l⟩ ⟨r, ref_r⟩ => .bin_op op ⟨l.upcast, ref_l⟩ ⟨r.upcast, ref_r⟩
+  end
+
   /-- A local variable in a node, that is, a variable that is only available in the local scope.
       This can be either an input variable, or a locally bound variable.  -/
   structure Var where

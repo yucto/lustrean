@@ -1,6 +1,7 @@
 import Lustrean.Parsing.Reify
 import Lustrean.Parsing.Inline
 import Lustrean.Parsing.Indicise
+import Lustrean.Parsing.Normalize
 
 open Lean
 open Elab (liftMacroM)
@@ -10,12 +11,14 @@ open Core (CoreM)
 namespace Lustrean.Parsing
 
 def elab_lustre (nodes : TSyntaxArray `lustre_node) : CoreM Unit := do
-  let nodes ← Indicise.elab_lustre <|
+  let nodes
+    := Normalize.elab_lustre <|
+    ← Indicise.elab_lustre <|
     ← Inline.elab_lustre <|
     ← Reify.elab_lustre <|
     nodes
   for nod in nodes do
-    println! s!"{nod.value}\n"
+    println! s!"{nod}\n"
 
 elab_rules : command
   | `(command| lustre $nodes:lustre_node*) => do
@@ -25,11 +28,27 @@ elab_rules : command
     liftTermElabM <| elab_lustre nodes
 
 lustre
-  node f(x) = o where
-    o = x
+  node u(x) = o where
+    o = 0 fby x
+
+  node f(x) = o
+    guard
+      x ≥ 0
+    where
+      o = if x > 3 then 3 else x
+    assert
+      0 ≤ x ∧ x ≤ 3
 
   node g() = o where
     o = f(5) + f(5)
+
+  node h() where
+    o = 0 fby 1 fby o+1
+    i =
+      if o = 5 then
+        if 0 ≠ 0 then 1 else 2
+      else
+        0
 
 lustre
   node e₁(x) = o
