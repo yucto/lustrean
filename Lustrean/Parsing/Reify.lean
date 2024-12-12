@@ -66,23 +66,6 @@ namespace UpperBound
     toString := UpperBound.toString
 end UpperBound
 
-inductive BinOp where
-  | add
-  | sub
-  | mul
-  | fby
-  deriving Repr, Inhabited
-
-namespace BinOp
-  protected def toString : BinOp → String
-    | .add => "+"
-    | .sub => "-"
-    | .mul => "*"
-    | .fby => "fby"
-
-  instance : ToString BinOp where
-    toString := BinOp.toString
-end BinOp
 
 inductive MonOp where
   | neg
@@ -128,6 +111,24 @@ namespace BoolBinOp
 end BoolBinOp
 
 namespace Reify
+  inductive BinOp where
+    | add
+    | sub
+    | mul
+    | fby
+    deriving Repr, Inhabited
+
+  namespace BinOp
+    protected def toString : BinOp → String
+      | .add => "+"
+      | .sub => "-"
+      | .mul => "*"
+      | .fby => "fby"
+
+    instance : ToString BinOp where
+      toString := BinOp.toString
+  end BinOp
+
   mutual
     inductive Expr where
       | int (lb : &LowerBound) (up : &UpperBound)

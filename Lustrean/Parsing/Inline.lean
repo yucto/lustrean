@@ -37,7 +37,7 @@ namespace Inline
       | interval (lb : &LowerBound) (up : &UpperBound)
       | var (name : &Name)
       | mon_op (op : MonOp) (e : &Expr)
-      | bin_op (op : BinOp) (left right : &Expr)
+      | bin_op (op : Reify.BinOp) (left right : &Expr)
       | ite (cond : &BoolExpr) (tb eb : &Expr)
       deriving Repr, Inhabited
 

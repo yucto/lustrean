@@ -23,7 +23,7 @@ namespace Indicise
       | interval (lb : &LowerBound) (up : &UpperBound)
       | var (k : &VarRef n m)
       | mon_op (op : MonOp) (e : &Expr n m)
-      | bin_op (op : BinOp) (left right : &Expr n m)
+      | bin_op (op : Reify.BinOp) (left right : &Expr n m)
       | ite (cond : &BoolExpr n m) (tb : &Expr n m) (eb : &Expr n m)
       deriving Repr, Inhabited
 
@@ -137,7 +137,7 @@ namespace Indicise
           return .bin_op op left right
   end
   end
-  
+
   def elab_node (nod : &Inline.Node) : CoreM (&Node) := nod.mapM fun nod => do
     let input_vars := Vector.mk nod.input_vars rfl
     let bound_vars := Vector.mk nod.bound_vars rfl
