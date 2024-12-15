@@ -1,3 +1,4 @@
+import Aesop
 import Lustrean.Common
 
 class BoundedLattice (α : Type) where
@@ -15,6 +16,7 @@ class BoundedLattice (α : Type) where
   meet_absorption : ∀ (x y : α), meet x (join x y) = x
   meet_top : ∀ (x : α), meet x top = x
   meet_bot : ∀ (x : α), meet x bot = bot
+  non_trivial : top ≠ bot
 export BoundedLattice (bot top join meet)
 
 notation " ⊤ " => top
@@ -27,21 +29,88 @@ namespace BoundedLattice
 
   attribute [simp] bot top join meet
   attribute [simp]
-  join_commutative join_associative
-  join_absorption join_bot join_top
-  meet_commutative meet_associative
-  meet_absorption meet_bot meet_top
+  join_associative join_absorption join_bot join_top
+  meet_associative meet_absorption meet_bot meet_top
 
-  @[simp]
   def is_bot : α → Prop :=
     (· = ⊥)
 
-  @[simp]
   def is_subset : α → α → Prop :=
     fun x y => x = meet x y
 
   infixr:50 " ⊑ " => is_subset
 
+  def trans : ∀ {x y z : α}, x ⊑ y → y ⊑ z → x ⊑ z := by
+    intros x y z Hx Hy
+    unfold is_subset at *
+    rw [Hx]
+    conv =>
+      lhs
+      rw [Hy]
+    rw [meet_associative]
+
+  instance {α : Type} [ι : BoundedLattice α] : Trans (@is_subset α ι) (@is_subset α ι) (@is_subset α ι) where
+    trans := trans
+
+  def bot_min : ∀ {x : α}, ⊥ ⊑ x := by
+    intros x
+    unfold is_subset
+    simp [meet_commutative]
+
+  def antisymm : ∀ {x y : α}, x ⊑ y → y ⊑ x → x = y := by
+    intros x y H H'
+    unfold is_subset at *
+    rw [meet_commutative] at H'
+    rw [H]
+    symm
+    assumption
+
+  instance {α : Type} [ι : BoundedLattice α] : Antisymm (@is_subset α ι) where
+    antisymm := antisymm
+
+  @[simp]
+  def min_bot_is_bot : ∀ {x : α}, x ⊑ ⊥ → x = bot := by
+    intros x H
+    apply antisymm <;> [
+      assumption ;
+      apply bot_min
+    ]
+
+  def min_join_left : ∀ {x y : α}, x ⊑ x ⊔ y := by
+    intros x y
+    unfold is_subset
+    symm
+    apply meet_absorption
+
+  def min_join_right : ∀ {x y : α}, y ⊑ x ⊔ y := by
+    intros
+    rw [join_commutative]
+    apply min_join_left
+
+  theorem join_eq_bot_iff_bot : ∀ {x y : α}, x ⊔ y = ⊥ ↔ x = ⊥ ∧ y = ⊥ := by
+    intros x y
+    constructor
+    · intros H
+      have : ∀ (a b : α), a ⊔ b = ⊥ → a = ⊥ := by
+        intros a b Ha
+        have : a = a ⊓ (a ⊔ b) := by simp
+        rw [this, Ha]
+        simp
+      constructor <;> apply this <;> first | assumption | rw [join_commutative] <;> assumption
+    · intro ⟨ Hx, Hy ⟩
+      simp [Hx, Hy]
+
+  theorem meet_not_bot_left : ∀ {x y : α}, x ⊓ y ≠ ⊥ → x ≠ ⊥ := by
+    intros x y H Hc
+    apply H
+    rw [Hc, meet_commutative]
+    simp
+
+  theorem meet_not_bot_right : ∀ {x y : α}, x ⊓ y ≠ ⊥ → y ≠ ⊥ := by
+    intros x y H Hc
+    apply H
+    rw [Hc]
+    simp
 
   instance is_bot_dec [DecidableEq α] : DecidablePred (@is_bot α ι) := by
     rename_i ι'
@@ -140,6 +209,5 @@ where
 export Domain (guard assign)
 
 instance (α : Type) [Domain α] : DecidableEq α := Domain.eq_dec
-  
 
 attribute [simp] Domain.eq_dec

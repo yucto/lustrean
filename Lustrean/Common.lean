@@ -6,6 +6,7 @@ inductive int_op : Type :=
 
 -- n : number of variable
 inductive iexpr (n : Nat) : Type :=
+| nil : iexpr n
 | var : Fin n → iexpr n
 | rand : Int → Int → iexpr n
 | const : Int → iexpr n

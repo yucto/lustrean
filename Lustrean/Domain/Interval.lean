@@ -760,6 +760,9 @@ namespace Interval
     rename_i h
     rw [dif_pos h]
 
+  theorem non_trivial : (top : Interval constants) ≠ bot := by
+    simp [top, bot]
+
   instance BoundedLatticeInterval : BoundedLattice (Interval constants) where
     bot := bot
     top := top
@@ -775,7 +778,7 @@ namespace Interval
     meet_absorption := meet_absorption
     meet_bot := meet_bot
     meet_top := meet_top
-
+    non_trivial := non_trivial
 
   def split_at_zero : Interval constants × Interval constants :=
     (
@@ -1077,7 +1080,7 @@ namespace Interval
     intros x y n
     have hx : x.meet x = x := BoundedLattice.meet_idempotent x
     have hy : y.meet y = y := BoundedLattice.meet_idempotent y
-    simp [narrow]
+    simp [BoundedLattice.is_subset, narrow]
     conv =>
       rhs
       arg 2
@@ -1096,6 +1099,10 @@ namespace Interval
     intros x y n
     have hx : x.meet x = x := BoundedLattice.meet_idempotent x
     simp [narrow]
+    rw [BoundedLattice.is_subset]
+    unfold BoundedLattice.meet
+    unfold BoundedLatticeInterval
+    simp
     rw [meet_associative]
     conv =>
       rhs
@@ -1159,6 +1166,7 @@ namespace Interval
     rand x y := if h : x ≤ y
       then .interval (.int x) (.int y) <| by constructor; assumption
       else .empty
+    nil := .bot
     eq_dec := inferInstance
     compare := compare
 

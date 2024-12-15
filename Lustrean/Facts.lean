@@ -1,3 +1,5 @@
+import Aesop
+
 namespace Int
   theorem min_assoc : ∀ (n m o : Int),
     min (min n m) o = min n (min m o) :=
@@ -60,7 +62,43 @@ namespace Decidable
     intros H <;>
     cases H <;>
     solve | apply h <;> assumption | apply h' <;> assumption
+
+
+  def decidableExistsFin {n : Nat} (P : Fin n → Prop) [ι : DecidablePred P] :
+    Decidable (∃ (i : Fin n), P i)
+  := by
+    induction n
+    case zero =>
+      apply isFalse
+      intro ⟨⟨_, Hi⟩, _⟩
+      cases Hi
+    case succ n IHn =>
+      let P' := fun (i : Fin n) => P i.succ
+      --have ι' : DecidablePred P' := fun (i : Fin n) => ι i.succ
+      by_cases P 0
+      case pos H0 =>
+        apply isTrue
+        exists 0
+      case neg H0 =>
+        by_cases ∃ i, P' i
+        case pos Hn =>
+          apply isTrue
+          let ⟨i, Hi⟩ := Hn
+          exists i.succ
+        case neg Hn =>
+          apply isFalse
+          rw [Fin.exists_fin_succ]
+          intros Hc
+          cases Hc <;> [
+            apply H0 ;
+            apply Hn
+          ] <;> assumption
+
+  instance {n : Nat} (P : Fin n → Prop) [DecidablePred P] :
+    Decidable (∃ (i : Fin n), P i)
+  := decidableExistsFin P
 end Decidable
+
 namespace Array
   def All {α : Type} (P : α → Prop) (as : Array α) : Prop :=
     ∀ (i : Fin as.size), P (as.get i)
