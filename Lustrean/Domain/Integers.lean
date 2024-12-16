@@ -166,7 +166,7 @@ namespace Integers
       rename_i x y
       by_cases h : (x = y) <;> simp [h]
 
-  def compare_int (op : compare_op) (a b : Int) :
+  def compare_int (op : CompareOp) (a b : Int) :
     Integers × Integers
   :=
     let cond := match op with
@@ -180,7 +180,7 @@ namespace Integers
     then (.int a, .int b)
     else (bot, bot)
 
-  def compare (op : compare_op) (x y : Integers) :
+  def compare (op : CompareOp) (x y : Integers) :
     Integers × Integers
   :=
     match op, x, y with

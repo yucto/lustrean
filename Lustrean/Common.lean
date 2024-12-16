@@ -21,6 +21,14 @@ inductive CompareOp : Type :=
 | cge : CompareOp
 | cgt : CompareOp
 
+def CompareOp.not (c : CompareOp) := match c with
+| ceq => cneq
+| cneq => ceq
+| cle => cgt
+| clt => cge
+| cge => clt
+| cgt => cle
+
 -- no negated expression. it must be eliminated by simplification
 inductive BExpr (n : Nat) : Type :=
 | random : BExpr n
@@ -29,8 +37,19 @@ inductive BExpr (n : Nat) : Type :=
 | and : BExpr n → BExpr n → BExpr n
 | or : BExpr n → BExpr n → BExpr n
 
+def BExpr.not {n : Nat} (b : BExpr n) := match b with
+| random => random
+| const b => const (.not b)
+| compare a op b => compare a op.not b
+| and b b' => or b.not b'.not
+| or b b' => and b.not b'.not
 
 inductive Instruction (n : Nat) : Type :=
 | skip : Instruction n
 | assign : Fin n → IExpr n → Instruction n
 | guard : BExpr n → Instruction n
+| assert : BExpr n → Instruction n
+
+structure PreNode (nb_var : Nat) : Type where
+  id : Nat
+  out_nodes : List (Nat × Instruction nb_var × Lean.Syntax)

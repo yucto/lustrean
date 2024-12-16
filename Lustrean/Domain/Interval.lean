@@ -1117,7 +1117,7 @@ namespace Interval
     bounding_low := bounding_low
     bounding_high := bounding_high
 
-  def measure (op : compare_op) : Nat :=
+  def measure (op : CompareOp) : Nat :=
     match op with
     | .ceq => 0
     | .cneq => 2
@@ -1126,7 +1126,7 @@ namespace Interval
     | .cge => 2
     | .cgt => 1
 
-  def compare (op : compare_op) (x y : Interval constants) :
+  def compare (op : CompareOp) (x y : Interval constants) :
     Interval constants × Interval constants
   :=
     match x, y with

@@ -152,7 +152,7 @@ namespace Undefined
       rw [Hc]
       simp
 
-  def compare (op : compare_op) (x y : Undefined α) :
+  def compare (op : CompareOp) (x y : Undefined α) :
     Undefined α × Undefined α
   :=
     let (x', y') := ι.compare op x.val y.val

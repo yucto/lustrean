@@ -2,10 +2,6 @@ import Lustrean.Common
 import Lustrean.Facts
 import Lustrean.Domain
 
-structure PreNode (nb_var : Nat) : Type where
-  id : Nat
-  out_nodes : List (Nat × Instruction nb_var)
-
 structure Node (nb_var nb_arcs : Nat) : Type where
   in_nodes : List (Fin nb_arcs)
 
@@ -13,6 +9,7 @@ structure Arc (nb_var nb_nodes : Nat) : Type where
   src : Fin nb_nodes
   dst : Fin nb_nodes
   inst : Instruction nb_var
+  synt : Lean.Syntax
 
 structure Cfg (nb_var : Nat) : Type where
   nb_nodes : Nat
@@ -73,7 +70,7 @@ namespace Cfg
 
     structure StepAux (nb_var nb_nodes nb_arcs : Nat)
       (l : List (PreNode nb_var))
-      (out : List (Nat × Instruction nb_var)) : Type
+      (out : List (Nat × Instruction nb_var × Lean.Syntax)) : Type
     where
       nodes : Array (Node nb_var nb_arcs)
       Hnodes : nb_nodes = nodes.size
@@ -88,20 +85,21 @@ namespace Cfg
     def step.aux (l : List (PreNode nb_var)) (i : Fin nb_nodes)
       (out_node : Nat)
       (out_inst : Instruction nb_var)
+      (synt : Lean.Syntax)
       (Hout : out_node < nb_nodes)
-      (out_nodes : List (Nat × Instruction nb_var))
+      (out_nodes : List (Nat × Instruction nb_var × Lean.Syntax))
       (Harcs : find_nb_arcs l + out_nodes.length < nb_arcs)
       (cfg : StepAux nb_var nb_nodes nb_arcs l out_nodes) :
-      StepAux nb_var nb_nodes nb_arcs l ((out_node, out_inst) :: out_nodes)
+      StepAux nb_var nb_nodes nb_arcs l ((out_node, out_inst, synt) :: out_nodes)
     :=
       let dst := .mk out_node Hout
-      let arc := .mk i dst out_inst
+      let arc := .mk i dst out_inst synt
       have H : cfg.arcs.size < nb_arcs := by
         rw [←cfg.Harcs]
         assumption
       let arc_idx := .mk cfg.arcs.size H
       let arcs := cfg.arcs.push arc
-      have Harcs : find_nb_arcs l + ((out_node, out_inst) :: out_nodes).length = arcs.size := by
+      have Harcs : find_nb_arcs l + ((out_node, out_inst, synt) :: out_nodes).length = arcs.size := by
         simp [arcs, ←Nat.add_assoc]
         apply cfg.Harcs
       let old_in_arcs := (cfg.nodes.get (cfg.Hnodes ▸ dst)).in_nodes
@@ -112,14 +110,14 @@ namespace Cfg
       .mk nodes Hnodes arcs Harcs
 
     def step.run (l : List (PreNode nb_var)) (i : Fin nb_nodes)
-      (out_nodes : List (Nat × Instruction nb_var))
+      (out_nodes : List (Nat × Instruction nb_var × Lean.Syntax))
       (Hn : ∀ p, p ∈ out_nodes → p.fst < nb_nodes)
       (Harcs : find_nb_arcs l + out_nodes.length ≤ nb_arcs)
       (cfg : NewAux nb_var nb_nodes nb_arcs l) :
       StepAux nb_var nb_nodes nb_arcs l out_nodes
     := match out_nodes with
     | [] => step.init nb_nodes nb_arcs l cfg
-    | (out_node, out_inst) :: out_nodes =>
+    | (out_node, out_inst, synt) :: out_nodes =>
       let Hl : find_nb_arcs l + out_nodes.length ≤ nb_arcs := by
         dsimp at Harcs
         omega
@@ -128,7 +126,7 @@ namespace Cfg
         apply Hn
         simp [Hp]
       ) Hl cfg
-      step.aux nb_nodes nb_arcs l i out_node out_inst (by simpa using Hn (out_node, out_inst))
+      step.aux nb_nodes nb_arcs l i out_node out_inst synt (by simpa using Hn (out_node, out_inst, synt))
         out_nodes Harcs cfg
 
     def step (l : List (PreNode nb_var))
@@ -254,6 +252,7 @@ namespace State
     | .skip => src_env
     | .assign var expr => assign src_env var expr
     | .guard b  => guard src_env b
+    | .assert _ => src_env
     set_arc_env arc_idx new_env
     return decide ¬old_env ⊑ new_env
 
@@ -301,8 +300,30 @@ namespace State
       arc_env Harc_env
       widening_points.val widening_points.property 0
 
-  partial def run (cfg : Cfg ι.nb_var) : State α cfg :=
-    (StateT.run loop init).2
+  def check_assert {m : Type → Type} [Monad m] [Lean.MonadError m]
+    (s : State α cfg) : m (State α cfg)
+  := do
+    for h:i in [0:cfg.nb_arcs] do
+      have H : i < cfg.nb_arcs := by
+        exact Membership.get_elem_helper h rfl
+      let i := ⟨i, H⟩
+      let arc := cfg.arcs.get (cfg.Harcs ▸ i)
+      match arc.inst with
+      | .assert b =>
+        let old_env := s.get_arc_env i
+        let new_env := ι.guard old_env b.not
+        if new_env ≠ ι.bot && old_env = ι.bot
+        then
+          let _ ← Lean.AddErrorMessageContext.add
+            arc.synt
+            m!"assert failed, got {old_env}"
+      | _ => pure ()
+    return s
+
+  partial def run {m : Type → Type} [Monad m] [Lean.MonadError m]
+    (cfg : Cfg ι.nb_var) : m (State α cfg)
+  :=
+    (StateT.run loop init).2 |> check_assert
   where
     loop : StateM (State α cfg) Unit := do
       let b ← iter
