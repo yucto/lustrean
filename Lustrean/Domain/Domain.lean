@@ -226,8 +226,8 @@ where
   nb_var : Nat
   eq_dec : DecidableEq α
   -- keep only elements satisfying the boolean expression
-  guard : α → bexpr nb_var → α
-  assign : α → Fin nb_var → iexpr nb_var → α
+  guard : α → BExpr nb_var → α
+  assign : α → Fin nb_var → IExpr nb_var → α
 export Domain (guard assign)
 
 instance (α : Type) [Domain α] : DecidableEq α := Domain.eq_dec

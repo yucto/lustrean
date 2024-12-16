@@ -14,7 +14,7 @@ where
   -- compare op x y = (x', y') where
   -- x' = { v ∈ x | ∃ v' ∈ y, v op v' }
   -- y' = { v' ∈ y | ∃ v ∈ x, v op v' }
-  compare : compare_op → α → α → α × α
+  compare : CompareOp → α → α → α × α
 
 namespace ValueDomain
   variable (α : Type) [ValueDomain α]
@@ -390,7 +390,7 @@ namespace NonRelational
   :=
     map_nil x fun x j => if i = j then a else x j
 
-  def eval (x : NonRelational α n) (e : iexpr n) : α :=
+  def eval (x : NonRelational α n) (e : IExpr n) : α :=
   match e with
   | .nil => ι.nil
   | .var i => get x i
@@ -406,12 +406,12 @@ namespace NonRelational
     | .imul => i₁ * i₂
     | .idiv => i₁ / i₂
 
-  def assign (i : Fin n) (e : iexpr n) :
+  def assign (i : Fin n) (e : IExpr n) :
     NonRelational α n
   :=
     update x i (eval x e)
 
-  def backward_eval (x : NonRelational α n) (e : iexpr n) (r : α) :
+  def backward_eval (x : NonRelational α n) (e : IExpr n) (r : α) :
     NonRelational α n
   :=
     let _ : DecidableEq α := ι.eq_dec -- help class inference

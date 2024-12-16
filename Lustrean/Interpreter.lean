@@ -4,7 +4,7 @@ import Lustrean.Domain
 
 structure PreNode (nb_var : Nat) : Type where
   id : Nat
-  out_nodes : List (Nat × inst nb_var)
+  out_nodes : List (Nat × Instruction nb_var)
 
 structure Node (nb_var nb_arcs : Nat) : Type where
   in_nodes : List (Fin nb_arcs)
@@ -12,7 +12,7 @@ structure Node (nb_var nb_arcs : Nat) : Type where
 structure Arc (nb_var nb_nodes : Nat) : Type where
   src : Fin nb_nodes
   dst : Fin nb_nodes
-  inst : inst nb_var
+  inst : Instruction nb_var
 
 structure Cfg (nb_var : Nat) : Type where
   nb_nodes : Nat
@@ -73,7 +73,7 @@ namespace Cfg
 
     structure StepAux (nb_var nb_nodes nb_arcs : Nat)
       (l : List (PreNode nb_var))
-      (out : List (Nat × inst nb_var)) : Type
+      (out : List (Nat × Instruction nb_var)) : Type
     where
       nodes : Array (Node nb_var nb_arcs)
       Hnodes : nb_nodes = nodes.size
@@ -87,9 +87,9 @@ namespace Cfg
 
     def step.aux (l : List (PreNode nb_var)) (i : Fin nb_nodes)
       (out_node : Nat)
-      (out_inst : inst nb_var)
+      (out_inst : Instruction nb_var)
       (Hout : out_node < nb_nodes)
-      (out_nodes : List (Nat × inst nb_var))
+      (out_nodes : List (Nat × Instruction nb_var))
       (Harcs : find_nb_arcs l + out_nodes.length < nb_arcs)
       (cfg : StepAux nb_var nb_nodes nb_arcs l out_nodes) :
       StepAux nb_var nb_nodes nb_arcs l ((out_node, out_inst) :: out_nodes)
@@ -112,7 +112,7 @@ namespace Cfg
       .mk nodes Hnodes arcs Harcs
 
     def step.run (l : List (PreNode nb_var)) (i : Fin nb_nodes)
-      (out_nodes : List (Nat × inst nb_var))
+      (out_nodes : List (Nat × Instruction nb_var))
       (Hn : ∀ p, p ∈ out_nodes → p.fst < nb_nodes)
       (Harcs : find_nb_arcs l + out_nodes.length ≤ nb_arcs)
       (cfg : NewAux nb_var nb_nodes nb_arcs l) :

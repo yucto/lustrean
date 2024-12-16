@@ -1,36 +1,36 @@
-inductive int_op : Type :=
-| iadd : int_op
-| isub : int_op
-| imul : int_op
-| idiv : int_op
+inductive IntOp : Type :=
+| iadd : IntOp
+| isub : IntOp
+| imul : IntOp
+| idiv : IntOp
 
 -- n : number of variable
-inductive iexpr (n : Nat) : Type :=
-| nil : iexpr n
-| var : Fin n → iexpr n
-| rand : Int → Int → iexpr n
-| const : Int → iexpr n
-| neg : iexpr n → iexpr n
-| binop : iexpr n → int_op → iexpr n → iexpr n
+inductive IExpr (n : Nat) : Type :=
+| nil : IExpr n
+| var : Fin n → IExpr n
+| rand : Int → Int → IExpr n
+| const : Int → IExpr n
+| neg : IExpr n → IExpr n
+| binop : IExpr n → IntOp → IExpr n → IExpr n
 
-inductive compare_op : Type :=
-| ceq : compare_op
-| cneq : compare_op
-| cle : compare_op
-| clt : compare_op
-| cge : compare_op
-| cgt : compare_op
+inductive CompareOp : Type :=
+| ceq : CompareOp
+| cneq : CompareOp
+| cle : CompareOp
+| clt : CompareOp
+| cge : CompareOp
+| cgt : CompareOp
 
 -- no negated expression. it must be eliminated by simplification
-inductive bexpr (n : Nat) : Type :=
-| random : bexpr n
-| const : Bool → bexpr n
-| compare : iexpr n → compare_op → iexpr n → bexpr n
-| and : bexpr n → bexpr n → bexpr n
-| or : bexpr n → bexpr n → bexpr n
+inductive BExpr (n : Nat) : Type :=
+| random : BExpr n
+| const : Bool → BExpr n
+| compare : IExpr n → CompareOp → IExpr n → BExpr n
+| and : BExpr n → BExpr n → BExpr n
+| or : BExpr n → BExpr n → BExpr n
 
 
-inductive inst (n : Nat) : Type :=
-| skip : inst n
-| assign : Fin n → iexpr n → inst n
-| guard : bexpr n → inst n
+inductive Instruction (n : Nat) : Type :=
+| skip : Instruction n
+| assign : Fin n → IExpr n → Instruction n
+| guard : BExpr n → Instruction n
