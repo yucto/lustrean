@@ -1,0 +1,45 @@
+\documentclass[professionalfonts]{beamer}
+\usepackage{cmap}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[english]{babel}
+\usepackage{tikz}
+\usepackage{minted}
+\usepackage{xcolor}
+
+\usetheme{AnnArbor}
+\usecolortheme{spruce}
+\setbeamercolor{button}{bg=black, fg=yellow}
+
+\usetikzlibrary{positioning}
+\usetikzlibrary{calc}
+
+\title{Lustrean}
+\subtitle{Jean trouve un meilleur nom!}
+\author{Jean \textsc{Caspar} \and Adrien \textsc{Mathieu}}
+\date{December 2024}
+
+\makeatletter
+\newcommand*{\currentname}{\@currentlabelname}
+\def\ft{\frametitle{\currentname}}
+\makeatother
+
+\setbeamertemplate{itemize items}[square]
+\setbeamertemplate{enumerate items}[default]
+
+\begin{document}
+\begingroup
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{}
+\begin{frame}[noframenumbering]
+  \titlepage
+\end{frame}
+\endgroup
+
+\section{Hello}
+\subsection{Bye}
+\begin{frame}
+  \ft{}
+\end{frame}
+
+\end{document}

@@ -1,2 +1,9 @@
 /.lake
 .direnv/
+
+# LaTeX stuff
+**/*.nav
+**/*.pdf
+**/*.snm
+**/*.synctex.gz
+**/*.vrb
