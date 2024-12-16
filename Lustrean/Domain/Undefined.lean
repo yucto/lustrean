@@ -36,22 +36,62 @@ namespace Undefined
   def meet : Undefined α := .mk (x.val ⊓ y.val) (x.may_be_nil && y.may_be_nil)
   def join : Undefined α := .mk (x.val ⊔ y.val) (x.may_be_nil || y.may_be_nil)
 
+  theorem join_commutative : join x y = join y x := by
+    simp [join]
+    simp [BoundedLattice.join_commutative, Bool.or_comm]
+
+  theorem join_associative : join (join x y) z = join x (join y z) := by
+    simp [join]
+    simp [BoundedLattice.join_associative, Bool.or_assoc]
+
+
+  theorem join_absorption : x.join (x.meet y) = x := by
+    simp [join, meet]
+    cases x <;> cases y.may_be_nil <;> simp
+
+  theorem join_bot : join x bot = x := by
+    simp [join, bot]
+
+  theorem join_top : join x top = top := by
+    simp [join, top]
+
+  theorem meet_commutative : meet x y = meet y x := by
+    simp [meet]
+    simp [BoundedLattice.meet_commutative, Bool.and_comm]
+
+  theorem meet_associative : meet (meet x y) z = meet x (meet y z) := by
+    simp [meet]
+    simp [BoundedLattice.meet_associative, Bool.and_assoc]
+
+  theorem meet_absorption : x.meet (x.join y) = x := by
+    simp [meet, join]
+    cases x <;> cases y.may_be_nil <;> simp
+
+  theorem meet_top : meet x top = x := by
+    simp [meet, top]
+
+  theorem meet_bot : meet x bot = bot := by
+    simp [meet, bot]
+
+  theorem non_trivial : Undefined.top ≠ (bot : Undefined α) := by
+    simp [top, bot]
+
   instance : BoundedLattice (Undefined α) where
     bot := bot
     top := top
     meet := meet
     join := join
-    join_commutative := sorry
-    join_associative := sorry
-    join_absorption := sorry
-    join_bot := sorry
-    join_top := sorry
-    meet_commutative := sorry
-    meet_associative := sorry
-    meet_absorption := sorry
-    meet_top := sorry
-    meet_bot := sorry
-    non_trivial := sorry
+    join_commutative := join_commutative
+    join_associative := join_associative
+    join_absorption := join_absorption
+    join_bot := join_bot
+    join_top := join_top
+    meet_commutative := meet_commutative
+    meet_associative := meet_associative
+    meet_absorption := meet_absorption
+    meet_top := meet_top
+    meet_bot := meet_bot
+    non_trivial := non_trivial
 
   def widen (n : Nat) : Undefined α :=
     .mk (ι.widen x.val y.val n) (x.may_be_nil || y.may_be_nil)
