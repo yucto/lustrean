@@ -1162,15 +1162,14 @@ namespace Interval
 
   instance : ValueDomain (Interval constants) where
     new := .interval (.int 0) (.int 0) <| by simp
+    nil := .bot
     rand x y := match x, y with
-    | .some x, .some y =>
-      if h : x ≤ y
-        then .interval (.int x) (.int y) <| by constructor; assumption
-        else .empty
+    | .some x, .some y => if h : x ≤ y
+      then .interval (.int x) (.int y) <| by constructor; assumption
+      else .empty
     | .none, .some y => .interval .minf (.int y) <| by constructor
     | .some x, .none => .interval (.int x) .pinf <| by constructor
     | .none, .none => .interval .minf .pinf <| by constructor
-    nil := .bot
     eq_dec := inferInstance
     compare := compare
 

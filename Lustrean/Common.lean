@@ -8,7 +8,7 @@ inductive IntOp : Type :=
 inductive IExpr (n : Nat) : Type :=
 | nil : IExpr n
 | var : Fin n → IExpr n
-| rand : Int → Int → IExpr n
+| rand : Option Int → Option Int → IExpr n
 | neg : IExpr n → IExpr n
 | binop : IExpr n → IntOp → IExpr n → IExpr n
 
