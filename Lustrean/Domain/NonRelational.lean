@@ -400,6 +400,7 @@ namespace NonRelational
 
   def eval (x : NonRelational α n) : IExpr n → α
   | .nil => ι.nil
+  | .top => ι.top
   | .var i => get x i
   | .rand a b => ι.rand a b
   | .const n => ι.from_const n
@@ -426,6 +427,7 @@ namespace NonRelational
     | .nil => if ι.is_bot (ι.meet r ι.nil)
       then BoundedLattice.bot
       else x
+    | .top => x
     | .var i => update x i (ι.meet (get x i) r)
     | .rand a b => if ι.is_bot (ι.meet r (ι.rand a b))
       then BoundedLattice.bot
