@@ -227,40 +227,114 @@ namespace NonRelational
     meet_bot := meet_bot
     non_trivial := non_trivial
 
+  def non_rel_subset : ∀ (x y : {env : Fin n → α // ∀ i, env i ≠ ⊥}),
+    NonRelational.non_rel x ⊑ NonRelational.non_rel y
+    ↔ ∀ i, x.val i ⊑ y.val i
+  := by
+    intros x y
+    constructor <;> intros H
+    · simp [BoundedLattice.is_subset, meet] at H
+      unfold map2_nil at H
+      unfold coalesce at H
+      simp at H
+      by_cases H' : ∀ (i : Fin n), ¬x.val i ⊓ y.val i = ⊥
+      · rw [dif_pos H'] at H
+        simp at H
+        rw [H]
+        simp
+      · rw [dif_neg H'] at H
+        cases H
+    · simp [BoundedLattice.is_subset, meet]
+      unfold map2_nil
+      simp [coalesce]
+      simp [BoundedLattice.is_subset] at H
+      have H' : ∀ (i : Fin n), ¬x.val i ⊓ y.val i = ⊥ := by
+        intros i
+        specialize H i
+        rw [←H]
+        apply x.property
+      rw [dif_pos H']
+      cases x
+      rename_i x Hx
+      simp at *
+      funext i
+      apply H
+
   instance : Widen (NonRelational α n) where
     widen x y n := match x, y with
-    | .non_rel x, .non_rel y => coalesce <|
-      fun i => ι.widen (x.val i) (y.val i) n
+    | .non_rel x, .non_rel y => .non_rel
+      <| .mk (fun i => ι.widen (x.val i) (y.val i) n)
+      <| by
+        intros i
+        simp
+        intros Hc
+        apply x.property i
+        apply BoundedLattice.antisymm
+        · conv =>
+            rhs
+            rw [←Hc]
+          apply WidenLawful.covering_left
+        · apply BoundedLattice.bot_min
     | .bot, z | z, .bot => z
 
   instance : WidenLawful (NonRelational α n) where
-    covering_left := by sorry/-
+    covering_left := by
       intros x y n
-      cases x <;> cases y <;> simp [BoundedLattice.is_subset, meet, map2_nil, coalesce]
-      funext
-      apply ι.covering_left-/
-    covering_right := by sorry/-
-      intros x y n
+      cases x <;> cases y <;> simp [widen]
+      <;> (try apply BoundedLattice.bot_min)
+      <;> (try apply BoundedLattice.refl)
+      rename_i x y
+      rw [non_rel_subset]
+      intros i
       simp
-      cases y <;> simp
-      funext
-      apply ι.covering_right-/
+    covering_right := by
+      intros x y n
+      cases x <;> cases y <;> simp [widen]
+      <;> (try apply BoundedLattice.bot_min)
+      <;> (try apply BoundedLattice.refl)
+      rename_i x y
+      rw [non_rel_subset]
+      intros i
+      simp
 
   instance : Narrow (NonRelational α n) where
     narrow x y n := map2_nil x y fun x y =>
       fun i => ι.narrow (x i) (y i) n
 
   instance : NarrowLawful (NonRelational α n) where
-    bounding_low := by sorry /-
+    bounding_low := by
       intros x y n
-      simp [-BoundedLattice.meet_associative]
-      funext
-      apply ι.bounding_low-/
-    bounding_high := by sorry /-
+      cases x <;> cases y <;> simp [Narrow.narrow, meet, map2_nil, coalesce]
+      <;> (try apply BoundedLattice.bot_min)
+      <;> (try apply BoundedLattice.refl)
+      rename_i x y
+      split
+      case isFalse => apply BoundedLattice.bot_min
+      case isTrue H =>
+        have H' : ∀ i, Narrow.narrow (x.val i) (y.val i) n ≠ ⊥ := by
+          intros i Hc
+          apply H i
+          apply BoundedLattice.min_bot_is_bot
+          conv =>
+            rhs
+            rw [←Hc]
+          simp
+        rw [dif_pos H']
+        rw [non_rel_subset]
+        intros i
+        simp
+    bounding_high := by
       intros x y n
-      simp [-BoundedLattice.meet_commutative, Narrow.narrow]
-      funext
-      apply ι.bounding_high-/
+      cases x <;> cases y <;> simp [Narrow.narrow, meet, map2_nil, coalesce]
+      <;> (try apply BoundedLattice.bot_min)
+      <;> (try apply BoundedLattice.refl)
+      rename_i x y
+      split
+      case isFalse => apply BoundedLattice.bot_min
+      case isTrue H =>
+        rw [non_rel_subset]
+        intros i
+        simp
 
   instance : DecidableEq (NonRelational α n) := fun x y => by
     cases x <;> cases y <;> simp <;>

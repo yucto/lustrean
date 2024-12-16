@@ -40,7 +40,7 @@ namespace BoundedLattice
 
   infixr:50 " ⊑ " => is_subset
 
-  def trans : ∀ {x y z : α}, x ⊑ y → y ⊑ z → x ⊑ z := by
+  theorem trans : ∀ {x y z : α}, x ⊑ y → y ⊑ z → x ⊑ z := by
     intros x y z Hx Hy
     unfold is_subset at *
     rw [Hx]
@@ -52,12 +52,12 @@ namespace BoundedLattice
   instance {α : Type} [ι : BoundedLattice α] : Trans (@is_subset α ι) (@is_subset α ι) (@is_subset α ι) where
     trans := trans
 
-  def bot_min : ∀ {x : α}, ⊥ ⊑ x := by
+  theorem bot_min : ∀ {x : α}, ⊥ ⊑ x := by
     intros x
     unfold is_subset
     simp [meet_commutative]
 
-  def antisymm : ∀ {x y : α}, x ⊑ y → y ⊑ x → x = y := by
+  theorem antisymm : ∀ {x y : α}, x ⊑ y → y ⊑ x → x = y := by
     intros x y H H'
     unfold is_subset at *
     rw [meet_commutative] at H'
@@ -69,20 +69,20 @@ namespace BoundedLattice
     antisymm := antisymm
 
   @[simp]
-  def min_bot_is_bot : ∀ {x : α}, x ⊑ ⊥ → x = bot := by
+  theorem min_bot_is_bot : ∀ {x : α}, x ⊑ ⊥ → x = bot := by
     intros x H
     apply antisymm <;> [
       assumption ;
       apply bot_min
     ]
 
-  def min_join_left : ∀ {x y : α}, x ⊑ x ⊔ y := by
+  theorem min_join_left : ∀ {x y : α}, x ⊑ x ⊔ y := by
     intros x y
     unfold is_subset
     symm
     apply meet_absorption
 
-  def min_join_right : ∀ {x y : α}, y ⊑ x ⊔ y := by
+  theorem min_join_right : ∀ {x y : α}, y ⊑ x ⊔ y := by
     intros
     rw [join_commutative]
     apply min_join_left
@@ -129,7 +129,7 @@ namespace BoundedLattice
     fun x => ∀ n, x (n+1) ⊑ x n
 
   @[simp]
-  def join_idempotent : ∀ x : α, x ⊔ x = x := by
+  theorem join_idempotent : ∀ x : α, x ⊔ x = x := by
     intros x
     conv =>
       lhs
@@ -138,13 +138,35 @@ namespace BoundedLattice
     apply join_absorption
 
   @[simp]
-  def meet_idempotent : ∀ x : α, x ⊓ x = x := by
+  theorem meet_idempotent : ∀ x : α, x ⊓ x = x := by
     intros x
     conv =>
       lhs
       arg 2
       rw [←join_bot x]
     apply meet_absorption
+
+  theorem refl : ∀ {x : α}, x ⊑ x := by
+    intros x
+    simp [is_subset]
+
+  @[simp]
+  theorem meet_min_left : ∀ {x y : α}, x ⊓ y ⊑ x := by
+    intros x y
+    simp [is_subset]
+    conv =>
+      rhs
+      arg 2
+      rw [meet_commutative]
+    rw [←meet_associative]
+    simp
+
+  @[simp]
+  theorem meet_min_right : ∀ {x y : α}, x ⊓ y ⊑ y := by
+    intros x y
+    rw [meet_commutative]
+    apply meet_min_left
+
 end BoundedLattice
 
 class Widen (α : Type) where
