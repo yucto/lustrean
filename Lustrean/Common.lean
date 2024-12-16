@@ -7,10 +7,8 @@ inductive IntOp : Type :=
 -- n : number of variable
 inductive IExpr (n : Nat) : Type :=
 | nil : IExpr n
-| top : IExpr n
 | var : Fin n → IExpr n
 | rand : Int → Int → IExpr n
-| const : Int → IExpr n
 | neg : IExpr n → IExpr n
 | binop : IExpr n → IntOp → IExpr n → IExpr n
 

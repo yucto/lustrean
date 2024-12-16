@@ -193,8 +193,9 @@ namespace Integers
 
   instance IntegersValueDomain : ValueDomain Integers where
     new := .int 0
-    from_const := .int
-    rand a b := if a = b then .int a else .top
+    rand a b := match a, b with
+    | .some a, .some b => if a = b then .int a else .top
+    | _, _ => .top
     nil := .bot
     eq_dec := inferInstance
     compare := compare

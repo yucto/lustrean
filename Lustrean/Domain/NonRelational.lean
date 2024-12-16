@@ -6,9 +6,8 @@ extends Add α, Neg α, Mul α, Sub α, Div α, BoundedLattice α,
   ToString α, WidenLawful α, NarrowLawful α
 where
   new : α
-  from_const : Int → α
   -- interval [a, b]
-  rand : Int → Int → α
+  rand : Option Int → Option Int → α
   nil : α
   eq_dec : DecidableEq α
   -- compare op x y = (x', y') where
@@ -400,10 +399,8 @@ namespace NonRelational
 
   def eval (x : NonRelational α n) : IExpr n → α
   | .nil => ι.nil
-  | .top => ι.top
   | .var i => get x i
   | .rand a b => ι.rand a b
-  | .const n => ι.from_const n
   | .neg e => - eval x e
   | .binop e₁ op e₂ =>
     let i₁ := eval x e₁
@@ -427,12 +424,8 @@ namespace NonRelational
     | .nil => if ι.is_bot (ι.meet r ι.nil)
       then BoundedLattice.bot
       else x
-    | .top => x
     | .var i => update x i (ι.meet (get x i) r)
     | .rand a b => if ι.is_bot (ι.meet r (ι.rand a b))
-      then BoundedLattice.bot
-      else x
-    | .const n => if ι.is_bot (ι.meet r (ι.from_const n))
       then BoundedLattice.bot
       else x
     | .neg e =>

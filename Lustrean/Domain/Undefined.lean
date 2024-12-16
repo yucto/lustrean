@@ -160,7 +160,6 @@ namespace Undefined
 
   instance : ValueDomain (Undefined α) where
     new := .mk ι.new false
-    from_const n := .mk (ι.from_const n) false
     rand a b := .mk (ι.rand a b) false
     nil := .mk ⊥ true
     eq_dec := inferInstance
