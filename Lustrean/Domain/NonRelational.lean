@@ -22,19 +22,19 @@ namespace ValueDomain
   -- backward_op x y r = (x', y') where
   -- x' = { v ∈ x | ∃ v' ∈ y, v op v' ∈ r }
   -- y' = { v' ∈ y | ∃ v ∈ x, v op v' ∈ r }
-  def backward_neg (x r : α) : α := BoundedLattice.meet (Neg.neg r) x
+  def backward_neg (x r : α) : α := -r ⊓ x
 
   def backward_add (x y r : α) : α × α :=
-    (BoundedLattice.meet x (Sub.sub r y), BoundedLattice.meet y (Sub.sub r x))
+    (x ⊓ r - y, y ⊓ r - x)
 
   def backward_sub (x y r : α) : α × α :=
-    (BoundedLattice.meet x (Add.add r y), BoundedLattice.meet y (Sub.sub x r))
+    (x ⊓ (Add.add r y), BoundedLattice.meet y (Sub.sub x r))
 
   def backward_mul (x y r : α) : α × α :=
-    (BoundedLattice.meet x (Div.div r y), BoundedLattice.meet y (Div.div r x))
+    (x ⊓ r / y, y ⊓ r / x)
 
   def backward_div (x y r : α) : α × α :=
-    (BoundedLattice.meet x (Mul.mul r y), BoundedLattice.meet y (Div.div x r))
+    (x ⊓ r * y, y ⊓ x / r)
 end ValueDomain
 
 inductive NonRelational (α : Type) [ValueDomain α] (n : Nat) :=
@@ -52,58 +52,69 @@ namespace NonRelational
     then .non_rel <| .mk env H
     else .bot
 
-  def map_nil (f : (Fin n → α) → (Fin n → α)) :
-    NonRelational α n
-  :=
+  def map_nil (f : (Fin n → α) → (Fin n → α)) : NonRelational α n :=
     match x with
     | .non_rel x => coalesce (f x.val)
     | .bot => .bot
 
-  def map2_nil (f : (Fin n → α) → (Fin n → α) → (Fin n → α)) :
-    NonRelational α n
-  :=
+  def map2_nil (f : (Fin n → α) → (Fin n → α) → (Fin n → α)) : NonRelational α n :=
     match x, y with
     | .non_rel x, .non_rel y => coalesce (f x.val y.val)
     | _, _ => .bot
 
+  protected def add :=
+    map2_nil x y fun x y i => x i + y i
+
   instance : Add (NonRelational α n) where
-    add x y := map2_nil x y fun x y i =>
-      ι.add (x i) (y i)
+    add := NonRelational.add
+
+  protected def neg :=
+    map_nil x fun x i => -(x i)
 
   instance : Neg (NonRelational α n) where
-    neg x := map_nil x fun x i => ι.neg (x i)
+    neg := NonRelational.neg
+
+  protected def sub :=
+    map2_nil x y fun x y i => x i - y i
 
   instance : Sub (NonRelational α n) where
-    sub x y := map2_nil x y fun x y i =>
-      ι.sub (x i) (y i)
+    sub := NonRelational.sub
+
+  protected def mul :=
+    map2_nil x y fun x y i =>
+      x i * y i
 
   instance : Mul (NonRelational α n) where
-    mul x y := map2_nil x y fun x y i =>
-      ι.mul (x i) (y i)
+    mul := NonRelational.mul
+
+  protected def div :=
+    map2_nil x y fun x y i =>
+      x i / y i
 
   instance : Div (NonRelational α n) where
-    div x y := map2_nil x y fun x y i =>
-      ι.div (x i) (y i)
+    div := NonRelational.div
+
+  protected def toString : NonRelational α n → String
+  | .bot => "⊥"
+  | .non_rel env =>
+    let rec acc : Nat → String
+    | 0 => ""
+    | 1 => if h : 1 < n
+      then
+        let v := env.val (Fin.mk 1 h)
+        s!"{v}"
+      else ""
+    | .succ i => if h : i < n
+      then
+        let r := acc i
+        let v := env.val (Fin.mk i h)
+        s!"{r} ; {v}"
+      else acc i
+    let r := acc n
+    s!"[ {r} ]"
 
   instance : ToString (NonRelational α n) where
-    toString x := match x with
-    | .bot => "⊥"
-    | .non_rel env =>
-      let rec acc (i : Nat) : String := match i with
-      | 0 => ""
-      | 1 => if h : i < n
-        then
-          let v := env.val (Fin.mk i h)
-          s!"{v}"
-        else ""
-      | .succ i => if h : i < n
-        then
-          let r := acc i
-          let v := env.val (Fin.mk i h)
-          s!"{r} ; {v}"
-        else acc i
-      let r := acc n
-      s!"[ {r} ]"
+    toString := NonRelational.toString
 
   theorem join_neq_bot : ∀ (x y : { env : Fin n → α // ∀ i, env i ≠ ⊥}) i,
     x.val i ⊔ y.val i ≠ ⊥
@@ -120,9 +131,7 @@ namespace NonRelational
     | .non_rel ⟨x, H⟩, .non_rel ⟨y, _⟩ =>
       .non_rel <| .mk (fun i => ι.join (x i) (y i)) <| by
         intros i
-        simp
-        rw [BoundedLattice.join_eq_bot_iff_bot]
-        simp [H]
+        simp [BoundedLattice.join_eq_bot_iff_bot, H]
     | .bot, z | z, .bot => z
 
   def meet : NonRelational α n := map2_nil x y fun x y =>
@@ -141,9 +150,9 @@ namespace NonRelational
   theorem join_absorption : join x (meet x y) = x := by
     cases x <;> cases y <;> simp only [join, meet, map2_nil, coalesce, reduceCtorEq]
     rename_i x y
-    by_cases H : ∀ (i : Fin n), x.val i ⊓ y.val i ≠ ⊥ <;> [
-      simp [dif_pos H] ; simp [dif_neg H]
-    ]
+    by_cases H : ∀ (i : Fin n), x.val i ⊓ y.val i ≠ ⊥
+    · simp [dif_pos H]
+    · simp [dif_neg H]
 
   theorem join_bot : x.join bot = x := by
     cases x <;> simp [join]
@@ -163,7 +172,8 @@ namespace NonRelational
     rename_i x y z
     by_cases H : ∀ i, x.val i ⊓ y.val i ⊓ z.val i ≠ ⊥
     · rw [dif_pos]
-      simp
+      dsimp
+      -- simp [dif_pos]
       rw [dif_pos, dif_pos]
       simp
       rw [dif_pos]
@@ -211,7 +221,7 @@ namespace NonRelational
     simp [top]
 
   instance : BoundedLattice (NonRelational α n) where
-    bot := .bot
+    bot := bot
     top := top
     join := join
     meet := meet
@@ -385,13 +395,10 @@ namespace NonRelational
   | .non_rel x => x.val i
   | .bot => ι.bot
 
-  def update (i : Fin n) (a : α) :
-    NonRelational α n
-  :=
-    map_nil x fun x j => if i = j then a else x j
+  def update (i : Fin n) (a : α) : NonRelational α n :=
+    x.map_nil fun x j => if i = j then a else x j
 
-  def eval (x : NonRelational α n) (e : IExpr n) : α :=
-  match e with
+  def eval (x : NonRelational α n) : IExpr n → α
   | .nil => ι.nil
   | .var i => get x i
   | .rand a b => ι.rand a b
@@ -438,9 +445,9 @@ namespace NonRelational
       | .isub => ι.backward_sub i₁ i₂ r
       | .imul => ι.backward_mul i₁ i₂ r
       | .idiv => ι.backward_div i₁ i₂ r
-      BoundedLattice.meet (backward_eval x e₁ r₁) (backward_eval x e₂ r₂)
+      backward_eval x e₁ r₁ ⊓ backward_eval x e₂ r₂
 
-  def guard (x : NonRelational α n) (b : bexpr n) :
+  def guard (x : NonRelational α n) (b : BExpr n) :
     NonRelational α n
   := match b with
   | .random | .const true => x
@@ -449,9 +456,9 @@ namespace NonRelational
     let i₁ := eval x e₁
     let i₂ := eval x e₂
     let (r₁, r₂) := ι.compare op i₁ i₂
-    BoundedLattice.meet (backward_eval x e₁ r₁) (backward_eval x e₂ r₂)
-  | .or b₁ b₂ => BoundedLattice.join (guard x b₁) (guard x b₂)
-  | .and b₁ b₂ => BoundedLattice.meet (guard x b₁) (guard x b₂)
+    backward_eval x e₁ r₁ ⊓ backward_eval x e₂ r₂
+  | .or b₁ b₂ => guard x b₁ ⊔ guard x b₂
+  | .and b₁ b₂ => guard x b₁ ⊓ guard x b₂
 
   instance : Domain (NonRelational α n) where
     new := coalesce fun _ => ValueDomain.new
