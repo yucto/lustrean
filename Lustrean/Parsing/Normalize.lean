@@ -19,6 +19,8 @@ open Std (HashMap)
 
 namespace Lustrean.Parsing
 namespace Normalize
+  export Indicise (Var)
+
   inductive VarRef (n m : Nat) where
     | step
     | input_var (k : Fin n)
@@ -54,7 +56,7 @@ namespace Normalize
       toString := BinOp.toString
   end BinOp
 
-  mutual
+  section
     variable (n m : Nat)
     
     inductive SimpleExpr where
@@ -63,18 +65,18 @@ namespace Normalize
       | bin_op (op : BinOp) (left right : SimpleExpr)
       deriving Repr, Inhabited
 
-    inductive Expr where
-      | simple (e : SimpleExpr)
-      | ite (cond : BoolExpr) (tb : SimpleExpr) (eb : SimpleExpr)
+    inductive BoolExpr where
+      | cmp_op (op : CmpOp) (left right : SimpleExpr n m)
+      | bin_op (op : BoolBinOp) (left right : BoolExpr)
       deriving Repr, Inhabited
 
-    inductive BoolExpr where
-      | cmp_op (op : CmpOp) (left right : Expr)
-      | bin_op (op : BoolBinOp) (left right : BoolExpr)
+    inductive Expr where
+      | simple (e : SimpleExpr n m)
+      | ite (cond : BoolExpr n m) (tb : SimpleExpr n m) (eb : SimpleExpr n m)
       deriving Repr, Inhabited
   end
 
-  mutual
+  section
     variable {n m m' : Nat} (h : m ≤ m')
 
     def SimpleExpr.upcast : SimpleExpr n m → SimpleExpr n m'
@@ -82,20 +84,14 @@ namespace Normalize
       | .var v => .var (v.upcast h)
       | .bin_op op l r => .bin_op op l.upcast r.upcast
 
-    def Expr.upcast : Expr n m → Expr n m'
-      | .simple e => .simple e.upcast
-      | .ite cond tb eb => .ite cond.upcast tb.upcast eb.upcast
-
     def BoolExpr.upcast : BoolExpr n m → BoolExpr n m'
-      | .cmp_op op left right => .cmp_op op left.upcast right.upcast
+      | .cmp_op op left right => .cmp_op op (left.upcast h) (right.upcast h)
       | .bin_op op left right => .bin_op op left.upcast right.upcast
-  end
 
-  /-- A local variable in a node, that is, a variable that is only available in the local scope.
-      This can be either an input variable, or a locally bound variable.  -/
-  structure Var where
-    name : Name
-    deriving Repr, Inhabited
+    def Expr.upcast : Expr n m → Expr n m'
+      | .simple e => .simple <| e.upcast h
+      | .ite cond tb eb => .ite (cond.upcast h) (tb.upcast h) (eb.upcast h)
+  end
 
   /-- A locally bound variable.  This is a local variable that is bound to a value -/
   structure BoundVar (n m : Nat) extends Var where
@@ -118,13 +114,13 @@ namespace Normalize
       | .var .step => "@"
       | .bin_op op l r => s!"({op} {l.toString} {r.toString})"
 
-    def Expr.toString : Expr n m → String
-      | .simple e => e.toString
-      | .ite cond tb eb => s!"(if {cond.toString} {tb.toString} {eb.toString})"
-
     def BoolExpr.toString : BoolExpr n m → String
       | .cmp_op op left right
       | .bin_op op left right => s!"({op} {left.toString} {right.toString})"
+
+    def Expr.toString : Expr n m → String
+      | .simple e => e.toString
+      | .ite cond tb eb => s!"(if {cond.toString} {tb.toString} {eb.toString})"
   end
 
   structure Node where
@@ -143,7 +139,7 @@ namespace Normalize
       match vr with
       | .input_var k => nod.input_vars[k]
       | .bound_var k | .old_bound_var k => nod.bound_vars[k].toVar
-      | .step => { name := .str .anonymous "@" }
+      | .step => { name := ⟨.str .anonymous "@", default⟩ } -- TODO: default is a dummy value
 
     instance (n m : Nat) : GetElem Node (VarRef n m) Var (fun nod _ => n = nod.n ∧ m = nod.m) where
       getElem := Node.getElem
@@ -178,6 +174,9 @@ namespace Normalize
       output_vars := default
       guards := default
       asserts := default
+
+    def total_vars (self : Node) : Nat :=
+      1 + self.n + self.m + self.m -- step + input vars + bound vars + old bound vars
   end Node
 
   abbrev NodeN (n m : Nat)  := { t : Node // t.m = m ∧ t.n = n }
@@ -195,7 +194,7 @@ namespace Normalize
   
   abbrev BVar (_n m : Nat) := Fin m
 
-  def add_var {n m : Nat} (e : Expr n m) (t : NodeN n m) : CounterM <| BVar n (m+1) × NodeN n (m+1) := do
+  def add_var {n m : Nat} (ref : Syntax) (e : Expr n m) (t : NodeN n m) : CounterM <| BVar n (m+1) × NodeN n (m+1) := do
     let ⟨t, ⟨tm_eq_m, tn_eq_n⟩⟩ := t
     let e' : Expr t.n (t.m+1) := tn_eq_n ▸ e.upcast <| by
       rewrite [tm_eq_m]
@@ -205,7 +204,7 @@ namespace Normalize
       t with
       m := t.m + 1
       bound_vars := t.bound_vars.map (·.upcast this) |>.push {
-        name := .num .anonymous (← CounterT.incr)
+        name := { value := .num .anonymous (← CounterT.incr), ref }
         value := e'
       }
       output_vars := t.output_vars.map (·.upcast this)
@@ -275,7 +274,7 @@ namespace Normalize
       match e with
       | .simple e => return { m', m_leq_m', e, nod }
       | .ite cond e₁ e₂ =>
-        let (x, nod) ← add_var (.ite cond e₁ e₂) nod
+        let (x, nod) ← add_var default (.ite cond e₁ e₂) nod -- TODO: default is a dummy value
         return {
           m' := m' + 1
           m_leq_m' := calc
@@ -335,9 +334,9 @@ namespace Normalize
       | .bin_op .fby ⟨e₁, _⟩ ⟨e₂, _⟩ => do
         let ⟨m₁, m_leq_m₁, e₁, nod⟩ ← elab_simple_expr_aux nod e₁
         let ⟨m₂, m₁_leq_m₂, e₂, nod⟩ ← elab_expr_aux nod (e₂.upcast m_leq_m₁)
-        let (x, nod) ← add_var e₂ nod
+        let (x, nod) ← add_var default e₂ nod -- TODO: default is a dummy value
         -- the condition `n = 0`
-        let cond := .cmp_op .eq (.simple <| .var .step) (.simple <| .interval 0 0)
+        let cond := .cmp_op .eq (.var .step) (.interval 0 0)
         return {
           m' := m₂ + 1
           m_leq_m' := by omega
@@ -369,8 +368,8 @@ namespace Normalize
           nod := nod
         }
       | .cmp_op op ⟨l, _⟩ ⟨r, _⟩ => do
-        let ⟨m₁, m_leq_m₁, l, nod⟩ ← elab_expr_aux nod l
-        let ⟨m₂, m₁_leq_m₂, r, nod⟩ ← elab_expr_aux nod (r.upcast m_leq_m₁)
+        let ⟨m₁, m_leq_m₁, l, nod⟩ ← elab_simple_expr_aux nod l
+        let ⟨m₂, m₁_leq_m₂, r, nod⟩ ← elab_simple_expr_aux nod (r.upcast m_leq_m₁)
         return {
           m' := m₂
           m_leq_m' := calc
@@ -387,12 +386,12 @@ namespace Normalize
       name := nod.name
       n := nod.n
       m := nod.m
-      input_vars := nod.input_vars.map (fun { name := ⟨name, _⟩ } => { name })
+      input_vars := nod.input_vars
       output_vars := nod.output_vars.map elab_vr
       -- Random garbage, will be filled in later.  This is necessary, because our expressions can
       -- refer to these variables, so they must appear exactly where they originally appear, so
       -- as not to break the references.  Additional bindings must come *after* these.
-      bound_vars := nod.bound_vars.map fun bv => { name := bv.name.value, value := default }
+      bound_vars := nod.bound_vars.map fun bv => { name := bv.name, value := default }
       -- For guards and asserts, on the other hand, we can add them later, which is simpler.
       guards := #[]
       asserts := #[]
