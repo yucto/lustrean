@@ -46,7 +46,7 @@ namespace NonRelational
   variable (x y z : NonRelational α n)
 
   def coalesce (env : Fin n → α) : NonRelational α n :=
-    let _ := fun i => ι.eq_dec (env i) ⊥
+    have := fun i => ι.eq_dec (env i) ⊥
     if H : ∀ i, env i ≠ ⊥
     then .non_rel <| .mk env H
     else .bot
