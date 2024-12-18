@@ -219,8 +219,8 @@ where
 attribute [simp] NarrowLawful.bounding_low NarrowLawful.bounding_high
 
 class Domain (α : Type)
-extends Add α, Mul α, Sub α, Div α, BoundedLattice α,
-  ToString α, WidenLawful α, NarrowLawful α
+extends BoundedLattice α, ToString α,
+  WidenLawful α, NarrowLawful α
 where
   new : α
   nb_var : Nat

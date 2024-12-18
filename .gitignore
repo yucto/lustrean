@@ -7,3 +7,10 @@
 **/*.snm
 **/*.synctex.gz
 **/*.vrb
+**/*.aux
+**/*.fdb_latexmk
+**/*.fls
+**/*.log
+**/*.out
+**/*.toc
+**/_minded-*/

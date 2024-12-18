@@ -15,7 +15,7 @@
 \usetikzlibrary{calc}
 
 \title{Lustrean}
-\subtitle{Jean trouve un meilleur nom!}
+\subtitle{Lustre + Lean = Lustrean}
 \author{Jean \textsc{Caspar} \and Adrien \textsc{Mathieu}}
 \date{December 2024}
 
@@ -28,6 +28,7 @@
 \setbeamertemplate{enumerate items}[default]
 
 \begin{document}
+
 \begingroup
 \setbeamertemplate{headline}{}
 \setbeamertemplate{footline}{}
@@ -40,6 +41,140 @@
 \subsection{Bye}
 \begin{frame}
   \ft{}
+\end{frame}
+
+\section{Abstract domains}
+\subsection{Domain}
+\begin{frame}
+  \ft{}
+  A domain over $n$ variables a data structure
+  which represents an overapproximation of a
+  set of environments. It has:
+
+  \begin{itemize}
+    \item decidable equality,
+    \item a function which returns a new environment,
+    \item an assignation function which takes an integer expression
+    and updates the environment accordingly,
+    \item a guard function which takes a boolean expression
+    and refines the environment to keep only those states
+    that makes the boolean exwhich should be different
+    from $\bot$.pression be true,
+    \item a widening and a narrowing operators.
+  \end{itemize}
+
+  The code is inspired from the TP of abstract interpretation
+  from Antoine Miné, Marc Chevalier and Josselin Giet.
+\end{frame}
+
+\subsection{Non relational domain}
+\begin{frame}
+  \ft{}
+  A non relational domain is a domain of the form
+  $\{0, \dots, n-1\} \to V$ where $V$ is a domain
+  representing values.
+
+  The value domains are bounded lattice with a widening
+  and a narrowing which support arithmetic operations.
+
+  We did not use any relational domains, as it would have
+  been to long to implement and to prove properties on them.
+\end{frame}
+
+\subsection{Nil in values domains}
+\begin{frame}
+  \ft{}
+  Values domains are also required to contain an
+  element representing $nil$. The order of the lattice
+  is an order represeting the set of possible values
+  the expression can take ; it is not the order
+  ``x is less defined than y''. Especially, we do
+  not have $nil \sqsubseteq 3$.
+\end{frame}
+
+\subsection{Concrete value domains}
+\begin{frame}
+  \ft{}
+
+  \begin{itemize}
+    \item Integers with a top and bottom element.
+    \item Intervals.
+  \end{itemize}
+  These domains send nil to top.
+  \begin{itemize}
+    \item A domain combinator which transform a domain $D$
+    into $D \times \mathbb{B}$, where $(v, \operatorname{false})$
+    represents the set of values represented by $v$, except $nil$,
+    and $(v, \operatorname{true})$ represents the set of values
+    represented by $v$ and $nil$.
+  \end{itemize}
+\end{frame}
+
+\section{Interpreter}
+\subsection{CFG}
+\begin{frame}
+  \ft{}
+  \begin{itemize}
+    \item The interpreter is given a list of ``pre nodes'',
+    parameterized by the number of variables.
+    \item A pre node is a list of tuples $(inst, out, synt)$.
+    \item $inst$ is an instruction, $out$ the index of the exit node
+    as a natural number, $synt$ a pointer to the piece of code from
+    which the instruction originates.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \ft{}
+  \begin{itemize}
+    \item We compile the pre nodes to a cfg. It consists of an array of nodes and arcs.
+    \item An arc contains an instruction, the index of the source node and of the exit node,
+    and a pointer to the syntax.
+    \item A node contains the list of the indices of the arcs going into it.
+  \end{itemize}
+  Indices lives in $Fin~arcs.size$, respectively $Fin~nodes.size$.
+
+  Because we have to translate the first representation into the second while
+  assuring correctness, there is a lot of bookkeeping
+  involved with dependent types, and I used
+  no less that two intermediate structures.
+
+  We also compute a set of widening points, which select at least
+  one node in each strongly connected component of the cfg.
+\end{frame}
+
+\subsection{Execution}
+\begin{frame}
+  \ft{}
+  \begin{itemize}
+    \item After that, we build a state which assigns a environment
+    (living in a domain) to each node and arc.
+    \item First we iterate over all arcs and assigns to each
+    arc the value of the transfer function of this arc
+    to the source environment.
+    \item Then we iterate over the nodes and assigns
+    to the them the union of the environments of their
+    entrant arcs. If the node is a widening point, we perform a widening.
+    \item We currently don't use the narrowing.
+    \item When it stabilizes, we return the state.
+  \end{itemize}
+\end{frame}
+
+\section{Correctness}
+\begin{frame}
+  \ft{}
+  \begin{itemize}
+    \item The notion of domain is totally formalized,
+    save for the termination property of the narrowing
+    and of the widening: we need classical logic to prove
+    it, but then it would be difficult to extract the witness.
+    \item We didn't provide a concrete semantics and proved
+    that the abstract semantics is a sound abstraction of the concrete
+    semantics.
+    \item We don't have an other semantics to which we can
+    compare our interpreter and relatively to which
+    we can prove soundness.
+  \end{itemize}
 \end{frame}
 
 \end{document}
