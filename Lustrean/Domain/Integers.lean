@@ -1,5 +1,6 @@
 import Lustrean.Domain.NonRelational
 
+namespace Lustrean
 inductive Integers where
 | bot : Integers
 | top : Integers
@@ -244,3 +245,4 @@ namespace Integers
     | exists 2; simp [Widen.widen_seq, Widen.widen, join, h₀, h₁, h₂, h₃, H₀, H₁, H₂];
       try simp [H₂']-/
 end Integers
+end Lustrean

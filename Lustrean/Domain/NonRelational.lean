@@ -1,6 +1,7 @@
 import Lustrean.Facts
 import Lustrean.Domain.Domain
 
+namespace Lustrean
 class ValueDomain (α : Type)
 extends Add α, Neg α, Mul α, Sub α, Div α, BoundedLattice α,
   ToString α, WidenLawful α, NarrowLawful α
@@ -468,3 +469,4 @@ namespace NonRelational
     bounding_low := NarrowLawful.bounding_low
     bounding_high := NarrowLawful.bounding_high
 end NonRelational
+end Lustrean

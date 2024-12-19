@@ -8,7 +8,14 @@ section
   variable {n m : Nat}
 
   def _root_.Lustrean.Parsing.Normalize.SimpleExpr.to_cfg_expr : SimpleExpr n m → IExpr (1 + n + m + m)
-    | .interval lb up => default -- TODO: requires proper bounds handling
+    | .interval lb ub =>
+      let lb := match lb with
+        | .minf => none
+        | .nat n => some n
+      let ub := match ub with
+        | .pinf => none
+        | .nat n => some n
+      .rand lb ub
     | .bin_op op l r =>
       let op := match op with
         | .add => .iadd
@@ -35,9 +42,9 @@ section
       | .and => .and l r
 end
 
-def elab_into_cfg (nod : Normalize.Node) : List (PreNode nod.total_vars) := Id.run do
+def elab_into_cfg (nod : Normalize.Node) : List (PreNode nod.total_vars) × Array (Fin nod.total_vars) := Id.run do
   -- TODO: default is a dummy value
-  let mut result := #[{ id := 0, out_nodes := [(1, .assign step (.const 0), default)] }]
+  let mut result := #[{ id := 0, out_nodes := [(1, .assign step (IExpr.const 0), default)] }]
   for h : i in [0:nod.m] do
     let k := Fin.mk i <| Membership.get_elem_helper h rfl
     result := result.push {
@@ -57,9 +64,8 @@ def elab_into_cfg (nod : Normalize.Node) : List (PreNode nod.total_vars) := Id.r
     let k := Fin.mk i <| Membership.get_elem_helper h rfl
     result := result.push {
       id := result.size
-      -- TODO: default should be [-∞, ∞]
       -- TODO: default is a dummy value
-      out_nodes := [(result.size + 1, .assign (input_var k) default, default)]
+      out_nodes := [(result.size + 1, .assign (input_var k) (.rand none none), default)]
     }
   for g in nod.guards do
     result := result.push {
@@ -106,7 +112,7 @@ def elab_into_cfg (nod : Normalize.Node) : List (PreNode nod.total_vars) := Id.r
     id := result.size
     -- TODO: default are dummy values
     out_nodes := [
-      (here_id, .assign step (.var step), default), -- go to next iteration
+      (here_id, .assign step (.binop (.var step) .iadd (IExpr.const 1)), default), -- go to next iteration
       (there_id, .skip, default),                   -- loop again current iteration
       (result.size + 1, .skip, default)             -- exit program
     ]
@@ -114,14 +120,18 @@ def elab_into_cfg (nod : Normalize.Node) : List (PreNode nod.total_vars) := Id.r
   for a in nod.asserts do
     result := result.push {
       id := result.size
-      -- TODO: default is a dummy value
-      out_nodes := [(result.size+1, .assert a.to_cfg_expr, default)]
+      out_nodes := [(result.size+1, .assert a.value.to_cfg_expr, a.ref)]
     }
   result := result.push {
     id := result.size
     out_nodes := []
   }
-  return result.data
+  let output_vars := nod.output_vars.map fun
+    | .step => step
+    | .input_var k => input_var k
+    | .bound_var k => bound_var k
+    | .old_bound_var k => old_bound_var k
+  return (result.data, output_vars)
 where
   step : Fin nod.total_vars := .mk 0 <| by
     unfold Normalize.Node.total_vars
@@ -135,5 +145,9 @@ where
   old_bound_var (k : Fin nod.m) : Fin nod.total_vars := .mk (1+nod.n+nod.m+k) <| by
     unfold Normalize.Node.total_vars
     omega
+
+def elab_lustre (a : Array Normalize.Node) : Array (Σ n, List (PreNode n) × Array (Fin n)) :=
+  a.map fun nod =>
+    ⟨nod.total_vars, elab_into_cfg nod⟩
 
 end Lustrean.Parsing.Compile

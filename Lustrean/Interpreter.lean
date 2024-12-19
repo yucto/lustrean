@@ -2,14 +2,26 @@ import Lustrean.Common
 import Lustrean.Facts
 import Lustrean.Domain
 
+namespace Lustrean
 structure Node (nb_var nb_arcs : Nat) : Type where
   in_nodes : List (Fin nb_arcs)
+  deriving Repr
 
 structure Arc (nb_var nb_nodes : Nat) : Type where
   src : Fin nb_nodes
   dst : Fin nb_nodes
   inst : Instruction nb_var
   synt : Lean.Syntax
+  deriving Repr
+
+namespace Arc
+  variable {nb_var nb_nodes : Nat}
+  protected def toString (self : Arc nb_var nb_nodes) : String :=
+    s!"({self.src} -> {self.dst} / {self.inst})"
+
+  instance : ToString (Arc nb_var nb_nodes) where
+    toString := Arc.toString
+end Arc
 
 structure Cfg (nb_var : Nat) : Type where
   nb_nodes : Nat
@@ -18,6 +30,7 @@ structure Cfg (nb_var : Nat) : Type where
   Hnodes : nb_nodes = nodes.size
   arcs : Array (Arc nb_var nb_nodes)
   Harcs : nb_arcs = arcs.size
+  deriving Repr
 
 namespace Cfg
   variable {nb_var : Nat}
@@ -329,3 +342,4 @@ namespace State
       let b ← iter
       if b then loop
 end State
+end Lustrean

@@ -131,7 +131,7 @@ namespace Normalize
     bound_vars : Vector (BoundVar n m) m
     output_vars : Array (VarRef n m)
     guards : Array (BoolExpr n m)
-    asserts : Array (BoolExpr n m)
+    asserts : Array (&BoolExpr n m)
     deriving Repr, Inhabited
 
   namespace Node
@@ -154,7 +154,7 @@ namespace Normalize
       let guards :=
         "guards" ++ (self.guards.map (fun b => s!"\n  {b.toString self.input_vars self.bound_vars}") |>.toList |> String.join)
       let asserts :=
-        "asserts" ++ (self.asserts.map (fun b => s!"\n  {b.toString self.input_vars self.bound_vars}") |>.toList |> String.join)
+        "asserts" ++ (self.asserts.map (fun b => s!"\n  {b.value.toString self.input_vars self.bound_vars}") |>.toList |> String.join)
       let vars :=
         "where" ++ (self.bound_vars.map (fun v =>
             s!"\n  {v.name.toString} = {v.value.toString self.input_vars self.bound_vars}")
@@ -209,7 +209,7 @@ namespace Normalize
       }
       output_vars := t.output_vars.map (·.upcast this)
       guards := t.guards.map (·.upcast this)
-      asserts := t.asserts.map (·.upcast this)
+      asserts := t.asserts.map (·.map (·.upcast this))
     }
     let new_var : BVar n (m+1) := Fin.last m
     have : nod.m = m + 1 ∧ nod.n = n := by
@@ -441,6 +441,7 @@ namespace Normalize
           new_nod.val.m ≤ m' := m_leq_m'
           m' = hnod.m := by symm; assumption
     for a in nod.asserts do
+      let ref := a.ref
       let a : Indicise.BoolExpr new_nod.val.n new_nod.val.m :=
         new_nod.property.1 ▸ a.value.upcast new_nod.property.2
       let { m', e, nod := ⟨hnod, hnod_m_m', hnod_n_nod_n⟩, m_leq_m', .. } ←
@@ -448,7 +449,7 @@ namespace Normalize
       let b : BoolExpr hnod.n hnod.m := hnod_m_m' ▸ hnod_n_nod_n ▸ e
       new_nod := .mk {
         hnod with
-        asserts := hnod.asserts.push b
+        asserts := hnod.asserts.push { value := b, ref }
       } <| by
         simp
         constructor

@@ -1,6 +1,7 @@
 import Aesop
 import Lustrean.Common
 
+namespace Lustrean
 class BoundedLattice (α : Type) where
   bot : α
   top : α
@@ -233,3 +234,4 @@ export Domain (guard assign)
 instance (α : Type) [Domain α] : DecidableEq α := Domain.eq_dec
 
 attribute [simp] Domain.eq_dec
+end Lustrean

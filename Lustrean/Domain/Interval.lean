@@ -1,12 +1,18 @@
 import Lustrean.Facts
 import Lustrean.Domain.NonRelational
 
+namespace Lustrean
 -- int or -∞
 inductive IntLow where
   | int (n : Int)
   | minf
 
 namespace IntLow
+  instance : Repr IntLow where
+    reprPrec
+      | .int n, _ => s!"{n}"
+      | .minf, _ => "-∞"
+
   inductive Le : IntLow → IntLow → Prop where
     | minf m : Le .minf m
     | leq n m : n ≤ m → Le (.int n) (.int m)
@@ -208,6 +214,11 @@ inductive IntHigh where
   | pinf
 
 namespace IntHigh
+  instance : Repr IntHigh where
+    reprPrec
+      | .int n, _ => s!"{n}"
+      | .pinf, _ => "∞"
+
   inductive Le : IntHigh → IntHigh → Prop where
     | pinf_ge n : Le n pinf
     | leq n m : n ≤ m → Le (.int n) (.int m)
@@ -612,6 +623,7 @@ end HLe
 inductive Interval (constants : List Int) where
   | empty : Interval constants
   | interval (low : IntLow) (high : IntHigh) : low ≤∘ high → Interval constants
+  deriving Repr, Inhabited
 
 namespace Interval
   variable {constants : List Int}
@@ -1180,3 +1192,4 @@ namespace Interval
     bounding_low := NarrowLawful.bounding_low
     bounding_high := NarrowLawful.bounding_high
 end Interval
+end Lustrean

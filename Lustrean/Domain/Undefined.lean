@@ -1,9 +1,11 @@
 import Aesop
 import Lustrean.Domain.NonRelational
 
+namespace Lustrean
 structure Undefined (α : Type) : Type where
   val : α
   may_be_nil : Bool
+  deriving Repr, Inhabited
 
 namespace Undefined
   variable {α : Type} [ι : ValueDomain α] (x y z : Undefined α)
@@ -25,11 +27,11 @@ namespace Undefined
   instance : Div (Undefined α) where
     div := div
 
-  def toString := if x.may_be_nil then ι.toString x.val
-    else s!"{x.val} ⊔ nil"
+  protected def toString := if x.may_be_nil then s!"{x.val} ⊔ nil"
+    else toString x.val
 
   instance : ToString (Undefined α) where
-    toString := toString
+    toString := Undefined.toString
 
   def bot : Undefined α := .mk ⊥ false
   def top : Undefined α := .mk ⊤ true
@@ -170,3 +172,4 @@ namespace Undefined
     bounding_low := NarrowLawful.bounding_low
     bounding_high := NarrowLawful.bounding_high
 end Undefined
+end Lustrean
