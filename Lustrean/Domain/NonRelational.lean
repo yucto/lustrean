@@ -37,7 +37,7 @@ namespace ValueDomain
     (x ⊓ r * y, y ⊓ x / r)
 end ValueDomain
 
-inductive NonRelational (α : Type) [ValueDomain α] (n : Nat) :=
+inductive NonRelational (α : Type) [ValueDomain α] (n : Nat) where
 | non_rel : { env : Fin n → α // ∀ i, env i ≠ ⊥} → NonRelational α n
 | bot : NonRelational α n
 
