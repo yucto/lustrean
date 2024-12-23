@@ -47,6 +47,16 @@ lustre
       x ≤ 0
 
 lustre
+  node f(c, z) = y where
+    y = if c = 0 then x else z
+    x = if c = 0 then z else y
+
+lustre
+  node f() = x where
+    x = y
+    y = x
+
+lustre
   node u(x) = o where
     o = 0 fby x
 
