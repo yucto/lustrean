@@ -1173,8 +1173,8 @@ namespace Interval
     decreasing_by all_goals simp [measure]
 
   instance : ValueDomain (Interval constants) where
-    new := .interval (.int 0) (.int 0) <| by simp
-    nil := .bot
+    new := ⊤
+    nil := ⊥
     rand x y := match x, y with
     | .some x, .some y => if h : x ≤ y
       then .interval (.int x) (.int y) <| by constructor; assumption
