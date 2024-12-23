@@ -303,8 +303,11 @@ namespace State
 
   def init : State α cfg :=
     let node_env := Array.mkArray cfg.nb_nodes ⊥
+    let node_env := if h : 0 < node_env.size then node_env.set ⟨0, h⟩ ⊤ else node_env
     let Hnode_env : node_env.size = cfg.nb_nodes := by
-      simp [node_env]
+      rename_i pre_node_env
+      dsimp only [node_env]
+      split <;> simp [pre_node_env]
     let arc_env := Array.mkArray cfg.nb_arcs ⊥
     let Harc_env : arc_env.size = cfg.nb_arcs := by
       simp [arc_env]
