@@ -10,22 +10,22 @@ structure Undefined (α : Type) : Type where
 namespace Undefined
   variable {α : Type} [ι : ValueDomain α] (x y z : Undefined α)
 
-  def add : Undefined α := .mk (x.val + y.val) (x.may_be_nil || y.may_be_nil)
-  def neg : Undefined α := .mk (-x.val) (x.may_be_nil)
-  def sub : Undefined α := .mk (x.val - y.val) (x.may_be_nil || y.may_be_nil)
-  def mul : Undefined α := .mk (x.val * y.val) (x.may_be_nil || y.may_be_nil)
-  def div : Undefined α := .mk (x.val / y.val) (x.may_be_nil || y.may_be_nil)
+  protected def add : Undefined α := .mk (x.val + y.val) (x.may_be_nil || y.may_be_nil)
+  protected def neg : Undefined α := .mk (-x.val) (x.may_be_nil)
+  protected def sub : Undefined α := .mk (x.val - y.val) (x.may_be_nil || y.may_be_nil)
+  protected def mul : Undefined α := .mk (x.val * y.val) (x.may_be_nil || y.may_be_nil)
+  protected def div : Undefined α := .mk (x.val / y.val) (x.may_be_nil || y.may_be_nil)
 
   instance : Add (Undefined α) where
-    add := add
+    add := Undefined.add
   instance : Neg (Undefined α) where
-    neg := neg
+    neg := Undefined.neg
   instance : Sub (Undefined α) where
-    sub := sub
+    sub := Undefined.sub
   instance : Mul (Undefined α) where
-    mul := mul
+    mul := Undefined.mul
   instance : Div (Undefined α) where
-    div := div
+    div := Undefined.div
 
   protected def toString := if x.may_be_nil then s!"{x.val} ⊔ nil"
     else toString x.val
