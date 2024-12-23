@@ -25,6 +25,8 @@ def elab_lustre (nodes : TSyntaxArray `lustre_node) : CoreM Unit := do
     let some cfg := Cfg.new vertices | continue
     println! s!"{cfg.arcs}"
     let state ← State.run (m := CoreM) (α := NonRelational (Undefined (Interval [])) n) cfg
+    for (env, i) in state.node_env.zipWithIndex do
+      println! s!"Node {i}: {env}"
     let some env := state.node_env.back? | continue
     for (var, i) in output_vars.zipWithIndex do
       let val := env.get var
