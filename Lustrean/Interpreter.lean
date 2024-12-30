@@ -265,7 +265,7 @@ namespace State
     | .guard b  => guard src_env b
     | .assert _ => src_env
     set_arc_env arc_idx new_env
-    return decide ¬old_env ⊑ new_env
+    return decide ¬new_env ⊑ old_env
 
   def iter_node (node_idx : Fin cfg.nb_nodes) : StateM (State α cfg) Unit := do
     let s ← get
