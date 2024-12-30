@@ -12,7 +12,44 @@ where
     else
       return r.cast (by omega)
 
+@[simp]
+theorem get_mk_vector_fin {α n} : ∀ (x : α) (i : Fin n), (mkVector n x).get i = x := by
+  intros x i
+  show (mkArray n x)[i] = x
+  simp [mkArray]
+
+@[simp]
+theorem get_mk_vector_nat {α n} : ∀ (x : α) (i : Nat) (h : i < n), (mkVector n x)[i] = x := by
+  intros x i h
+  simp [mkVector]
+  have : i < (mkArray n x).size := by simpa using h
+  show (mkArray n x)[i] = x
+  simp [mkArray]
+
+@[simp]
+theorem get_of_fn_fin {α n} : ∀ (f : Fin n → α) (i : Fin n), (ofFn f).get i = f i := by
+  intros f i
+  simp [ofFn]
+  show (Array.ofFn f)[i] = f i
+  simp
+
+@[simp]
+theorem get_of_fn_nat {α n} : ∀ (f : Fin n → α) (i : Nat) (h : i < n), (ofFn f)[i] = f ⟨i, h⟩ := by
+  intros f i h
+  simp [ofFn]
+  have : i < (Array.ofFn f).size := by simpa using h
+  show (Array.ofFn f)[i] = f ⟨i, h⟩
+  simp
 end Batteries.Vector
+
+theorem piext {α} : ∀ β β' : α → Sort _, (∀ x, β x = β' x) → (∀ x, β x) = (∀ x, β' x) := by
+  intros β β' βx_eq_β'x
+  have : β = β' := by
+    funext
+    apply βx_eq_β'x
+  rw [this]
+
+macro "piext " x:ident : tactic => `(tactic| (apply piext; intro $x:ident))
 
 namespace Lustrean
   def CounterT := StateT Nat
