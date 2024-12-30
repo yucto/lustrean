@@ -284,6 +284,14 @@ namespace State
     else
       set_node_env node_idx in_env
 
+  def incr_heartbeat : StateM (State α cfg) Unit := do
+    let s ← get
+    set { s with nb_step := s.nb_step.succ}
+
+  def heartbeat : StateM (State α cfg) Nat := do
+    let s ← get
+    return s.nb_step
+
   def iter : StateM (State α cfg) Bool := do
     let mut result := false
     for h : i in [0:cfg.nb_arcs] do
@@ -297,9 +305,8 @@ namespace State
         apply Membership.get_elem_helper
         · assumption
         · rfl
-    let s ← get
-    set { s with nb_step := s.nb_step.succ }
     return result
+    incr_heartbeat
 
   def init : State α cfg :=
     let node_env := Array.mkArray cfg.nb_nodes ⊥
