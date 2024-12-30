@@ -184,7 +184,8 @@ namespace IntLow
   by
     intros l₁ l₂
     cases l₁ <;> cases l₂ <;> simp [max] <;> constructor
-    apply Int.le_max_right
+    · apply Int.le_max_right
+    · apply Int.le_refl
 
   theorem max_eq_left : ∀ {l₁ l₂ : IntLow},
     Le l₂ l₁ → l₁.max l₂ = l₁ :=
