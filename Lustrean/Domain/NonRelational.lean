@@ -27,7 +27,7 @@ namespace NonRelational
     x.map_nil fun x => x.set i a
 
   def eval : IExpr n → α
-  | .nil => ι.nil
+  | .nil => nil
   | .var i => get x i
   | .rand a b => ι.rand a b
   | .neg e => - eval e
@@ -48,12 +48,12 @@ namespace NonRelational
   :=
     have : DecidableEq α := ι.eq_dec -- help class inference
     match e with
-    | .nil => if ι.is_bot (ι.meet r ι.nil)
-      then BoundedLattice.bot
+    | .nil => if ι.is_bot (r ⊓ nil)
+      then ⊥
       else x
-    | .var i => update x i (ι.meet (get x i) r)
-    | .rand a b => if ι.is_bot (ι.meet r (ι.rand a b))
-      then BoundedLattice.bot
+    | .var i => update x i ((get x i) ⊓ r)
+    | .rand a b => if ι.is_bot (r ⊓ (ι.rand a b))
+      then ⊥
       else x
     | .neg e =>
       let i := eval x e

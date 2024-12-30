@@ -324,16 +324,15 @@ namespace State
   def check_assert {m : Type → Type} [Monad m] [Lean.MonadError m]
     (s : State α cfg) : m (State α cfg)
   := do
-    for h:i in [0:cfg.nb_arcs] do
-      have H : i < cfg.nb_arcs := by
-        exact Membership.get_elem_helper h rfl
-      let i := ⟨i, H⟩
+    for h : i in [0:cfg.nb_arcs] do
+      have : i < cfg.nb_arcs := Membership.get_elem_helper h rfl
+      let i := ⟨i, this⟩
       let arc := cfg.arcs.get (cfg.Harcs ▸ i)
       match arc.inst with
       | .assert b =>
         let old_env := s.get_arc_env i
         let new_env := ι.guard old_env b.not
-        if new_env ≠ ι.bot && old_env = ι.bot
+        if new_env ≠ ⊥ && old_env = ⊥
         then
           let _ ← Lean.AddErrorMessageContext.add
             arc.synt
