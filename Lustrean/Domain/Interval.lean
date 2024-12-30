@@ -20,7 +20,6 @@ namespace IntLow
   instance : LE IntLow where
     le := Le
 
-  @[simp]
   theorem Le_refl : ∀ (l : IntLow), Le l l :=
   by
     intros l
@@ -423,7 +422,6 @@ inductive HLe : IntLow → IntHigh → Prop where
 namespace HLe
   infix:30 " ≤∘ " => HLe
 
-  @[simp]
   theorem HLe_Le : ∀ (l₁ l₂ : IntLow) (h₁ h₂ : IntHigh),
     IntLow.Le l₂ l₁ → IntHigh.Le h₁ h₂ →
     HLe l₁ h₁ → HLe l₂ h₂ :=

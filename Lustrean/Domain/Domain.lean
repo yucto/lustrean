@@ -193,8 +193,6 @@ where
   covering_right : ∀  (x y : α) (n : Nat), BoundedLattice.is_subset y (x ∇_n y)
   -- trust Adrien for termination
 
-attribute [simp] WidenLawful.covering_left WidenLawful.covering_right
-
 class Narrow (α : Type) where
   -- Nat : number of iterations
   narrow : α → α → Nat → α
@@ -216,8 +214,6 @@ where
   bounding_high : ∀  (x y : α) (n : Nat),
     BoundedLattice.is_subset (narrow x y n) x
   -- trust Adrien for termination
-
-attribute [simp] NarrowLawful.bounding_low NarrowLawful.bounding_high
 
 class Domain (α : Type)
 extends BoundedLattice α, ToString α,
