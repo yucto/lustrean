@@ -180,7 +180,7 @@ namespace IntLow
     cases l₁ <;> cases l₂ <;> simp [min, max]
     apply Int.max_min_absorb
 
-  theorem Le_max_right : ∀ (l₁ l₂ : IntLow), Le l₂ (max l₁ l₂) :=
+  theorem Le_max_right : ∀ l₁ l₂ : IntLow, l₂ ≤ (max l₁ l₂) :=
   by
     intros l₁ l₂
     cases l₁ <;> cases l₂ <;> simp [max] <;> constructor

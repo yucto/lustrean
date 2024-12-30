@@ -108,12 +108,12 @@ namespace Cfg
       let dst := .mk out_node Hout
       let arc := .mk i dst out_inst synt
       have H : cfg.arcs.size < nb_arcs := by
-        rw [←cfg.Harcs]
+        rw [← cfg.Harcs]
         assumption
       let arc_idx := .mk cfg.arcs.size H
       let arcs := cfg.arcs.push arc
       have Harcs : find_nb_arcs l + ((out_node, out_inst, synt) :: out_nodes).length = arcs.size := by
-        simp [arcs, ←Nat.add_assoc]
+        simp [arcs, ← Nat.add_assoc]
         apply cfg.Harcs
       let old_in_arcs := (cfg.nodes.get (cfg.Hnodes ▸ dst)).in_nodes
       let new_node := .mk (arc_idx :: old_in_arcs)
@@ -144,11 +144,11 @@ namespace Cfg
 
     def step (l : List (PreNode nb_var))
       (i : Fin nb_nodes) (cfg : NewAux nb_var nb_nodes nb_arcs l)
-    (pn : PreNode nb_var) (Hn : pn.id = i ∧ (
-      ∀ p, p ∈ pn.out_nodes → p.fst < nb_nodes
-    ))
-    (Harcs : find_nb_arcs l + pn.out_nodes.length ≤ nb_arcs)
-    : NewAux nb_var nb_nodes nb_arcs (pn :: l)
+      (pn : PreNode nb_var) (Hn : pn.id = i ∧
+        ∀ p, p ∈ pn.out_nodes → p.fst < nb_nodes
+      )
+      (Harcs : find_nb_arcs l + pn.out_nodes.length ≤ nb_arcs)
+      : NewAux nb_var nb_nodes nb_arcs (pn :: l)
     :=
       let cfg := step.run nb_nodes nb_arcs l i pn.out_nodes Hn.right Harcs cfg
       let Heq : find_nb_arcs l + pn.out_nodes.length = find_nb_arcs (pn :: l) := by
@@ -158,9 +158,9 @@ namespace Cfg
     def aux (l : List (PreNode nb_var))
       (Hlength : List.length l ≤ nb_nodes)
       (Harcs : find_nb_arcs l ≤ nb_arcs)
-      (Hsorted : ∀ (i : Fin l.length), (l.get i).id = (i + nb_nodes - List.length l) ∧ (
-        ∀ p, p ∈ (l.get i).out_nodes → p.fst < nb_nodes
-      )) : NewAux nb_var nb_nodes nb_arcs l
+      (Hsorted : ∀ i, (l.get i).id = (i + nb_nodes - List.length l) ∧
+        ∀ p ∈ (l.get i).out_nodes, p.fst < nb_nodes
+      ) : NewAux nb_var nb_nodes nb_arcs l
     := match l with
     | [] => init nb_nodes nb_arcs
     | pn :: l =>
@@ -186,16 +186,14 @@ namespace Cfg
         omega
       have Heq : find_nb_arcs l + pn.out_nodes.length = find_nb_arcs (pn :: l) := by
         apply find_nb_arcs_cons
-      step nb_nodes nb_arcs l i cfg pn (by
-        dsimp at Hsorted
-        simpa using Hsorted 0
-      ) (Heq ▸ Harcs)
+      step nb_nodes nb_arcs l i cfg pn (by simpa using Hsorted (0 : Fin (_ + 1)))
+        (Heq ▸ Harcs)
   end new
 
   def new (l : List (PreNode nb_var)) : Option (Cfg nb_var) :=
     let lsorted := l.mergeSort (fun n₁ n₂ => if n₁.id ≤ n₂.id then true else false)
-    if Hsorted : ∀ (i : Fin lsorted.length), (lsorted.get i).id = i ∧ (
-        ∀ p, p ∈ (lsorted.get i).out_nodes → p.fst < lsorted.length
+    if Hsorted : ∀ i, (lsorted.get i).id = i ∧ (
+        ∀ p ∈ (lsorted.get i).out_nodes, p.fst < lsorted.length
       )
     then
       let nb_arcs := new.find_nb_arcs lsorted
@@ -244,17 +242,17 @@ namespace State
     let Hnode_env : node_env.size = cfg.nb_nodes := by
       rw [←s.Hnode_env]
       simp [node_env]
-    set ({ s with node_env := node_env, Hnode_env := Hnode_env})
+    set { s with node_env, Hnode_env }
 
   def get_arc_env (s : State α cfg) (i : Fin cfg.nb_arcs) : α :=
     s.arc_env.get (s.Harc_env ▸ i)
 
   def set_arc_env (i : Fin cfg.nb_arcs) (a : α) : StateM (State α cfg) Unit := do
-    let mut s ← get
+    let s ← get
     let arc_env := s.arc_env.set (s.Harc_env ▸ i) a
     let Harc_env : arc_env.size = cfg.nb_arcs := by
       simp [arc_env, s.Harc_env]
-    set ({ s with arc_env := arc_env, Harc_env := Harc_env})
+    set { s with arc_env, Harc_env }
 
   def iter_arc (arc_idx : Fin cfg.nb_arcs) : StateM (State α cfg) Bool := do
     let s ← get

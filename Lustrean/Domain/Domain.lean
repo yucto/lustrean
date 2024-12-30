@@ -181,7 +181,7 @@ namespace Widen
   variable {α : Type} [Widen α]
 
   @[simp]
-  def widen_seq (x : Nat → α) (n : Nat) : α := match n with
+  def widen_seq (x : Nat → α) : Nat → α
   | 0 => x 0
   | .succ n => (widen_seq x n) ∇_n (x n.succ)
 end Widen
@@ -189,8 +189,8 @@ end Widen
 class WidenLawful (α : Type)
 extends Widen α, BoundedLattice α
 where
-  covering_left : ∀  (x y : α) (n : Nat), BoundedLattice.is_subset x (x ∇_n y)
-  covering_right : ∀  (x y : α) (n : Nat), BoundedLattice.is_subset y (x ∇_n y)
+  covering_left : ∀ (x y : α) n, x ⊑ (x ∇_n y)
+  covering_right : ∀ (x y : α) n, y ⊑ (x ∇_n y)
   -- trust Adrien for termination
 
 class Narrow (α : Type) where
@@ -210,9 +210,9 @@ class NarrowLawful (α : Type)
 extends Narrow α, BoundedLattice α
 where
   bounding_low : ∀  (x y : α) (n : Nat),
-    BoundedLattice.is_subset (BoundedLattice.meet x y) (narrow x y n)
+    (x ⊓ y) ⊑ (narrow x y n)
   bounding_high : ∀  (x y : α) (n : Nat),
-    BoundedLattice.is_subset (narrow x y n) x
+    (narrow x y n) ⊑ x
   -- trust Adrien for termination
 
 class Domain (α : Type)
