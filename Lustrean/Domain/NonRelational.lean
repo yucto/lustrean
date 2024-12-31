@@ -1,4 +1,3 @@
-import Lustrean.Facts
 import Lustrean.Domain.Domain
 import Batteries.Data.Vector
 import Lustrean.Domain.NonRelational.ValueDomain

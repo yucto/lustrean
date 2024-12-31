@@ -1,5 +1,5 @@
-import Lustrean.Facts
 import Lustrean.Domain.NonRelational
+import Misc.Int
 
 namespace Lustrean
 -- int or -∞

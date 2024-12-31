@@ -1,5 +1,4 @@
 import Lustrean.Common
-import Lustrean.Facts
 import Lustrean.Domain
 
 namespace Lustrean

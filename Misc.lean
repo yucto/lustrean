@@ -80,3 +80,4 @@ namespace Lustrean
 
   abbrev CounterM := CounterT Id
 end Lustrean
+import Misc.Int
