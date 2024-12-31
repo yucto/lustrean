@@ -265,6 +265,10 @@ namespace State
     | .guard b  => guard src_env b
     | .assert _ => src_env
     set_arc_env arc_idx new_env
+    -- this is actually faster than checking just one inclusion:
+    --   ¬ (new_env ⊑ old_env)
+    -- although, because we always have `old_env ⊑ new_env`, the two
+    -- are equivalent
     return decide <| old_env ≠ new_env
 
   def iter_node (node_idx : Fin cfg.nb_nodes) : StateM (State α cfg) Unit := do
@@ -297,21 +301,21 @@ namespace State
       dbg_trace s!"  {i}) {env}"
 
   def iter : StateM (State α cfg) Bool := do
-    let mut result := false
+    let mut iterate_again := false
     -- debug
     for h : i in [0:cfg.nb_arcs] do
       let b ← iter_arc <| .mk i <| by
         apply Membership.get_elem_helper
         · assumption
         · rfl
-      result := result || b
+      iterate_again := iterate_again || b
     for h : i in [0:cfg.nb_nodes] do
       iter_node <| .mk i <| by
         apply Membership.get_elem_helper
         · assumption
         · rfl
     incr_heartbeat
-    return result
+    return iterate_again
 
   def init : State α cfg :=
     let node_env := Array.mkArray cfg.nb_nodes ⊥
