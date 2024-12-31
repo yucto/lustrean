@@ -966,7 +966,7 @@ namespace Interval
           assumption
 
   def widen (n : Nat) : Interval constants :=
-    if n <= 100
+    if n <= 10
     then x.join y
     else match x, y with
     | .empty, z
@@ -994,7 +994,7 @@ namespace Interval
   by
     intros n
     cases x <;> simp [BoundedLattice.is_subset, BoundedLattice.meet, meet, widen] <;>
-    by_cases h : n ≤ 100 <;> simp [h, join] <;>
+    by_cases h : n ≤ 10 <;> simp [h, join] <;>
     cases y <;> rename_i hle <;> simp [max, min, hle] <;> clear h
     · simp [IntLow.max_min_absorb, IntHigh.min_max_absorb]
       rename_i hle' _ _
@@ -1050,7 +1050,7 @@ namespace Interval
   by
     intros n
     cases x <;> simp [BoundedLattice.is_subset, BoundedLattice.meet, meet, widen] <;>
-    by_cases h : n ≤ 100 <;> cases y <;>
+    by_cases h : n ≤ 10 <;> cases y <;>
     simp [h, join] <;> clear h <;>
     rename_i l h hle  <;> simp [max, min, hle] <;>
     rename_i l' h' hle'
