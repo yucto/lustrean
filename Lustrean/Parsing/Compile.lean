@@ -42,7 +42,7 @@ section
       | .and => .and l r
 end
 
-def elab_into_cfg (nod : Normalize.Node) : List (PreNode nod.total_vars) × Array (Fin nod.total_vars) := Id.run do
+def elab_into_cfg (nod : Normalize.Node) : List (PreNode nod.total_vars) × Array (&Fin nod.total_vars) := Id.run do
   -- TODO: default is a dummy value
   let mut result := #[{ id := 0, out_nodes := [(1, .assign step (IExpr.const 0), default)] }]
   for h : i in [0:nod.m] do
@@ -126,11 +126,11 @@ def elab_into_cfg (nod : Normalize.Node) : List (PreNode nod.total_vars) × Arra
     id := result.size
     out_nodes := []
   }
-  let output_vars := nod.output_vars.map fun
+  let output_vars := nod.output_vars.map (·.map fun
     | .step => step
     | .input_var k => input_var k
     | .bound_var k => bound_var k
-    | .old_bound_var k => old_bound_var k
+    | .old_bound_var k => old_bound_var k)
   return (result.data, output_vars)
 where
   step : Fin nod.total_vars := .mk 0 <| by
@@ -146,7 +146,7 @@ where
     unfold Normalize.Node.total_vars
     omega
 
-def elab_lustre (a : Array Normalize.Node) : Array (Σ n, List (PreNode n) × Array (Fin n)) :=
+def elab_lustre (a : Array Normalize.Node) : Array (Σ n, List (PreNode n) × Array (&Fin n)) :=
   a.map fun nod =>
     ⟨nod.total_vars, elab_into_cfg nod⟩
 

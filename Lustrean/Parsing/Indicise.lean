@@ -85,7 +85,7 @@ namespace Indicise
     m : Nat
     input_vars : Vector Var n
     bound_vars : Vector (BoundVar n m) m
-    output_vars : Array (VarRef n m)
+    output_vars : Array (&VarRef n m)
     guards : Array (&BoolExpr n m)
     asserts : Array (&BoolExpr n m)
     deriving Repr, Inhabited
@@ -103,7 +103,7 @@ namespace Indicise
       let args := ", ".intercalate <| self.input_vars.map (·.name.toString) |>.toList
       let outputs :=
         if self.output_vars.size > 0 then
-          " = " ++ (", ".intercalate <| self.output_vars.map (self[·].name.toString) |>.toList)
+          " = " ++ (", ".intercalate <| self.output_vars.map (self[·.value].name.toString) |>.toList)
         else
           ""
       let guards :=
@@ -175,7 +175,7 @@ namespace Indicise
       return { name, value }
     let output_vars ← nod.output_vars.mapM (m := CoreM) fun var : &Name => do
       let some i := env.get? var | throwErrorAt var.ref "unbound variable"
-      return i
+      return ⟨i, var.ref⟩
     let guards ← nod.guards.mapM <| elab_boolexpr env
     let asserts ← nod.asserts.mapM <| elab_boolexpr env
     return { name := nod.name, n, input_vars, bound_vars, guards, asserts, output_vars }

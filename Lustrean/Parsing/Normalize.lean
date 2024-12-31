@@ -129,7 +129,7 @@ namespace Normalize
     m : Nat
     input_vars : Vector Var n
     bound_vars : Vector (BoundVar n m) m
-    output_vars : Array (VarRef n m)
+    output_vars : Array (&VarRef n m)
     guards : Array (BoolExpr n m)
     asserts : Array (&BoolExpr n m)
     deriving Repr, Inhabited
@@ -148,7 +148,7 @@ namespace Normalize
       let args := ", ".intercalate <| self.input_vars.map (·.name.toString) |>.toList
       let outputs :=
         if self.output_vars.size > 0 then
-          " = " ++ (", ".intercalate <| self.output_vars.map (self[·].name.toString) |>.toList)
+          " = " ++ (", ".intercalate <| self.output_vars.map (self[·.value].name.toString) |>.toList)
         else
           ""
       let guards :=
@@ -207,7 +207,7 @@ namespace Normalize
         name := { value := .num .anonymous (← CounterT.incr), ref }
         value := e'
       }
-      output_vars := t.output_vars.map (·.upcast this)
+      output_vars := t.output_vars.map (·.map (·.upcast this))
       guards := t.guards.map (·.upcast this)
       asserts := t.asserts.map (·.map (·.upcast this))
     }
@@ -387,7 +387,7 @@ namespace Normalize
       n := nod.n
       m := nod.m
       input_vars := nod.input_vars
-      output_vars := nod.output_vars.map elab_vr
+      output_vars := nod.output_vars.map (·.map elab_vr)
       -- Random garbage, will be filled in later.  This is necessary, because our expressions can
       -- refer to these variables, so they must appear exactly where they originally appear, so
       -- as not to break the references.  Additional bindings must come *after* these.
