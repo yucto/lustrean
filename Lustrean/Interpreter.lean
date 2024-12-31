@@ -265,7 +265,7 @@ namespace State
     | .guard b  => guard src_env b
     | .assert _ => src_env
     set_arc_env arc_idx new_env
-    return decide ¬new_env ⊑ old_env
+    return decide <| old_env ≠ new_env
 
   def iter_node (node_idx : Fin cfg.nb_nodes) : StateM (State α cfg) Unit := do
     let s ← get
@@ -290,8 +290,15 @@ namespace State
     let s ← get
     return s.nb_step
 
+  def debug : StateM (State α cfg) Unit := do
+    let s ← get
+    dbg_trace s!"Step {s.nb_step}"
+    for (env, i) in s.node_env.zipWithIndex do
+      dbg_trace s!"  {i}) {env}"
+
   def iter : StateM (State α cfg) Bool := do
     let mut result := false
+    -- debug
     for h : i in [0:cfg.nb_arcs] do
       let b ← iter_arc <| .mk i <| by
         apply Membership.get_elem_helper
@@ -303,8 +310,8 @@ namespace State
         apply Membership.get_elem_helper
         · assumption
         · rfl
-    return result
     incr_heartbeat
+    return result
 
   def init : State α cfg :=
     let node_env := Array.mkArray cfg.nb_nodes ⊥
@@ -321,8 +328,10 @@ namespace State
       arc_env Harc_env
       widening_points.val widening_points.property 0
 
-  def check_assert {m : Type → Type} [Monad m] [Lean.MonadError m]
-    (s : State α cfg) : m (State α cfg)
+  variable {m : Type → Type} [Monad m]
+  variable [Lean.MonadLog m] [Lean.AddMessageContext m] [Lean.MonadOptions m]
+
+  def check_assert (s : State α cfg) : m (State α cfg)
   := do
     for h : i in [0:cfg.nb_arcs] do
       have : i < cfg.nb_arcs := Membership.get_elem_helper h rfl
@@ -334,15 +343,14 @@ namespace State
         let new_env := ι.guard old_env b.not
         if new_env ≠ ⊥ && old_env = ⊥
         then
-          let _ ← Lean.AddErrorMessageContext.add
-            arc.synt
-            m!"assert failed, got {old_env}"
+          Lean.logErrorAt arc.synt m!"assert failed, got {new_env}"
+          -- let _ ← Lean.AddErrorMessageContext.add
+            -- arc.synt
+            -- m!"assert failed, got {old_env}"
       | _ => pure ()
     return s
 
-  partial def run {m : Type → Type} [Monad m] [Lean.MonadError m]
-    (cfg : Cfg ι.nb_var) : m (State α cfg)
-  :=
+  partial def run (cfg : Cfg ι.nb_var) : m (State α cfg) :=
     (StateT.run loop init).2 |> check_assert
   where
     loop : StateM (State α cfg) Unit := do
