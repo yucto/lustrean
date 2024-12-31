@@ -130,7 +130,7 @@ namespace Undefined
       let ⟨y, b'⟩ := y
       unfold BoundedLattice.is_subset
       simp [Narrow.narrow, narrow, meet]
-      rw [←ι.meet_associative]
+      rw [← ι.meet_associative]
       apply NarrowLawful.bounding_low
     bounding_high := by
       intros x y n

@@ -20,15 +20,24 @@ namespace NonRelational
     have : DecidableEq α := ι.eq_dec
     all_goals exact inferInstance
 
+  protected def toString : NonRelational α n → String
+  | .bot => "⊥"
+  | .non_rel env => toString env.val.toArray
+
+  instance : ToString (NonRelational α n) where
+    toString := NonRelational.toString
+
   def coalesce (env : Vector α n) : NonRelational α n :=
     have := fun i : Fin n => ι.eq_dec (env.get i) ⊥
     if H : ∀ i, env.get i ≠ ⊥
-    then .non_rel <| .mk env H
-    else .bot
+    then
+      .non_rel <| .mk env H
+    else
+      .bot
 
   def map_nil (f : Vector α n → Vector α n) : NonRelational α n :=
     match x with
-    | .non_rel x => coalesce (f x.val)
+    | .non_rel x => coalesce <| f x.val
     | .bot => .bot
 
   def map2_nil (f : Vector α n → Vector α n → Vector α n) : NonRelational α n :=
@@ -65,28 +74,6 @@ namespace NonRelational
 
   instance : Div (NonRelational α n) where
     div := NonRelational.div
-
-  protected def toString : NonRelational α n → String
-  | .bot => "⊥"
-  | .non_rel env =>
-    let rec acc : Nat → String
-    | 0 => ""
-    | 1 => if h : 1 < n
-      then
-        let v := env.val[1]
-        s!"{v}"
-      else ""
-    | .succ i => if h : i < n
-      then
-        let r := acc i
-        let v := env.val.get ⟨i, h⟩
-        s!"{r} ; {v}"
-      else acc i
-    let r := acc n
-    s!"[ {r} ]"
-
-  instance : ToString (NonRelational α n) where
-    toString := NonRelational.toString
 
   theorem join_neq_bot : ∀ (x y : { env : Fin n → α // ∀ i, env i ≠ ⊥}) i,
     x.val i ⊔ y.val i ≠ ⊥

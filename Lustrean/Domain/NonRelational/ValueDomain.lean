@@ -14,6 +14,7 @@ where
   -- x' = { v ∈ x | ∃ v' ∈ y, v op v' }
   -- y' = { v' ∈ y | ∃ v ∈ x, v op v' }
   compare : CompareOp → α → α → α × α
+export ValueDomain (nil)
 
 namespace ValueDomain
   variable (α : Type) [ValueDomain α]
@@ -21,19 +22,19 @@ namespace ValueDomain
   -- backward_op x y r = (x', y') where
   -- x' = { v ∈ x | ∃ v' ∈ y, v op v' ∈ r }
   -- y' = { v' ∈ y | ∃ v ∈ x, v op v' ∈ r }
-  def backward_neg (x r : α) : α := -r ⊓ x
+  def backward_neg (x r : α) : α := (-r) ⊓ x
 
   def backward_add (x y r : α) : α × α :=
-    (x ⊓ r - y, y ⊓ r - x)
+    (x ⊓ (r - y), y ⊓ (r - x))
 
   def backward_sub (x y r : α) : α × α :=
     (x ⊓ (r + y), y ⊓ (x - r))
 
   def backward_mul (x y r : α) : α × α :=
-    (x ⊓ r / y, y ⊓ r / x)
+    (x ⊓ (r / y), y ⊓ (r / x))
 
   def backward_div (x y r : α) : α × α :=
-    (x ⊓ r * y, y ⊓ x / r)
+    (x ⊓ (r * y), y ⊓ (x / r))
 end ValueDomain
 
 end Lustrean

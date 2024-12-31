@@ -41,11 +41,9 @@ namespace NonRelational
     | .idiv => i₁ / i₂
 
   def assign (i : Fin n) (e : IExpr n) : NonRelational α n :=
-    update x i (eval x e)
+    update x i <| eval x e
 
-  def backward_eval (x : NonRelational α n) (e : IExpr n) (r : α) :
-    NonRelational α n
-  :=
+  def backward_eval (e : IExpr n) (r : α) : NonRelational α n :=
     have : DecidableEq α := ι.eq_dec -- help class inference
     match e with
     | .nil => if ι.is_bot (r ⊓ nil)
@@ -58,7 +56,7 @@ namespace NonRelational
     | .neg e =>
       let i := eval x e
       let r := ι.backward_neg i r
-      backward_eval x e r
+      backward_eval e r
     | .binop e₁ op e₂ =>
       let i₁ := eval x e₁
       let i₂ := eval x e₂
@@ -67,20 +65,18 @@ namespace NonRelational
       | .isub => ι.backward_sub i₁ i₂ r
       | .imul => ι.backward_mul i₁ i₂ r
       | .idiv => ι.backward_div i₁ i₂ r
-      backward_eval x e₁ r₁ ⊓ backward_eval x e₂ r₂
+      backward_eval e₁ r₁ ⊓ backward_eval e₂ r₂
 
-  def guard (x : NonRelational α n) (b : BExpr n) :
-    NonRelational α n
-  := match b with
+  def guard : BExpr n → NonRelational α n
   | .random | .const true => x
-  | .const false => BoundedLattice.bot
+  | .const false => ⊥
   | .compare e₁ op e₂ =>
     let i₁ := eval x e₁
     let i₂ := eval x e₂
     let (r₁, r₂) := ι.compare op i₁ i₂
     backward_eval x e₁ r₁ ⊓ backward_eval x e₂ r₂
-  | .or b₁ b₂ => guard x b₁ ⊔ guard x b₂
-  | .and b₁ b₂ => guard x b₁ ⊓ guard x b₂
+  | .or b₁ b₂ => guard b₁ ⊔ guard b₂
+  | .and b₁ b₂ => guard b₁ ⊓ guard b₂
 
   instance : Domain (NonRelational α n) where
     new := coalesce (Vector.mkVector n ValueDomain.new)
