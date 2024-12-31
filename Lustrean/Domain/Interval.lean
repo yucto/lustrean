@@ -2,7 +2,7 @@ import Lustrean.Domain.NonRelational
 import Misc.Int
 
 namespace Lustrean
--- int or -∞
+/-- int or -∞ -/
 inductive IntLow where
   | int (n : Int)
   | minf
