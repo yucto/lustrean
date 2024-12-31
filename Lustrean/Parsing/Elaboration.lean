@@ -12,86 +12,6 @@ open Elab.Command (liftTermElabM)
 open Core (CoreM)
 
 namespace Lustrean.Parsing
-
-
-lustre
-  node u(x) = o
-    where
-      o = x
-    assert
-      x ≤ 0
-
-lustre
-  node f(c, z) = y where
-    y = if c = 0 then x else z
-    x = if c = 0 then z else y
-
-lustre
-  node f() = x where
-    x = y
-    y = x
-
-lustre
-  node u(x) = o where
-    o = 0 fby x
-
-  node f(x) = o
-    guard
-      x ≥ 0
-    where
-      o = if x > 3 then 3 else x
-    assert
-      0 ≤ x ∧ x ≤ 3
-
-  node g() = o where
-    o = f(5) + f(5)
-
-  node h() where
-    o = 0 fby 1 fby o+1
-    i =
-      if o = 5 then
-        if 0 ≠ 0 then 1 else 2
-      else
-        0
-
-lustre
-  node e₁(x) = o
-    guard
-      x ≥ 0
-    where
-      o = 3 + x * [2, ∞]
-    assert
-      o ≠ 0
-
-  node e₂(x) = o where
-    v = e₁(x)
-    o = v + v
-
-  node e₃(x) = o where
-    v = e₂(x)
-    o = v + v
-
-  node e₄(x) = o
-    guard
-      x ≥ 0
-    where
-      o = v + v
-      v = e₃(x)
-    assert
-      o ≥ 0
-
-  -- node main() = o where
-  --   o = e₄(5)
-
-
-lustre
-  node a() = o₁, o₂ where
-    o₁ = 3
-    o₂ = 5
-
-  node b() = o₁ where
-    o₁, o₂ = a()
-
   def elab_lustre (nodes : TSyntaxArray `lustre_node) : CoreM Unit := do
     let nodes :=
       Compile.elab_lustre <|
@@ -122,14 +42,3 @@ lustre
         return .mk nod
       liftTermElabM <| elab_lustre nodes
 end Lustrean.Parsing
-
--- node main' = o where
---     o : nat = o₄
---     o₄ : nat = v₄ + v₄
---     v₄ : nat = o₃
---     o₃ : nat = v₃ + v₃
---     v₃ : nat = o₂
---     o₂ : nat = v₂ + v₂
---     v₂ : nat = o₁
---     o₁ : nat = 3
--- 
