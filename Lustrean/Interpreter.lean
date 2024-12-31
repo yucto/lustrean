@@ -341,7 +341,7 @@ namespace State
       | .assert b =>
         let old_env := s.get_arc_env i
         let new_env := ι.guard old_env b.not
-        if new_env ≠ ⊥ && old_env = ⊥
+        if new_env ≠ ⊥
         then
           Lean.logErrorAt arc.synt m!"assert failed, got {new_env}"
           -- let _ ← Lean.AddErrorMessageContext.add
