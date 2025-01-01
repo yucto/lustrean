@@ -1082,11 +1082,11 @@ namespace Interval
     covering_right := covering_right
 
   def narrow (_ : Nat) : Interval constants :=
-    BoundedLattice.meet x y
+    x ⊓ y
 
   theorem bounding_low :
     ∀ (x y : Interval constants) (n : Nat),
-    BoundedLattice.is_subset (BoundedLattice.meet x y) (narrow x y n) :=
+    (x ⊓ y) ⊑ (narrow x y n) :=
   by
     intros x y n
     have hx : x.meet x = x := BoundedLattice.meet_idempotent x
@@ -1105,10 +1105,9 @@ namespace Interval
 
   theorem bounding_high :
     ∀ (x y : Interval constants) (n : Nat),
-    BoundedLattice.is_subset (narrow x y n) x :=
+    (narrow x y n) ⊑ x :=
   by
     intros x y n
-    have hx : x.meet x = x := BoundedLattice.meet_idempotent x
     simp [narrow]
     rw [BoundedLattice.is_subset]
     unfold BoundedLattice.meet
@@ -1119,7 +1118,10 @@ namespace Interval
       rhs
       arg 2
       rw [meet_commutative]
-    rw [←meet_associative, hx]
+    rw [
+      ← meet_associative,
+      show x.meet x = x by apply BoundedLattice.meet_idempotent
+    ]
 
   instance : Narrow (Interval constants) where
     narrow := narrow
@@ -1174,13 +1176,13 @@ namespace Interval
   instance : ValueDomain (Interval constants) where
     new := ⊤
     nil := ⊥
-    rand x y := match x, y with
-    | .some x, .some y => if h : x ≤ y
-      then .interval (.int x) (.int y) <| by constructor; assumption
-      else .empty
-    | .none, .some y => .interval .minf (.int y) <| by constructor
-    | .some x, .none => .interval (.int x) .pinf <| by constructor
-    | .none, .none => .interval .minf .pinf <| by constructor
+    rand
+      | .some x, .some y => if h : x ≤ y
+        then .interval (.int x) (.int y) <| by constructor; assumption
+        else .empty
+      | .none, .some y => .interval .minf (.int y) <| by constructor
+      | .some x, .none => .interval (.int x) .pinf <| by constructor
+      | .none, .none => .interval .minf .pinf <| by constructor
     eq_dec := inferInstance
     compare := compare
 
