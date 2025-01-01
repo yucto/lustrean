@@ -1175,7 +1175,7 @@ namespace Interval
 
   instance : ValueDomain (Interval constants) where
     new := ⊤
-    nil := ⊥
+    nil := ⊤                    -- we have no better approximation for nil in this domain than ⊤
     rand
       | .some x, .some y => if h : x ≤ y
         then .interval (.int x) (.int y) <| by constructor; assumption
