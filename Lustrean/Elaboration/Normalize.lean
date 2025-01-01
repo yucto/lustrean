@@ -1,6 +1,6 @@
-import Lustrean.Parsing.Reify
-import Lustrean.Parsing.Inline
-import Lustrean.Parsing.Indicise
+import Lustrean.Elaboration.Reify
+import Lustrean.Elaboration.Inline
+import Lustrean.Elaboration.Indicise
 import Misc
 
 open Batteries (Vector)
@@ -17,7 +17,7 @@ open Std (HashMap)
 -- For the sake of simplicity, we aggressively allocate stuff into the persistent state, and not
 -- just for variables for which this is useful.
 
-namespace Lustrean.Parsing
+namespace Lustrean.Elaboration
 namespace Normalize
   export Indicise (Var)
 
@@ -466,4 +466,4 @@ namespace Normalize
     nodes.map elab_node
 end Normalize
 
-end Lustrean.Parsing
+end Lustrean.Elaboration

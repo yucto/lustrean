@@ -1,10 +1,10 @@
-import Lustrean.Parsing.Syntax
+import Lustrean.Elaboration.Syntax
 
 open Lean Meta Elab
 
 -- Reify phase.  This is the bridge between the parser and the elaborator.
 
-namespace Lustrean.Parsing
+namespace Lustrean.Elaboration
 structure WithRef (α : Type _) where
   value : α
   ref : Syntax
@@ -261,4 +261,4 @@ namespace Reify
   def elab_lustre (nodes : TSyntaxArray `lustre_node) : CoreM (Array (&Node)) :=
     nodes.mapM elab_node
 end Reify
-end Lustrean.Parsing
+end Lustrean.Elaboration

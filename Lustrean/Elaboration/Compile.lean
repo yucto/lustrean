@@ -1,13 +1,13 @@
-import Lustrean.Parsing.Normalize
+import Lustrean.Elaboration.Normalize
 import Lustrean.Common
 
-namespace Lustrean.Parsing.Compile
+namespace Lustrean.Elaboration.Compile
 open Normalize
 
 section
   variable {n m : Nat}
 
-  def _root_.Lustrean.Parsing.Normalize.SimpleExpr.to_cfg_expr : SimpleExpr n m → IExpr (1 + n + m + m)
+  def _root_.Lustrean.Elaboration.Normalize.SimpleExpr.to_cfg_expr : SimpleExpr n m → IExpr (1 + n + m + m)
     | .interval lb ub =>
       let lb := match lb with
         | .minf => none
@@ -27,12 +27,12 @@ section
     | .var (.bound_var k) => .var <| .mk (1+n+k) <| by omega
     | .var (.old_bound_var k) => .var <| .mk (1+n+m+k) <| by omega
 
-  def _root_.Lustrean.Parsing.Normalize.BoolExpr.to_cfg_expr : BoolExpr n m → BExpr (1 + n + m + m)
+  def _root_.Lustrean.Elaboration.Normalize.BoolExpr.to_cfg_expr : BoolExpr n m → BExpr (1 + n + m + m)
     | .cmp_op op l r =>
       let op := match op with
-        | .eq => .ceq
-        | .lt => .clt
-        | .leq => .cle
+        | .eq => .eq
+        | .lt => .lt
+        | .leq => .le
       .compare l.to_cfg_expr op r.to_cfg_expr
     | .bin_op op l r =>
       let l := l.to_cfg_expr
@@ -150,4 +150,4 @@ def elab_lustre (a : Array Normalize.Node) : Array (Σ n, List (PreNode n) × Ar
   a.map fun nod =>
     ⟨nod.total_vars, elab_into_cfg nod⟩
 
-end Lustrean.Parsing.Compile
+end Lustrean.Elaboration.Compile

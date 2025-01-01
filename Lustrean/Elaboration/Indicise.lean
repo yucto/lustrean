@@ -1,5 +1,5 @@
-import Lustrean.Parsing.Reify
-import Lustrean.Parsing.Inline
+import Lustrean.Elaboration.Reify
+import Lustrean.Elaboration.Inline
 import Misc
 
 open Batteries (Vector)
@@ -11,7 +11,7 @@ open Std (HashMap)
 -- with indices in the local context.  This is akin to a de Bruijn transformation, except that it
 -- must take into account the fact that all the bindings are mutually recursive.
 
-namespace Lustrean.Parsing
+namespace Lustrean.Elaboration
 namespace Indicise
   inductive VarRef (n m : Nat) where
     | input_var (k : Fin n)
@@ -184,4 +184,4 @@ namespace Indicise
     nodes.mapM elab_node
 end Indicise
 
-end Lustrean.Parsing
+end Lustrean.Elaboration

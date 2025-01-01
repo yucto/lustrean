@@ -1,8 +1,8 @@
-import Lustrean.Parsing.Reify
-import Lustrean.Parsing.Inline
-import Lustrean.Parsing.Indicise
-import Lustrean.Parsing.Normalize
-import Lustrean.Parsing.Compile
+import Lustrean.Elaboration.Reify
+import Lustrean.Elaboration.Inline
+import Lustrean.Elaboration.Indicise
+import Lustrean.Elaboration.Normalize
+import Lustrean.Elaboration.Compile
 import Lustrean.Interpreter
 import Lustrean.Domain.Interval
 
@@ -11,7 +11,7 @@ open Elab (liftMacroM)
 open Elab.Command (liftTermElabM)
 open Core (CoreM)
 
-namespace Lustrean.Parsing
+namespace Lustrean.Elaboration
   def elab_lustre (nodes : TSyntaxArray `lustre_node) : CoreM Unit := do
     let nodes :=
       Compile.elab_lustre <|
@@ -24,11 +24,11 @@ namespace Lustrean.Parsing
       let some cfg := Cfg.new vertices | continue
       -- println! s!"{cfg.arcs}"
       let state ← State.run (m := CoreM) (α := NonRelational (Undefined (Interval [])) n) cfg
-      -- println! "Step ∞"
-      -- for (env, i) in state.node_env.zipWithIndex do
-        -- println! s!" {i}) {env}"
+      println! "Step ∞"
+      for (env, i) in state.node_env.zipWithIndex do
+        println! s!" {i}) {env}"
       let some env := state.node_env.back? | continue
-      for (⟨var, ref⟩, i) in output_vars.zipWithIndex do
+      for ⟨var, ref⟩ in output_vars do
         let val := env.get var
         -- println! s!"Checking {i}-th variable {var}: {val}..."
         if val.may_be_nil then
@@ -41,4 +41,4 @@ namespace Lustrean.Parsing
         let nod ← liftMacroM <| expandMacros nod.raw
         return .mk nod
       liftTermElabM <| elab_lustre nodes
-end Lustrean.Parsing
+end Lustrean.Elaboration

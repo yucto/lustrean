@@ -1,4 +1,4 @@
-import Lustrean.Parsing.Reify
+import Lustrean.Elaboration.Reify
 import Misc
 
 open Batteries (Vector)
@@ -8,7 +8,7 @@ open Std (HashMap)
 
 -- Inline phase.  This is responsible for removing node calls from the AST.
 
-namespace Lustrean.Parsing
+namespace Lustrean.Elaboration
 
 namespace Inline
   export Reify (Variable)
@@ -240,4 +240,4 @@ namespace Inline
       env := env.insert nod.value.name nod
     return result
 end Inline
-end Lustrean.Parsing
+end Lustrean.Elaboration
