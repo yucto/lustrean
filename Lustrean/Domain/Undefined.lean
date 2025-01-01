@@ -1,4 +1,3 @@
-import Aesop
 import Lustrean.Domain.NonRelational
 
 namespace Lustrean
