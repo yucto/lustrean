@@ -1146,12 +1146,12 @@ namespace Interval
     | _, .empty => (.empty, .empty)
     | .interval l₁ h₁ _, .interval l₂ h₂ _ =>
       match op with
-      | .ceq => (x.meet y, x.meet y)
-      | .cneq =>
-        let (x', y') := compare .clt x y
-        let (x'', y'') := compare .cgt x y
+      | .eq => (x.meet y, x.meet y)
+      | .neq =>
+        let (x', y') := compare .lt x y
+        let (x'', y'') := compare .gt x y
         (x'.join x'', y'.join y'')
-      | .cle =>
+      | .le =>
         let l := l₁.max l₂
         let h := h₁.min h₂
         (
@@ -1163,12 +1163,12 @@ namespace Interval
           else .empty
         )
       | .clt => compare .cle (x + (.interval (.int 1) (.int 1) <| by simp)) y
-      | .cge =>
-        let (y', x') := compare .clt y x
+      | .ge =>
+        let (y', x') := compare .le y x
         (x', y')
-      | .cgt =>
-        let (y', x') := compare .cle y x
-        (y', x')
+      | .gt =>
+        let (y', x') := compare .lt y x
+        (x', y')
     termination_by measure op
     decreasing_by all_goals simp [measure]
 
