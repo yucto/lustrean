@@ -171,12 +171,12 @@ namespace Integers
     Integers × Integers
   :=
     let cond := match op with
-    | .ceq => decide (a = b)
-    | .cneq => decide (a ≠ b)
-    | .cle => decide (a ≤ b)
-    | .clt => decide (a < b)
-    | .cge => decide (a ≥ b)
-    | .cgt => decide (a > b)
+    | .eq => decide (a = b)
+    | .neq => decide (a ≠ b)
+    | .le => decide (a ≤ b)
+    | .lt => decide (a < b)
+    | .ge => decide (a ≥ b)
+    | .gt => decide (a > b)
     if cond
     then (.int a, .int b)
     else (bot, bot)
@@ -188,8 +188,8 @@ namespace Integers
     | _, .bot, _
     | _, _, .bot => (bot, bot)
     | _, .int a, .int b => compare_int op a b
-    | .ceq, .top, z
-    | .ceq, z, .top => (z, z)
+    | .eq, .top, z
+    | .eq, z, .top => (z, z)
     | _, _, _ => (x, y)
 
   instance IntegersValueDomain : ValueDomain Integers where

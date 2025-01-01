@@ -52,30 +52,30 @@ namespace IExpr
 end IExpr
 
 inductive CompareOp : Type where
-| ceq : CompareOp
-| cneq : CompareOp
-| cle : CompareOp
-| clt : CompareOp
-| cge : CompareOp
-| cgt : CompareOp
+| eq : CompareOp
+| neq : CompareOp
+| le : CompareOp
+| lt : CompareOp
+| ge : CompareOp
+| gt : CompareOp
 deriving Repr, Inhabited
 
 namespace CompareOp
   def not : CompareOp → CompareOp
-  | ceq => cneq
-  | cneq => ceq
-  | cle => cgt
-  | clt => cge
-  | cge => clt
-  | cgt => cle
+  | eq => neq
+  | neq => eq
+  | le => gt
+  | lt => ge
+  | ge => lt
+  | gt => le
 
   protected def toString : CompareOp → String
-    | .ceq => "="
-    | .cneq => "≠"
-    | .cle => "≤"
-    | .clt => "<"
-    | .cge => "≥"
-    | .cgt => ">"
+    | eq => "="
+    | neq => "≠"
+    | le => "≤"
+    | lt => "<"
+    | ge => "≥"
+    | gt => ">"
 
   instance : ToString CompareOp where
     toString := CompareOp.toString
