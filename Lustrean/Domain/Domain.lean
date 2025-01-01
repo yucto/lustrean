@@ -209,10 +209,8 @@ end Narrow
 class NarrowLawful (α : Type)
 extends Narrow α, BoundedLattice α
 where
-  bounding_low : ∀  (x y : α) (n : Nat),
-    (x ⊓ y) ⊑ (narrow x y n)
-  bounding_high : ∀  (x y : α) (n : Nat),
-    (narrow x y n) ⊑ x
+  bounding_low : ∀  (x y : α) (n : Nat), (x ⊓ y) ⊑ (narrow x y n)
+  bounding_high : ∀  (x y : α) (n : Nat), (narrow x y n) ⊑ x
   -- trust Adrien for termination
 
 class Domain (α : Type)
@@ -228,6 +226,4 @@ where
 export Domain (guard assign)
 
 instance (α : Type) [Domain α] : DecidableEq α := Domain.eq_dec
-
-attribute [simp] Domain.eq_dec
 end Lustrean
