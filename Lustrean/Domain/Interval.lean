@@ -1162,7 +1162,10 @@ namespace Interval
           then .interval l h₂ hyp₂
           else .empty
         )
-      | .clt => compare .cle (x + (.interval (.int 1) (.int 1) <| by simp)) y
+      | .lt =>
+        let one := .interval (.int 1) (.int 1) <| by simp
+        let (x', y') := compare .le (x + one) y
+        (x' - one, y')
       | .ge =>
         let (y', x') := compare .le y x
         (x', y')
