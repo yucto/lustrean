@@ -24,9 +24,9 @@ namespace Lustrean.Elaboration
       let some cfg := Cfg.new vertices | continue
       -- println! s!"{cfg.arcs}"
       let state ← State.run (m := CoreM) (α := NonRelational (Undefined (Interval [])) n) cfg
-      println! "Step ∞"
-      for (env, i) in state.node_env.zipWithIndex do
-        println! s!" {i}) {env}"
+      -- println! "Step ∞"
+      -- for (env, i) in state.node_env.zipWithIndex do
+      --   println! s!" {i}) {env}"
       let some env := state.node_env.back? | continue
       for ⟨var, ref⟩ in output_vars do
         let val := env.get var
