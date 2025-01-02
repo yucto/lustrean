@@ -1,0 +1,144 @@
+\documentclass{scrartcl}
+\usepackage{cmap}
+\usepackage{fontspec}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[english]{babel}
+\usepackage{tikz}
+\usepackage{minted}
+\usepackage{xcolor}
+\usepackage{ifthen}
+\usepackage{hyperref}
+\usepackage{fontspec, unicode-math}
+
+\setmonofont{FiraCode Nerd Font Mono}
+
+\usetikzlibrary{positioning}
+\usetikzlibrary{calc}
+
+\newcommand*{\keyword}[1]{\textbf{\color{yellow}{#1}}}
+\newcommand*{\Node}{\keyword{node}}
+\newcommand*{\If}{\keyword{node}}
+\newcommand*{\Where}{\keyword{where}}
+\newcommand*{\Then}{\keyword{then}}
+\newcommand*{\Else}{\keyword{else}}
+
+\newfontfamily\NHLight[
+   ItalicFont     = HelveticaNeueLT Std Thin,
+   ]{Helvetica Neue LT Std}
+\newcommand\textulf[1]{{\NHLight\textit#1}}
+\title{Lustrean}
+\subtitle{Lustre + Lean = Lustrean}
+\author{Jean \textsc{Caspar} \and Adrien \textsc{Mathieu}}
+\date{December 2024}
+\newcommand{\lustrean}[1]{\scalebox{#1}{%
+  \begin{tikzpicture}%
+    \node (L) {\Huge\(\mathcal{L}\)};%
+    \node at (.6,.25) {ustr};%
+    \node at (.6,-.2) {\small ${\exists}\hspace*{-.1em}{\forall}$\hspace*{-.1em}\raisebox{-.05ex}{\textulf{N}}};%
+  \end{tikzpicture}%
+}}
+\begin{document}
+\maketitle
+\tableofcontents
+
+\pagebreak
+
+\section*{Introduction}
+Lustrean is an abstract interpreter of a core subset of Lustre in Lean.  It aims at
+\begin{itemize}
+\item doing a (shallow) embedding of Lustre into Lean;
+\item using precise semantics of the embedded program, that is, not to refuse a program just
+  because it cannot statically be determined to be meaningful;
+\item abstracting over that semantics to semi-decide whether that program will produce runtime
+  errors.
+\end{itemize}
+Runtime errors that Lustrean can prevent are of two kind:
+\begin{itemize}
+\item the program being meaningless, it produces a non-value;
+\item the program fails to verify certain user-specified properties.
+\end{itemize}
+
+Moreover, Lustrean is parametric over the abstract domain used.  We provide simple numerical
+domains to be used with a nonrelational domain, but this is entirely decoupled from the rest of
+the project.
+
+\subsection*{Getting and testing Lustrean}
+Lustrean can be cloned from \url{https://github.com/yucto/lustrean}.  The project is divided into
+two module trees: the main module, \texttt{Lustrean}; and a module \texttt{Misc} which contains
+definitions and lemmas which are of general purpose.
+
+Besides this, a module \texttt{Example} is provided, that shows how to use Lustrean.  It is
+recommended that this module is opened with an editor that supports Lean, so as to have immediate
+feedback: as the Lustre code is written, it will be checked, compiled and (abstractly)
+interpreted on the fly.  For instance, if you type
+% [extrakeywords=node where assert guard]
+\begin{minted}{text}
+node f(x) = o where
+  o = x * x
+assert
+  o ≥ 0
+\end{minted}
+the last assert will be quickly highlighted in red, indicating that Lustrean has failed to
+automatically prove that the said assert will never fail.  If you change the assignment of
+\texttt{o} to the following, which is seemingly equivalent but more verbose, you will see that
+the error will disappear.
+\begin{minted}{text}
+  o = if x ≥ 0 then x * x else x * x
+\end{minted}
+This example will be further explained later on.
+
+
+\section{Lustre embedding}
+Lustrean embeds a core subset of Lustre, which is accessible as a library.
+
+\subsection{Accepted subset of Lustre}
+The subset of Lustre that is accepted by Lustrean is simply typed, with two types: (signed)
+integers, and boolean.  However, boolean values can only be used to express guards, assertions
+and in \texttt{if} statements.
+% Types
+% Semantics
+% Syntax
+
+\subsection{Embedding phases}
+
+\section{Abstract interpretation}
+\subsection{The interpreter}
+
+\subsection{Compilation scheme}
+
+\section{Domains}
+
+\section{Difficulties encountered}
+\subsection{Monads}
+
+\subsection{Bugs still present}
+
+\subsection{Inadequate domain}
+
+\lustrean{2}
+
+\begin{center}
+  \begin{tikzpicture}[thick, 1/.style={->}, 2/.style={->, dashed}]
+    \node (0) {$\bullet$};
+
+    \foreach[count=\n from 0] \lbl/\style in {
+      {$n$ \leftarrow{} $0$}/1,%
+      {locals \leftarrow{} $\bot$}/1,%
+      {state \leftarrow{} locals}/1,%
+      {input \leftarrow{} $\top$}/1,%
+      {guards}/1,%
+      {locals \leftarrow{} $\bot$}/1,%
+      {code}/2,%
+      {asserts}/1%
+    } {
+      \edef\m{\the\numexpr \n + 1\relax}
+      \node[below=of \n] (\m) {$\bullet$};
+      \draw[\style] (\n) -- node[right] {\lbl} (\m);
+    }
+    \draw[->] (7) edge[bend left=30] node[left] {skip} (6);
+    \draw[->] (7) edge[bend left=90] node[left] {$n$ \leftarrow{} $n + 1$} (2);
+  \end{tikzpicture}
+\end{center}
+
+\end{document}
