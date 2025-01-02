@@ -2,9 +2,16 @@ import Lustrean
 
 lustre
   node u(x) = o where
-    o = (x * x) + 3
+    o = x * x + 3
   assert
     o ≤ 1
+
+lustre
+  node u(x) = o where
+    -- o = if x ≥ 0 then x * x else x * x
+    o = x * x
+  assert
+    o ≥ 0
 
 lustre
   node f() = x where
@@ -13,8 +20,15 @@ lustre
 
 lustre
   node f(c, z) = y where
-    y = if c = 0 then x else z
     x = if c = 0 then z else y
+    y = if c = 0 then x else z
+
+lustre
+  node l() = o where
+    up = 1 fby if (up = 1 ∧ o < 10) ∨ (up = 0 ∧ o = 0) then 1 else 0
+    o = 0 fby if up = 1 then o + 1 else o - 1
+  assert
+    0 ≤ o
 
 lustre
   node f(x) = o
@@ -33,7 +47,6 @@ lustre
   node u(x) = o where
     o = 0 fby x
 
-lustre
   -- shadowing
   node f(x) = o
     guard
@@ -41,9 +54,9 @@ lustre
     where
       o = if x > 3 then 3 else x
     assert
-      0 ≤ x ∧ x ≤ 4
+      0 ≤ x
+      x ≤ 4
 
-lustre
   node g() = o where
     o = f(5) + f(5)
 
@@ -51,6 +64,6 @@ lustre
     o = 0 fby 1 fby i+1
     i =
       if o = 5 then
-        o + if 0 ≠ 0 ∧ o ≤ 2*o then 1 else 2
+        if 0 ≠ 0 then 1 else 2
       else
         0
