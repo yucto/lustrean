@@ -109,6 +109,43 @@ and in \texttt{if} statements.
 
 \section{Domains}
 
+The domains used in abstract interpretation are bounded lattice
+which supports arithmetical operations, assignments and guards,
+where a guard is a restriction of the environment to the values
+satisfying some predicate. Domains should also come with
+a widening and a narrowing operators. A widening operator
+is an overapproximation of the union of environment, which
+ensures we reach a post-fixpoint of the transfer function in
+finite time. A narrowing is an overapproximation of the
+intersection, which allows to improve the precision while
+staying above the fixpoint.
+
+Here, we only used non relational domains: environments are functions
+from the set of variables to a so-called value domain, representing
+an approximation of a value. In the implemention, we used vectors rather
+than functions for more efficiency. Relational domains are far more
+powerful than non relatonial domains, but we didn't have the time to
+implement one. Also, our non relational domains are reduced, meaning
+that there is a single representation for all environments which contain
+at least one bottom value.
+
+We implemented two value domains: integers with a top and a
+bottom element, and the intervals. We also implemented a domain
+combinator which freely add a nil value, representing an
+unknown value. We use this value to represent non initialized
+pre expressions. In the new domain, values are a pair of
+a value from the old domain et a boolean representing the
+fact that this value may be nil. Therefore nil is incomparable
+with values from the old domain, except with bottom. Nil is greater
+than bottom.
+
+Domains have been fully formalized in Lean, except for the fact
+that widening and narrowing stabilizes in finite time: this requires
+classical logic, but then we would not be able to extract the
+number of iterations to use it in the interpreter, as it uses
+an axiom, and it would be painful since our widening depends on
+the list of constants in the program.
+
 \section{Difficulties encountered}
 \subsection{Monads}
 
