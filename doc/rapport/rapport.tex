@@ -105,6 +105,39 @@ and in \texttt{if} statements.
 \section{Abstract interpretation}
 \subsection{The interpreter}
 
+The interpreter works on a CFG. The interpreter assigns to each
+node and arcs of the CFG an environment, representing
+the function which sends a variable to its value. This
+environment is abstracted and takes its values in a domain,
+as described later.
+
+We procede by iteration: we start with
+every environment to bottom, meaning that they are unreachable,
+except for the initial node. Then we iterate the following steps
+until the environments in the node stabilize. First, we
+iterate on every arc to assigns to each arc the value
+of the transfer function of the arc applied to the environment
+of the source node of the arc. Then we iterate on every node
+to assign to each node the union of the environments of
+the arcs coming into the node.
+
+We couldn't prove that the function iterating until the stabilizition
+terminates in Lean, as described in the Domains section,
+though it may be possible. But Lean allows to annotate as partial
+some functions where it can prove that the type of the returned
+value is inhabited, ensuring no inconsistency can happen.
+In the interpreter, all array accesses are proven correct.
+
+In order to do this, a lot of bookkeeping is involved with dependent types.
+For example, we use two intermediate structures in order
+to convert the first representation of the CFG, which is presented
+as a list of nodes, a nodes consisting in a list of pairs with an instruction
+and the index of the exit node of the instruction, and the second
+representation, which consists of a list of nodes and arcs, a node
+containing a list of ``indices into the list of arcs'', representing the
+instructions going into this node, and an arc consisting of an instruction
+and the source and exit node of this instruction, represented as ``indices into the list of nodes''.
+
 \subsection{Compilation scheme}
 
 \section{Domains}
@@ -140,11 +173,10 @@ with values from the old domain, except with bottom. Nil is greater
 than bottom.
 
 Domains have been fully formalized in Lean, except for the fact
-that widening and narrowing stabilizes in finite time: this requires
-classical logic, but then we would not be able to extract the
-number of iterations to use it in the interpreter, as it uses
-an axiom, and it would be painful since our widening depends on
-the list of constants in the program.
+that widening and narrowing stabilizes in finite time: this is
+would be very painful to prove, since our widening depends on
+the list of constants in the program, and may requires classical
+logic, thus being difficult to extract.
 
 \section{Difficulties encountered}
 \subsection{Monads}

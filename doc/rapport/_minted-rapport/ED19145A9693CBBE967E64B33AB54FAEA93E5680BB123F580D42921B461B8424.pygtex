@@ -1,0 +1,6 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+node f(x) = o where
+  o = x * x
+assert
+  o ≥ 0
+\end{Verbatim}
