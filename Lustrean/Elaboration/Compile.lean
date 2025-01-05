@@ -1,5 +1,5 @@
 import Lustrean.Elaboration.Normalize
-import Lustrean.Common
+import Lustrean.Imp
 
 namespace Lustrean.Elaboration.Compile
 open Normalize

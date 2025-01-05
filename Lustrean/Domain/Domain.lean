@@ -1,5 +1,5 @@
 import Aesop
-import Lustrean.Common
+import Lustrean.Imp
 
 namespace Lustrean
 class BoundedLattice (α : Type) where

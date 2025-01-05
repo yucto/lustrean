@@ -1,4 +1,4 @@
-import Lustrean.Common
+import Lustrean.Imp
 import Lustrean.Domain
 
 namespace Lustrean
