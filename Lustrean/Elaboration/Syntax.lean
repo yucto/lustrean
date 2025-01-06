@@ -1,5 +1,8 @@
 import Lean
 
+-- These are the non terminals of our grammar.  They are declared independently of their rules
+-- because they are "open": anyone can introduce new rules for these non terminals, or rewrite
+-- rules on top of these.
 declare_syntax_cat lustre_node
 declare_syntax_cat lustre_expr
 declare_syntax_cat lustre_node_decl
@@ -7,6 +10,12 @@ declare_syntax_cat lustre_assertion
 declare_syntax_cat lustre_lower_bound
 declare_syntax_cat lustre_upper_bound
 
+-- These are the rules of our grammar.  A declaration of the form
+--   syntax fragments : non-terminal
+-- is written, in grammar style, as
+--   non-terminal → fragments
+-- Declarations preceded by a "sugar" comment indicate syntactic sugar.  They are folded to
+-- non-sugar construction at the end of this file.
 syntax (name := lustre_command) "lustre " lustre_node* : command
 syntax "node " ident "(" ident,* ")" (" = " (ident),+)?
   (" guard" lustre_assertion*)? " where" lustre_node_decl*
@@ -50,6 +59,7 @@ syntax:65 " ¬" lustre_assertion:65 : lustre_assertion
 -- sugar
 syntax:max " (" lustre_assertion:0 ") " : lustre_assertion
 
+-- Rewrite rules on top of the previously declared syntactic forms.
 macro_rules
   | `(lustre_expr| $k:num) => `(lustre_expr| [$k:num, $k:num])
   | `(lustre_assertion| ¬ $e:lustre_assertion) => do
