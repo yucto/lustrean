@@ -10,27 +10,28 @@
 \usepackage{ifthen}
 \usepackage{hyperref}
 \usepackage{fontspec, unicode-math}
+\usepackage[normalem]{ulem}
 
-\setmonofont{FiraCode Nerd Font Mono}
+\setmonofont{FiraCode Nerd Font Mono}[Scale=MatchLowercase]
 
 \usetikzlibrary{positioning}
 \usetikzlibrary{calc}
 
-\newcommand*{\keyword}[1]{\textbf{\color{yellow}{#1}}}
+\newcommand*{\keyword}[1]{\textbf{\color{green!65!black}{#1}}}
 \newcommand*{\Node}{\keyword{node}}
-\newcommand*{\If}{\keyword{node}}
 \newcommand*{\Where}{\keyword{where}}
+\newcommand*{\Guard}{\keyword{guard}}
+\newcommand*{\Assert}{\keyword{assert}}
+\newcommand*{\If}{\keyword{if}}
 \newcommand*{\Then}{\keyword{then}}
 \newcommand*{\Else}{\keyword{else}}
+\newcommand*{\Pre}{\keyword{pre}}
+\newcommand*{\Fby}{\keyword{fby}}
 
 \newfontfamily\NHLight[
    ItalicFont     = HelveticaNeueLT Std Thin,
    ]{Helvetica Neue LT Std}
 \newcommand\textulf[1]{{\NHLight\textit#1}}
-\title{Lustrean}
-\subtitle{Lustre + Lean = Lustrean}
-\author{Jean \textsc{Caspar} \and Adrien \textsc{Mathieu}}
-\date{December 2024}
 \newcommand{\lustrean}[1]{\scalebox{#1}{%
   \begin{tikzpicture}%
     \node (L) {\Huge\(\mathcal{L}\)};%
@@ -38,6 +39,22 @@
     \node at (.6,-.2) {\small ${\exists}\hspace*{-.1em}{\forall}$\hspace*{-.1em}\raisebox{-.05ex}{\textulf{N}}};%
   \end{tikzpicture}%
 }}
+\newminted[lustre]{text}{escapeinside=@@, linenos}
+\newmintinline[lustr]{text}{escapeinside=@@}
+
+\setminted{baselinestretch=.8}
+
+\makeatletter
+\def\uwave{\bgroup\markoverwith{\lower3.5\p@\hbox{\sixly\textcolor{red!90!black}{\char58}}}\ULon}
+\font\sixly=lasy6
+\makeatother
+\newcommand*{\error}[1]{\uwave{#1}}
+
+\title{Lustrean}
+\subtitle{Lustre + Lean = Lustrean}
+\author{Jean \textsc{Caspar} \and Adrien \textsc{Mathieu}}
+\date{December 2024}
+
 \begin{document}
 \maketitle
 \tableofcontents
@@ -72,142 +89,364 @@ Besides this, a module \texttt{Example} is provided, that shows how to use Lustr
 recommended that this module is opened with an editor that supports Lean, so as to have immediate
 feedback: as the Lustre code is written, it will be checked, compiled and (abstractly)
 interpreted on the fly.  For instance, if you type
+% this is supposed to work, with a better version of minted...
 % [extrakeywords=node where assert guard]
-\begin{minted}{text}
-node f(x) = o where
+\begin{lustre}
+@\Node@ f(x) = o @\Where@
   o = x * x
-assert
-  o ≥ 0
-\end{minted}
+@\Assert@
+  @\error{o ≥ 0}@
+\end{lustre}
 the last assert will be quickly highlighted in red, indicating that Lustrean has failed to
 automatically prove that the said assert will never fail.  If you change the assignment of
 \texttt{o} to the following, which is seemingly equivalent but more verbose, you will see that
 the error will disappear.
-\begin{minted}{text}
-  o = if x ≥ 0 then x * x else x * x
-\end{minted}
+\begin{lustre*}{firstnumber=2}
+  o = @\If@ x ≥ 0 @\Then@ x * x @\Else@ x * x
+\end{lustre*}
 This example will be further explained later on.
 
 
 \section{Lustre embedding}
-Lustrean embeds a core subset of Lustre, which is accessible as a library.
+Lustrean embeds a core subset of Lustre, enriched with the possibility to declare assertions and
+assumptions at a node level.  That is, in addition to local bindings, a node can introduce
+assumptions with the \lustr{@\Guard@} keyword (synonyms in other contexts might be
+\texttt{assume}, \texttt{require} or pre-conditions, although in Lustrean assumptions can speak
+of any variable, not just input variables), and assertions with the \lustr{@\Assert@} keyword
+(synonyms are \texttt{ensure}, \texttt{provide} or post-conditions).
 
-\subsection{Accepted subset of Lustre}
+\subsection{Syntax}
 The subset of Lustre that is accepted by Lustrean is simply typed, with two types: (signed)
 integers, and boolean.  However, boolean values can only be used to express guards, assertions
-and in \texttt{if} statements.
-% Types
-% Semantics
-% Syntax
+and in used in \texttt{if} statements.  The exact syntax is entirely specified in
+\path{Lustrean/Elaboration/Syntax.lean}.
 
-\subsection{Embedding phases}
+\subsection{Type system}
+The type system of Lustrean is extremely simple.  All expressions are (signed) integers, except
+for boolean expressions which can only occur in positions where they are syntactically expected.
+The type system hasn't been improved with extensions, such as incorporating a clock system, since
+the point of doing abstract interpretation is to widen the number of programs for which we can
+statically ensure the absence of runtime errors.
+
+All in all, this means that we don't even need a type checking pass, as all the type checking /
+inference that we need to do is encoded in the syntax.
+
+\subsection{Reification}
+The parser hooks into Lean's own parser, so it actually happens at compile time.  The reification
+step turns that syntax tree into a Lean value, that can be manipulated by Lean code.  Since the
+meta-language of Lean is Lean itself, this is a very simple step, as the syntax tree is already a
+Lean value: it merely does a tree traversal, producing a tree whose type is an ADT encoding
+exactly Lutrsean programs.
+
+This is further simplified by the fact that all the analysis happens at compile-time (with
+respect to Lean's compilation process), so we don't even need to quote the resulting tree.
+
+\subsection{Inlining}
+After having reified a Lustrean program, we know it is syntactically correct (and thus type
+correct), but we yet have to check scopes.  We want to avoid having to check at some point that
+all the variables are correctly bound, and then transporting that proof through all the
+compilation steps until we actually need it to resolve the variables.
+
+For variables bound to nodes, used in node calls, we avoid this problem entirely by inlining them
+right after we have resolved them.  This means that either a variable is well-scoped, and it will
+be replaced by its definition, or it is not and this will produce an error.
+
+The inlining ensures that every assumption an inlined node makes about its formal parameters is
+
+\subsection{Indicisation}
+The remaining variables are of two kind: input variables, or locally bound variables.  Clearly,
+we cannot inline input variables, so, instead, we will perform a de Bruijn-like transformation,
+replacing every variable with an index, indicating where to find the definition of the variable.
+
+The main differences with a de Bruijn transformation are:
+\begin{itemize}
+\item that bindings cannot be nested.  Indeed, local bindings are mutually recursive, and need
+  not to be statically schedulable;
+\item indices are enriched with a proof that we are within bounds.
+\end{itemize}
+The fact that all bindings are at toplevel means that, after this step has been performed, we end
+up with an array of expressions, representing the content of each locally bound variable.  Each
+variable is now either an index of an input variable, or an index of a locally bound variable.
+
+\subsection{Normalization}
+The normalization step does several code transformations at once.  It is, however, simpler to
+explain them individually,
+\begin{itemize}
+\item Firstly, it transforms \lustr{e@${}_1$@ @\Fby@ e@${}_2$@} into
+  \lustr{e@${}_1$@ -> @\Pre@ e@${}_2$@} (the two operators \lustr{->} and \lustr{@\Pre@} will be
+  compiled independently);
+\item it ensures that, in every expression of the form \lustr{@\Pre@ e}, $e$ is a locally
+  bound variable, by creating a new binding \lustr{v = e} and replacing $e$ with $v$ if
+  necessary;
+\item it introduces a new variable, $n$, which counts the number of times the node has been
+  activated.  This is useful to replace \lustr{e@${}_1$@ -> e@${}_2$@} by
+  \lustr{@\If@ n = 0 @\Then@ e@${}_1$@ @\Else@ e@${}_2$@};
+\item it ensures that every \lustr{@\If@ ... @\Then@ ... @\Else@ ...} expression happens at the 
+  top of an expression.  The reason to do so is that the language we will compile Lustrean to
+  doesn't have \texttt{if} expressions, only \texttt{if} statements, so we will compile a
+  binding \lustr{v = @\If@ c @\Then@ e@${}_1$@ @\Else@ e@${}_2$@} into
+  \lustr{@\If@ c @\Then@ v = e@${}_1$@ @\Else@ v = e@${}_2$@};
+
+\item for every locally bound variable \(v\), it creates a variable \(v_\textrm{pre}\), (which in
+  ZRun is called ``last'') whose purpose is to store the persistent state.  Then, we replace
+  every \lustr{@\Pre@ v} with \lustr{v@${}_\textrm{pre}$@};
+\end{itemize}
+
+\subsection{Compilation}
+After having normalized the program, we compile it to a Control Flow Graph (CFG onwards) of a
+simple imperative programming language (defined in \path{Lustrean/Imp.lean}, which we'll call Imp
+onwards), which essentially has two statements: an assignment statement, and a guard statement.
+The \lustr{@\Guard@} statement is akin to an \lustr{@\If@} statement, but is formulated as a
+  statement that blocks computation if its condition is not met because the generated CFG is not
+  deterministic (this will be further explained in the Compilation Scheme section).
+
+This is mostly a virtual step, as, in the code, it is merged with the step that translates a CFG
+expressed in the concrete semantics into a CFG in the abstracted semantics.  This is important
+because, as will be further explained in the Compilation Scheme section, this allows producing a
+much simpler abstracted CFG, by exploiting the abstract interpreter itself to perform some
+operations that our concrete program should do explicitly otherwise.
+
+However, this also has a major drawback, which is that at no point the concrete program is
+explicitly built.  If we wanted to prove soundness theorems for our abstract interpreter, we
+should do it with respect to a concrete semantics.  In fact, a concrete machine does not provide
+a fixpoint computation operation, as our abstract interpreter does, and since our compilation
+scheme exploits this feature, proving a soundness theorem would additionally require to either
+avoid using that primitive fixpoint operation, or also proving a fixpoint lifting theorem that
+states that computing a fixpoint in the language, or lifting it in the abstract interpreter ends
+up with the same result.
+
+\subsection{Semantics}
+The semantics of Lustre that Lustrean provides are akin to those of ZRun (modulo the fact that
+ZRun implements more features).  However, they are simplified in the domain used to find a
+fixpoint: ZRun has two special, ``undefined'' values, bottom and nil.  The former represents
+computation that haven't produced a value yet (and which might never produced a value), while the
+latter represents values created by \lustr{@\Pre@}.
+
+In the concrete semantics of Lustrean, instead, these two ``undefined'' values are merged.  The
+one value that corresponds to these two values is called, in Lustrean, nil.  This makes the
+concrete semantics easy to explain: initialize every (non-input) variable to nil, and propagate
+computations.  This applies uniformly for ``last'' variables, and for locally bound variables.
+
+This nil value represents both an undefined value that we are not supposed to use (ie. reading a
+\lustr{@\Pre@ e} value at the first step) and divergence/non-causality.  These are two behaviors
+that are considered bad, and that Lustrean tries to prove never happen, so there is no real need
+to distinguish these two.  However, the concrete semantics cannot actually diverge: computing a
+Lustre step always terminates.
+
+These should not be confused with extra ``special'' points added in the abstract domain, $\bot$
+and $\top$.  The former represents unreachable expressions (\emph{not} diverging expressions,
+since expressions in Lustre cannot diverge anyways), while the latter represents an expression
+that might have any value.  While producing a nil (which corresponds, in ZRun, to either bottom
+or nil) is considered as bad behavior, producing a $\bot$ or a $\top$ is not bad behavior.
 
 \section{Abstract interpretation}
 \subsection{The interpreter}
+The abstract interpreter takes, as input, a program (whose form is a CFG backed by simple
+imperative statements).  It executes that program, and outputs the state of the abstract machine
+at the end of the program.  To do so, it actually computes the state at each vertex (and each
+arc) of the CFG, by translating the CFG into an operator over the domain passed as argument, and
+computing its fixpoint.
 
-The interpreter works on a CFG. The interpreter assigns to each
-node and arcs of the CFG an environment, representing
-the function which sends a variable to its value. This
-environment is abstracted and takes its values in a domain,
-as described later.
+We procede by iteration: we start with every environment to $\bot$, meaning that they are
+unreachable, except for the initial node, whose environment is $\top$, meaning that initially any
+value might be present in memory. Then we iterate the following steps until the environments in
+the node stabilize:
+\begin{itemize}
+\item we iterate on every arc to assigns to each arc the value of the transfer function of the
+  arc applied to the environment of the source node of the arc;
+\item we iterate on every node to assign to each node the union of the environments of the arcs
+  coming into the node.
+\end{itemize}
 
-We procede by iteration: we start with
-every environment to bottom, meaning that they are unreachable,
-except for the initial node. Then we iterate the following steps
-until the environments in the node stabilize. First, we
-iterate on every arc to assigns to each arc the value
-of the transfer function of the arc applied to the environment
-of the source node of the arc. Then we iterate on every node
-to assign to each node the union of the environments of
-the arcs coming into the node.
+We couldn't prove that the function iterating until the stabilizition terminates in Lean, as
+described in the Domains section, though it may be possible. But Lean allows to annotate as
+partial some functions where it can prove that the type of the returned value is inhabited,
+ensuring no inconsistency can happen.  In the interpreter, all array accesses are proven correct.
 
-We couldn't prove that the function iterating until the stabilizition
-terminates in Lean, as described in the Domains section,
-though it may be possible. But Lean allows to annotate as partial
-some functions where it can prove that the type of the returned
-value is inhabited, ensuring no inconsistency can happen.
-In the interpreter, all array accesses are proven correct.
-
-In order to do this, a lot of bookkeeping is involved with dependent types.
-For example, we use two intermediate structures in order
-to convert the first representation of the CFG, which is presented
-as a list of nodes, a nodes consisting in a list of pairs with an instruction
-and the index of the exit node of the instruction, and the second
-representation, which consists of a list of nodes and arcs, a node
-containing a list of ``indices into the list of arcs'', representing the
-instructions going into this node, and an arc consisting of an instruction
-and the source and exit node of this instruction, represented as ``indices into the list of nodes''.
+In order to do this, a lot of bookkeeping is involved with dependent types.  For example, we use
+two intermediate structures in order to convert the first representation of the CFG, which is
+presented as a list of nodes, a nodes consisting in a list of pairs with an instruction and the
+index of the exit node of the instruction, and the second representation, which consists of a
+list of nodes and arcs, a node containing a list of ``indices into the list of arcs'',
+representing the instructions going into this node, and an arc consisting of an instruction and
+the source and exit node of this instruction, represented as ``indices into the list of nodes''.
 
 \subsection{Compilation scheme}
+The compilation scheme should encode the coiterative semantics within Imp.  Essentially, this
+means producing code in that matches correspond to the source code of ZRun, but instantiated with
+a particular Lustre program.  This would involve implementing a fixpoint computation in Imp, and
+executing over and over again in our outermost fixpoint computation.
 
-\section{Domains}
-
-The domains used in abstract interpretation are bounded lattice
-which supports arithmetical operations, assignments and guards,
-where a guard is a restriction of the environment to the values
-satisfying some predicate. Domains should also come with
-a widening and a narrowing operators. A widening operator
-is an overapproximation of the union of environment, which
-ensures we reach a post-fixpoint of the transfer function in
-finite time. A narrowing is an overapproximation of the
-intersection, which allows to improve the precision while
-staying above the fixpoint.
-
-Here, we only used non relational domains: environments are functions
-from the set of variables to a so-called value domain, representing
-an approximation of a value. In the implemention, we used vectors rather
-than functions for more efficiency. Relational domains are far more
-powerful than non relatonial domains, but we didn't have the time to
-implement one. Also, our non relational domains are reduced, meaning
-that there is a single representation for all environments which contain
-at least one bottom value.
-
-We implemented two value domains: integers with a top and a
-bottom element, and the intervals. We also implemented a domain
-combinator which freely add a nil value, representing an
-unknown value. We use this value to represent non initialized
-pre expressions. In the new domain, values are a pair of
-a value from the old domain et a boolean representing the
-fact that this value may be nil. Therefore nil is incomparable
-with values from the old domain, except with bottom. Nil is greater
-than bottom.
-
-Domains have been fully formalized in Lean, except for the fact
-that widening and narrowing stabilizes in finite time: this is
-would be very painful to prove, since our widening depends on
-the list of constants in the program, and may requires classical
-logic, thus being difficult to extract.
-
-\section{Difficulties encountered}
-\subsection{Monads}
-
-\subsection{Bugs still present}
-
-\subsection{Inadequate domain}
-
-\lustrean{2}
-
-\begin{center}
+However, fixpoint computations can be flattenend, so rather than doing that, we can simply forget
+about every condition in the loop computing the innermost fixpoint.  Indeed, \autoref{fig:cfg}
+shows the generated CFG, assuming \(\mathcal{L}\) is the set of locally bound variables,
+\(\mathcal{I}\) the set of input variables, \(\mathcal{G}\) the set of guards, and
+\(\mathcal{A}\) the set of assertions.
+% Deduplication of fixpoint computation
+\begin{figure}[H]
+  \centering
   \begin{tikzpicture}[thick, 1/.style={->}, 2/.style={->, dashed}]
     \node (0) {$\bullet$};
 
-    \foreach[count=\n from 0] \lbl/\style in {
-      {$n$ \leftarrow{} $0$}/1,%
-      {locals \leftarrow{} $\bot$}/1,%
-      {state \leftarrow{} locals}/1,%
-      {input \leftarrow{} $\top$}/1,%
-      {guards}/1,%
-      {locals \leftarrow{} $\bot$}/1,%
-      {code}/2,%
-      {asserts}/1%
+    \foreach[count=\n from 0] \lbl/\style/\right in {
+      {$n$ \leftarrow{} $0$}/1/{},%
+      {$v$ \leftarrow{} nil}/1/{$\$v\in\mathcal{L}$},%
+      {$v_\textrm{pre}$ \leftarrow{} $v$}/1/{$v\in\mathcal{L}$},%
+      {$v$ \leftarrow{} $[-\infty, \infty]$}/1/{$v\in\mathcal{I}$},%
+      {guard $g$}/1/{$g\in\mathcal{G}$},%
+      {$v$ \leftarrow{} nil}/1/{$v\in\mathcal{L}$},%
+      {code}/2/{},%
+      {assert $a$}/1/{$a\in\mathcal{A}$}%
     } {
       \edef\m{\the\numexpr \n + 1\relax}
       \node[below=of \n] (\m) {$\bullet$};
-      \draw[\style] (\n) -- node[right] {\lbl} (\m);
+      \draw[\style] (\n) -- node[right] (h\n) {\lbl} (\m);
+      \node[anchor=west] at (h\n -| 3,0) {\right};
     }
     \draw[->] (7) edge[bend left=30] node[left] {skip} (6);
     \draw[->] (7) edge[bend left=90] node[left] {$n$ \leftarrow{} $n + 1$} (2);
   \end{tikzpicture}
+  \caption{Generated CFG.  ``code'' refers to executing an assignment for each equation,
+    optionally branching if there is an \texttt{if} statement.}\label{fig:cfg}
+\end{figure}
+
+Note that this program is non-deterministic: after having ``executed'' the equations, we can
+non-deterministically refine once more the current iteration, or skip to the next iteration.
+
+\section{Domains}
+
+The domains used in abstract interpretation are bounded lattice which supports arithmetical
+operations, assignments and guards, where a guard is a restriction of the environment to the
+values satisfying some predicate. Domains should also come with a widening and a narrowing
+operators. A widening operator is an overapproximation of the union of environment, which ensures
+we reach a post-fixpoint of the transfer function in finite time. A narrowing is an
+overapproximation of the intersection, which allows to improve the precision while staying above
+the fixpoint.
+
+\subsection{Non-relational domain}
+Here, we only used non relational domains: environments are functions from the set of variables
+to a so-called value domain, representing an approximation of a value. In the implemention, we
+used vectors rather than functions for more efficiency. Relational domains are far more powerful
+than non relatonial domains, but we didn't have the time to implement one. Also, our non
+relational domains are reduced, meaning that there is a single representation for all
+environments which contain at least one bottom value.
+
+We implemented two value domains: integers with a top and a bottom element, and the intervals. We
+also implemented a domain combinator which freely adds a nil value, representing an unknown
+value. We use this value to represent non initialized pre expressions. In the new domain, values
+are a pair of a value from the old domain et a boolean representing the fact that this value may
+be nil. Therefore nil is incomparable with values from the old domain, except with $\bot$. Nil is
+greater than $\bot$.
+
+Domains have been fully formalized in Lean, except for the fact that widening and narrowing
+stabilizes in finite time: this is would be very painful to prove, since our widening depends on
+the list of constants in the program, and may require classical logic, thus being difficult to
+extract.
+
+\subsection{Working examples}
+The interval non-relational domain is appropriate to prove inequalities between an expression,
+and a constant.  Consider, for instance, the following examples for which Lustrean can
+successfully disprove runtime failure.
+\begin{lustre}
+@\Node@ truncate(x) = o @\Where@
+  @\Guard@
+    x ≥ 0
+  @\Where@
+    y = x @\Fby@ y + 1
+    o = @\If@ y > 3 @\Then@ 3 @\Else@ y
+  @\Assert@
+    0 ≤ o
+    o ≤ 3
+\end{lustre}
+and
+\begin{lustre}
+@\Node@ counter() = o @\Where@
+  o = 0 @\Fby@ 1 + o
+@\Assert@
+  o ≥ 0
+\end{lustre}
+However, it can fail at even the simplest assertion.
+\begin{lustre}
+@\Node@ embarassing(x) @\Where@
+@\Assert@
+  x = x
+\end{lustre}
+If we simplify \(x\) from both sides of this expression, we get the condition \(0 = 0\), which
+Lustrean is capable of proving.  Hence, adding a simplifier might greatly increase the precision
+of Lustrean.  We will see in the next section an other example where doing a seemingly trivial
+transformation (which, this times, apparently complexifies the expression) also helps Lustrean.
+
+\subsection{Non-working examples}
+According to our tests, non-relational domains struggle to prove the properties we are interested
+in.  However, we will show that it is still possible, in some cases, to recover some kind of
+relational-like analysis.
+
+Consider, for instance, the very trivial example
+\begin{lustre}
+@\Node@ u() = o @\Where@
+  o = 0 @\Fby@ o
+\end{lustre}
+Lustrean fails to automatically prove that this program will not fail at runtime, the reason
+being that it will get compiled to
+\begin{lustre*}{firstnumber=2}
+  o = @\If@ n = 0 @\Then@ 0 @\Else@ o@${}_\textrm{pre}$@
+\end{lustre*}
+and the non-relational domain cannot express conditions such as ``$n > 0$ implies
+$o_\textrm{pre}$ is well-defined''.  Since it is clear that not being able to reason about
+whether $n=0$ greatly hinders the power of our analysis, our abstract interpreter would likely be
+much more practical if we implemented a relational domain, for instance, by partitioning our
+non-relational domain with respect to $n = 0$, that is, partition according to the following
+domain:
+\begin{center}
+  \begin{tikzpicture}
+    \node (top) at (1,1) {$\top$};
+    \node (eq) at (0,0) {$n = 0$};
+    \node (neq) at (2,0) {$n\neq 0$};
+    \node (bot) at (1,-1) {$\bot$};
+
+    \draw (bot) -- (eq);
+    \draw (bot) -- (neq);
+    \draw (eq) -- (top);
+    \draw (neq) -- (top);
+  \end{tikzpicture}
 \end{center}
+
+However, there is actually a way to recover a more precise analysis without much work, by
+unrolling the outer loop.  This way, the environment where $n = 0$ and where $n > 0$ end up being
+in two different nodes of the graph.  And, indeed, if one actually tries to run the previous
+example, Lustrean will successfully not report any error, because it unrolls one iteration of the
+loop.  To see the effect of loop unrolling, one can change the value of the constant
+\texttt{unroll\_loop}, in \path{Lustrean/Elaboration/Compile.lean:46}.
+
+An other interesting example is the following
+\begin{lustre}
+@\Node@ f(x) @\Where@
+  o = x * x
+@\Assert@
+  o ≥ 0
+\end{lustre}
+It is easy to convince oneself that this assertion is always true, yet Lustrean fails to prove
+it.  Indeed, in the environment where we know that \(x\in[-\infty, \infty]\), \texttt{x * x}
+evaluates to \lustr{[-∞, ∞] * [-∞, ∞]}, which in turn evaluates to \lustr{[-∞, ∞]}.  Yet, not
+everything is lost: consider the following program instead
+\begin{lustre}
+@\Node@ f(x) @\Where@
+  o = @\If@ x ≥ 0 @\Then@ x * x @\Else@ x * x
+@\Assert@
+  o ≥ 0
+\end{lustre}
+This works because we now evaluate \lustr{x * x} in two different environments, where we can
+remember the fact that both operands have the same sign even after substituting \lustr{x}.  We
+could apply this transform to every multiplication, but we haven't done so.  Doing so could
+result in an exponential blowup in the size of the expression.
+
+A more interesting example to analyze is one that exhibits non-statically schedulable behavior:
+\begin{lustre}
+@\Node@ f(c, z) = x, y @\Where@
+  x = @\If@ c = 0 @\Then@ z @\Else@ y
+  y = @\If@ c = 0 @\Then@ x @\Else@ z
+\end{lustre}
+Lustrean also fails to show this example is well-defined.  We haven't found a way to recover the
+information while sticking with a non-relational domain.
 
 \end{document}
