@@ -13,11 +13,8 @@ lean_lib Misc where
     ⟨`autoImplicit, false⟩
   ]
 
+@[default_target]
 lean_lib Lustrean where
   leanOptions := #[
     ⟨`autoImplicit, false⟩
   ]
-
-@[default_target]
-lean_exe "lustrean" where
-  root := `Main
