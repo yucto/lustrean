@@ -44,7 +44,7 @@ namespace Integers
         simp [h1]
     join_absorption := by
       intro x y
-      cases x <;> cases y <;> simp [join, meet] <;>
+      cases x <;> cases y <;> simp [join, meet] ;
       next x y =>
         by_cases h : (x = y) <;>
         simp [h]
@@ -76,7 +76,7 @@ namespace Integers
         simp [h1]
     meet_absorption := by
       intro x y
-      cases x <;> cases y <;> simp [meet, join] <;>
+      cases x <;> cases y <;> simp [meet, join]
       next x y =>
         by_cases h : (x = y) <;>
         simp [h]
@@ -86,7 +86,7 @@ namespace Integers
     meet_top := by
       intro x
       cases x <;> dsimp [meet]
-    non_trivial := by simp [bot, top]
+    non_trivial := by simp
 
   def map_int (x y : Integers) (f : Int → Int →  Integers) : Integers :=
     match x, y with

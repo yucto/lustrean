@@ -9,7 +9,7 @@ import Lustrean.Domain.NonRelational.Narrow
 import Lustrean.Domain.NonRelational.Widen
 import Misc
 
-open Batteries (Vector)
+open Batteries
 
 namespace Lustrean
 
@@ -78,7 +78,7 @@ namespace NonRelational
   | .and b₁ b₂ => guard b₁ ⊓ guard b₂
 
   instance : Domain (NonRelational α n) where
-    new := coalesce (Vector.mkVector n ValueDomain.new)
+    new := coalesce (Vector.replicate n ValueDomain.new)
     nb_var := n
     eq_dec := inferInstance
     assign := assign

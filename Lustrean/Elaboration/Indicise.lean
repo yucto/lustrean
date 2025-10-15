@@ -2,8 +2,8 @@ import Lustrean.Elaboration.Reify
 import Lustrean.Elaboration.Inline
 import Misc
 
-open Batteries (Vector)
-open Lean hiding HashMap
+open Batteries
+open Lean
 open Meta Elab
 open Std (HashMap)
 
@@ -178,7 +178,7 @@ namespace Indicise
       return ⟨i, var.ref⟩
     let guards ← nod.guards.mapM <| elab_boolexpr env
     let asserts ← nod.asserts.mapM <| elab_boolexpr env
-    return { name := nod.name, n, input_vars, bound_vars, guards, asserts, output_vars }
+    return { name := nod.name, n, m, input_vars, bound_vars, guards, asserts, output_vars }
 
   def elab_lustre (nodes : Array (&Inline.Node)) : CoreM (Array (&Node)) :=
     nodes.mapM elab_node

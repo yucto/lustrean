@@ -17,7 +17,7 @@ where
 export ValueDomain (nil)
 
 namespace ValueDomain
-  variable (α : Type) [ValueDomain α]
+  variable {α : Type} [ValueDomain α]
   -- backward operations :
   -- backward_op x y r = (x', y') where
   -- x' = { v ∈ x | ∃ v' ∈ y, v op v' ∈ r }

@@ -1,6 +1,6 @@
 import Lustrean.Domain.NonRelational.Lattice
 
-open Batteries (Vector)
+open Batteries
 
 namespace Lustrean.NonRelational
   variable {α : Type} {n : Nat}

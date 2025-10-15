@@ -1,11 +1,9 @@
 import Lustrean.Elaboration.Reify
 import Misc
 
-open Batteries (Vector)
-open Lean hiding HashMap
-open Meta Elab
+open Batteries
+open Lean Meta Elab
 open Std (HashMap)
-
 -- Inline phase.  This is responsible for removing node calls from the AST.
 
 namespace Lustrean.Elaboration
@@ -105,7 +103,7 @@ namespace Inline
   abbrev NodeAddM := NodeAddT Id
 
   abbrev InlineM := NodeAddT <| Except Error
-  
+
   namespace InlineM
     abbrev add_var (var : BoundVar) : InlineM PUnit :=
       NodeAddT.add_var var
@@ -115,7 +113,7 @@ namespace Inline
 
     abbrev add_assert (a : &BoolExpr) : InlineM PUnit :=
       NodeAddT.add_assert a
-  
+
     protected def run (name : &Name) (input_vars : Array Variable) (output_vars : Array (&Name))
                       (self : InlineM Unit) : Except Error Node := do
       let initial_node : Node := {
@@ -161,7 +159,7 @@ namespace Inline
             throw <| .arity_mismatch nod node_def.input_vars.size args.size
           for (v, arg) in node_def.input_vars.zip args do
             let name := v.name.map (pre ++ ·)
-            let value ← elab_expr_aux none name arg 
+            let value ← elab_expr_aux none name arg
             add_var { name, value := value }
           for bvar in node_def.bound_vars do
             add_var {
@@ -225,9 +223,9 @@ namespace Inline
       InlineM.run nod.name nod.input_vars nod.output_vars do
         for { names, value } in nod.bound_vars do
           elab_expr env names value
-        for (b, i) in nod.guards.zipWithIndex do
+        for (b, i) in nod.guards.zipIdx do
           elab_boolexpr env true i b
-        for (b, i) in nod.asserts.zipWithIndex do
+        for (b, i) in nod.asserts.zipIdx do
           elab_boolexpr env false i b
   end
 

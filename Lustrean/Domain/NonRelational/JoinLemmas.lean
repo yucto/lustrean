@@ -1,7 +1,7 @@
 import Batteries.Data.Vector.Basic
 import Lustrean.Domain.NonRelational.Basic
 
-open Batteries (Vector)
+open Batteries
 
 namespace Lustrean.NonRelational
   variable {α : Type} {n : Nat}
@@ -9,12 +9,12 @@ namespace Lustrean.NonRelational
   variable (x y z : NonRelational α n)
 
   theorem join_commutative : join x y = join y x := by
-    cases x <;> cases y <;> simp [join, coalesce]
+    cases x <;> cases y <;> simp [join]
     rename_i x y
     simp [BoundedLattice.join_commutative]
 
   theorem join_associative : join (join x y) z = join x (join y z) := by
-    cases x <;> cases y <;> cases z <;> dsimp [join, coalesce]
+    cases x <;> cases y <;> cases z <;> dsimp [join]
     rename_i x y z
     simp
 
@@ -35,7 +35,7 @@ namespace Lustrean.NonRelational
     cases x <;> simp [join]
 
   theorem join_top : x.join top = top := by
-    cases x <;> simp [join, top, coalesce]
+    cases x <;> simp [join, top]
     ext
     simp
 end Lustrean.NonRelational

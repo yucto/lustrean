@@ -78,7 +78,7 @@ namespace Cfg
       Harcs : find_nb_arcs l = arcs.size
 
     def init : NewAux nb_var nb_nodes nb_arcs [] :=
-      .mk (Array.mkArray nb_nodes (.mk [])) (by simp) #[] rfl
+      .mk (Array.replicate nb_nodes (.mk [])) (by simp) #[] rfl
 
     structure StepAux (nb_var nb_nodes nb_arcs : Nat)
       (l : List (PreNode nb_var))
@@ -114,9 +114,9 @@ namespace Cfg
       have Harcs : find_nb_arcs l + ((out_node, out_inst, synt) :: out_nodes).length = arcs.size := by
         simp [arcs, ← Nat.add_assoc]
         apply cfg.Harcs
-      let old_in_arcs := (cfg.nodes.get (cfg.Hnodes ▸ dst)).in_nodes
+      let old_in_arcs := cfg.nodes[cfg.Hnodes ▸ dst].in_nodes
       let new_node := .mk (arc_idx :: old_in_arcs)
-      let nodes := cfg.nodes.set (cfg.Hnodes ▸ dst) new_node
+      let nodes := cfg.nodes.set dst.1 new_node (cfg.Hnodes ▸ dst.2)
       have Hnodes : nb_nodes = nodes.size := by
         simp [nodes, cfg.Hnodes]
       .mk nodes Hnodes arcs Harcs
@@ -197,7 +197,7 @@ namespace Cfg
     then
       let nb_arcs := new.find_nb_arcs lsorted
       let Hl : l.length = lsorted.length := by
-        simp [lsorted, List.mergeSort_length]
+        simp [lsorted]
       let aux := new.aux l.length nb_arcs lsorted (by simp [Hl])
         (by simp [nb_arcs]) <| by
         rw [Hl]
@@ -214,7 +214,7 @@ namespace Cfg
   -- true : should widen, false : shouldn't
   def get_widening_points {nb_var : Nat} (cfg : Cfg nb_var) : { arr : Array Bool // arr.size = cfg.nb_nodes }
   :=
-    let arr := Array.mkArray cfg.nb_nodes true
+    let arr := Array.replicate cfg.nb_nodes true
     let Harr : arr.size = cfg.nb_nodes := by
       simp [arr]
     ⟨arr, Harr⟩
@@ -233,29 +233,31 @@ namespace State
   variable {α : Type} [ι : Domain α] {cfg : Cfg ι.nb_var}
 
   def get_node_env (s : State α cfg) (i : Fin cfg.nb_nodes) : α :=
-    s.node_env.get (s.Hnode_env ▸ i)
+    s.node_env[s.Hnode_env ▸ i]
 
   def set_node_env (i : Fin cfg.nb_nodes) (a : α) : StateM (State α cfg) Unit := do
     let s ← get
-    let node_env := s.node_env.set (s.Hnode_env ▸ i) a
+    let ⟨i,h⟩ := i
+    let node_env := s.node_env.set i a (s.Hnode_env ▸ h)
     let Hnode_env : node_env.size = cfg.nb_nodes := by
       rw [←s.Hnode_env]
       simp [node_env]
     set { s with node_env, Hnode_env }
 
   def get_arc_env (s : State α cfg) (i : Fin cfg.nb_arcs) : α :=
-    s.arc_env.get (s.Harc_env ▸ i)
+    s.arc_env[s.Harc_env ▸ i]
 
   def set_arc_env (i : Fin cfg.nb_arcs) (a : α) : StateM (State α cfg) Unit := do
     let s ← get
-    let arc_env := s.arc_env.set (s.Harc_env ▸ i) a
+    let ⟨i,h⟩ := i
+    let arc_env := s.arc_env.set i a (s.Harc_env ▸ h)
     let Harc_env : arc_env.size = cfg.nb_arcs := by
       simp [arc_env, s.Harc_env]
     set { s with arc_env, Harc_env }
 
   def iter_arc (arc_idx : Fin cfg.nb_arcs) : StateM (State α cfg) Bool := do
     let s ← get
-    let arc := cfg.arcs.get (cfg.Harcs ▸ arc_idx)
+    let arc := cfg.arcs[cfg.Harcs ▸ arc_idx]
     let src_env := s.get_node_env arc.src
     let old_env := s.get_arc_env arc_idx
     let new_env := match arc.inst with
@@ -272,13 +274,13 @@ namespace State
 
   def iter_node (node_idx : Fin cfg.nb_nodes) : StateM (State α cfg) Unit := do
     let s ← get
-    let node := cfg.nodes.get (cfg.Hnodes.symm ▸ node_idx)
+    let node := cfg.nodes[cfg.Hnodes.symm ▸ node_idx]
     let in_env := List.foldl (fun acc_env arc_idx =>
       let env := s.get_arc_env arc_idx
       acc_env ⊔ env
     ) ⊥ node.in_nodes
     let s ← get
-    if s.widening_points.get (s.Hwidening_points ▸ node_idx)
+    if s.widening_points[s.Hwidening_points ▸ node_idx]
     then
       let old_env := s.get_node_env node_idx
       set_node_env node_idx (old_env ∇_(s.nb_step) in_env)
@@ -296,7 +298,7 @@ namespace State
   def debug : StateM (State α cfg) Unit := do
     let s ← get
     dbg_trace s!"Step {s.nb_step}"
-    for (env, i) in s.node_env.zipWithIndex do
+    for (env, i) in s.node_env.zipIdx do
       dbg_trace s!"  {i}) {env}"
 
   def iter : StateM (State α cfg) Bool := do
@@ -317,13 +319,13 @@ namespace State
     return iterate_again
 
   def init : State α cfg :=
-    let node_env := Array.mkArray cfg.nb_nodes ⊥
-    let node_env := if h : 0 < node_env.size then node_env.set ⟨0, h⟩ ⊤ else node_env
+    let node_env := Array.replicate cfg.nb_nodes ⊥
+    let node_env := if h : 0 < node_env.size then node_env.set 0 ⊤ else node_env
     let Hnode_env : node_env.size = cfg.nb_nodes := by
       rename_i pre_node_env
       dsimp only [node_env]
       split <;> simp [pre_node_env]
-    let arc_env := Array.mkArray cfg.nb_arcs ⊥
+    let arc_env := Array.replicate cfg.nb_arcs ⊥
     let Harc_env : arc_env.size = cfg.nb_arcs := by
       simp [arc_env]
     let widening_points := cfg.get_widening_points
@@ -337,12 +339,11 @@ namespace State
   def check_assert (s : State α cfg) : m (State α cfg)
   := do
     for h : i in [0:cfg.nb_arcs] do
-      have : i < cfg.nb_arcs := Membership.get_elem_helper h rfl
-      let i := ⟨i, this⟩
-      let arc := cfg.arcs.get (cfg.Harcs ▸ i)
+      have : i < cfg.arcs.size := Membership.get_elem_helper h cfg.Harcs
+      let arc := cfg.arcs[i]
       match arc.inst with
       | .assert b =>
-        let old_env := s.get_arc_env i
+        let old_env := s.get_arc_env ⟨i,cfg.Harcs ▸ this⟩
         let new_env := ι.guard old_env b.not
         if new_env ≠ ⊥
         then

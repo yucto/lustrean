@@ -1,7 +1,7 @@
 import Lustrean.Domain.NonRelational.Lattice
 import Lustrean.Domain.NonRelational.Widen
 
-open Batteries (Vector)
+open Batteries
 
 namespace Lustrean.NonRelational
   variable {α : Type} {n : Nat}
@@ -17,8 +17,8 @@ namespace Lustrean.NonRelational
     bounding_low := by
       intros x y m
       cases x <;> cases y <;> simp [Narrow.narrow, NonRelational.narrow, meet, map2_nil, coalesce]
-      <;> (try apply BoundedLattice.bot_min)
-      <;> (try apply BoundedLattice.refl)
+      ;(try apply BoundedLattice.bot_min)
+      ;(try apply BoundedLattice.refl)
       rename_i x y
       split
       case isFalse => apply BoundedLattice.bot_min
@@ -38,12 +38,13 @@ namespace Lustrean.NonRelational
         intros i
         simp
         apply NarrowLawful.bounding_low
+      all_goals rfl
 
     bounding_high := by
       intros x y n
-      cases x <;> cases y <;> simp [Narrow.narrow, NonRelational.narrow, meet, map2_nil, coalesce]
-      <;> (try apply BoundedLattice.bot_min)
-      <;> (try apply BoundedLattice.refl)
+      cases x <;> cases y <;> simp [Narrow.narrow, NonRelational.narrow, map2_nil, coalesce]
+      ; (try apply BoundedLattice.bot_min)
+      ; (try apply BoundedLattice.refl)
       rename_i x y
       split
       case isFalse => apply BoundedLattice.bot_min
@@ -52,4 +53,5 @@ namespace Lustrean.NonRelational
         intros i
         simp
         apply NarrowLawful.bounding_high
+      all_goals rfl
 end Lustrean.NonRelational

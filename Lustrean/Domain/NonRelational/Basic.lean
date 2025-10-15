@@ -2,7 +2,7 @@ import Lustrean.Domain.NonRelational.ValueDomain
 import Batteries.Data.Vector
 import Misc
 
-open Batteries (Vector)
+open Batteries
 
 namespace Lustrean
 inductive NonRelational (α : Type) [ValueDomain α] (n : Nat) where
@@ -84,7 +84,7 @@ namespace NonRelational
     intros
     apply H
 
-  def top : NonRelational α n := .non_rel <| .mk (Vector.mkVector _ ⊤) fun _ => by
+  def top : NonRelational α n := .non_rel <| .mk (Vector.replicate _ ⊤) fun _ => by
     simp
     apply ι.non_trivial
 

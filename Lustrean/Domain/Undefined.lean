@@ -43,12 +43,12 @@ namespace Undefined
 
   theorem join_associative : join (join x y) z = join x (join y z) := by
     simp [join]
-    simp [BoundedLattice.join_associative, Bool.or_assoc]
+    simp [Bool.or_assoc]
 
 
   theorem join_absorption : x.join (x.meet y) = x := by
     simp [join, meet]
-    cases x <;> cases y.may_be_nil <;> simp
+    cases x ; cases y.may_be_nil <;> simp
 
   theorem join_bot : join x bot = x := by
     simp [join, bot]
@@ -62,11 +62,11 @@ namespace Undefined
 
   theorem meet_associative : meet (meet x y) z = meet x (meet y z) := by
     simp [meet]
-    simp [BoundedLattice.meet_associative, Bool.and_assoc]
+    simp [Bool.and_assoc]
 
   theorem meet_absorption : x.meet (x.join y) = x := by
     simp [meet, join]
-    cases x <;> cases y.may_be_nil <;> simp
+    cases x ; cases y.may_be_nil <;> simp
 
   theorem meet_top : meet x top = x := by
     simp [meet, top]
@@ -112,7 +112,7 @@ namespace Undefined
       simp [Widen.widen, widen, meet]
       constructor
       · apply WidenLawful.covering_left
-      · intros <;> left <;> assumption
+      · intros ; left ; assumption
     covering_right := by
       intros x y n
       let ⟨x, b⟩ := x
@@ -121,7 +121,7 @@ namespace Undefined
       simp [Widen.widen, widen, meet]
       constructor
       · apply WidenLawful.covering_right
-      · intros <;> right <;> assumption
+      · intros ; right ; assumption
   instance : NarrowLawful (Undefined α) where
     bounding_low := by
       intros x y n
@@ -139,14 +139,14 @@ namespace Undefined
       simp [Narrow.narrow, narrow, meet]
       constructor
       · apply NarrowLawful.bounding_high
-      · intros <;> assumption
+      · intros ; assumption
 
   instance : DecidableEq (Undefined α) :=
     fun x y =>
     let _ := ι.eq_dec
     if h : (x.val = y.val) ∧ (x.may_be_nil = y.may_be_nil)
     then .isTrue <| by
-      cases x <;> cases y <;> simp at * <;> assumption
+      cases x ; cases y ; simp at * ; assumption
     else .isFalse <| by
       intro Hc
       apply h

@@ -210,7 +210,7 @@ def elab_into_cfg (nod : Normalize.Node) : List (PreNode nod.total_vars) × Arra
     | .input_var k => input_var k
     | .bound_var k => bound_var k
     | .old_bound_var k => old_bound_var k)
-  return (result.data, output_vars)
+  return (result.toList, output_vars)
 where
   step : Fin nod.total_vars := .mk 0 <| by
     unfold Normalize.Node.total_vars

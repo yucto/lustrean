@@ -3,8 +3,8 @@ import Lustrean.Elaboration.Inline
 import Lustrean.Elaboration.Indicise
 import Misc
 
-open Batteries (Vector)
-open Lean hiding HashMap
+open Batteries
+open Lean
 open Meta Elab
 open Std (HashMap)
 
@@ -13,7 +13,7 @@ open Std (HashMap)
 -- persistent state.  They are used to compile the `pre` construct.  It also puts subexpressions
 -- into their own variables to ensure every subexpression that requires any persistent state is
 -- actually a variable (that is, we name subexpressions that need a persistent state).
--- 
+--
 -- For the sake of simplicity, we aggressively allocate stuff into the persistent state, and not
 -- just for variables for which this is useful.
 
@@ -58,7 +58,7 @@ namespace Normalize
 
   section
     variable (n m : Nat)
-    
+
     inductive SimpleExpr where
       | interval (lb : LowerBound) (up : UpperBound)
       | var (k : VarRef n m)
@@ -169,8 +169,8 @@ namespace Normalize
       n := n
       m := m
       name := default
-      input_vars := Vector.mkVector n default
-      bound_vars := Vector.mkVector m default
+      input_vars := Vector.replicate n default
+      bound_vars := Vector.replicate m default
       output_vars := default
       guards := default
       asserts := default
@@ -191,7 +191,7 @@ namespace Normalize
     instance : Inhabited (NodeN n m) where
       default := NodeN.default n m
   end NodeN
-  
+
   abbrev BVar (_n m : Nat) := Fin m
 
   def add_var {n m : Nat} (ref : Syntax) (e : Expr n m) (t : NodeN n m) : CounterM <| BVar n (m+1) × NodeN n (m+1) := do
@@ -283,7 +283,7 @@ namespace Normalize
           e := .var <| .bound_var x
           nod
         }
-    
+
     partial def elab_expr_aux {n m : Nat} (nod : NodeN n m) : Indicise.Expr n m → CounterM (AuxExpr n m)
       | .interval lb up =>
         return ⟨m, by simp, .simple (.interval lb up), nod⟩
@@ -409,7 +409,7 @@ namespace Normalize
         omega
       new_nod := .mk {
         hnod with
-        bound_vars := hnod.bound_vars |>.set ⟨i, this⟩ {
+        bound_vars := hnod.bound_vars |>.set i {
           name := nod.bound_vars[i].name
           value := hnod_m_m' ▸ hnod_n_nod_n ▸ e
         }

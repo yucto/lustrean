@@ -39,8 +39,8 @@ namespace IntLow
     Le h₁ h₂ → Le h₂ h₃ → Le h₁ h₃ :=
   by
     intros h₁ h₂ h₃ hyp hyp'
-    cases hyp <;> (try constructor) <;>
-    cases hyp' <;> try constructor
+    cases hyp <;> (try constructor)
+    cases hyp' ; try constructor
     apply Int.le_trans <;> assumption
 
   instance (n m : IntLow) : Decidable (Le n m) := by
@@ -116,7 +116,6 @@ namespace IntLow
   by
     intro n m o
     cases n <;> cases m <;> cases o <;> simp [min]
-    apply Int.min_assoc
 
   def max (n m : IntLow) : IntLow :=
     match n, m with
@@ -147,8 +146,6 @@ namespace IntLow
   by
     intro n
     cases n <;> simp [max]
-    apply Int.max_eq_left
-    apply Int.le_refl
 
   theorem max_comm : ∀ (n m : IntLow),
     max n m = max m n :=
@@ -162,16 +159,13 @@ namespace IntLow
   by
     intro n m o
     cases n <;> cases m <;> cases o <;> simp [max]
-    apply Int.max_assoc
 
   theorem min_max_absorb : ∀ (l₁ l₂ : IntLow),
     min l₁ (max l₁ l₂) = l₁ :=
   by
     intro l₁ l₂
     cases l₁ <;> cases l₂ <;> simp [min, max]
-    · apply Int.min_max_absorb
-    · apply Int.min_eq_left
-      apply Int.le_refl
+    apply Int.min_max_absorb
 
   theorem max_min_absorb : ∀ (l₁ l₂ : IntLow),
     max l₁ (min l₁ l₂) = l₁ :=
@@ -324,7 +318,6 @@ namespace IntHigh
   by
     intro n m o
     cases n <;> cases m <;> cases o <;> simp [max]
-    apply Int.max_assoc
 
   def min (n m : IntHigh) : IntHigh :=
     match n, m with
@@ -355,8 +348,6 @@ namespace IntHigh
   by
     intro n
     cases n <;> simp [min]
-    apply Int.min_eq_left
-    apply Int.le_refl
 
   theorem min_comm : ∀ (n m : IntHigh),
     min n m = min m n :=
@@ -370,7 +361,6 @@ namespace IntHigh
   by
     intro n m o
     cases n <;> cases m <;> cases o <;> simp [min]
-    apply Int.min_assoc
 
   theorem max_min_absorb : ∀ (h₁ h₂ : IntHigh),
     max h₁ (min h₁ h₂) = h₁ :=
@@ -378,8 +368,6 @@ namespace IntHigh
     intro h₁ h₂
     cases h₁ <;> cases h₂ <;> simp [min, max]
     apply Int.max_min_absorb
-    apply Int.max_eq_left
-    apply Int.le_refl
 
   theorem min_max_absorb : ∀ (h₁ h₂ : IntHigh),
     min h₁ (max h₁ h₂) = h₁ :=
@@ -495,7 +483,7 @@ namespace HLe
     intro l₁ l₂ h₁ h₂ hyp₁ hyp₂
     cases l₁ <;> cases l₂ <;> cases h₁ <;> cases h₂ <;> try constructor
     rename_i a b c d
-    cases hyp₁ <;> cases hyp₂ <;>
+    cases hyp₁ ; cases hyp₂ ;
     apply Int.sub_le_sub <;> assumption
 
   theorem min_max_monotone : ∀ (l₁ l₂ : IntLow) (h₁ h₂ : IntHigh),
@@ -839,9 +827,9 @@ namespace Interval
   match h₁, h₂ with
   | _, .int 0 => .bot
   | .pinf, _ => .interval (.int 0) .pinf <| by constructor
-  | .int _, .pinf => .interval (.int 0) (.int 0) <| by constructor <;> simp
+  | .int _, .pinf => .interval (.int 0) (.int 0) <| by constructor ; simp
   | .int n, .int m => if hyp : 0 ≤ n / m
-    then .interval (.int 0) (.int (n / m)) <| by constructor <;> assumption
+    then .interval (.int 0) (.int (n / m)) <| by constructor ; assumption
     else .bot
 
   def div_neg_pos : Interval constants :=
@@ -989,11 +977,12 @@ namespace Interval
           · apply extract_min_ge_correct constants h₂
         · assumption
 
+  set_option linter.unreachableTactic false in
   theorem covering_left : ∀ (n : Nat),
     BoundedLattice.is_subset x (x.widen y n) :=
   by
     intros n
-    cases x <;> simp [BoundedLattice.is_subset, BoundedLattice.meet, meet, widen] <;>
+    cases x <;> simp [BoundedLattice.is_subset, BoundedLattice.meet, meet, widen]
     by_cases h : n ≤ 10 <;> simp [h, join] <;>
     cases y <;> rename_i hle <;> simp [max, min, hle] <;> clear h
     · simp [IntLow.max_min_absorb, IntHigh.min_max_absorb]
@@ -1001,7 +990,7 @@ namespace Interval
       simp [hle']
     · rename_i l' h' hle' l h
       split <;> split <;> try simp
-      · rw [dif_pos hle']
+      · assumption
       · have hyph : h'.Le h := by
           cases (IntHigh.Le_total h' h) <;> [ assumption ; contradiction ]
         have hyph' : h'.min (extract_min_ge constants h) = h' := by
@@ -1012,7 +1001,7 @@ namespace Interval
             skip
           ]
         simp [hyph']
-        rw [dif_pos hle']
+        assumption
       · have hypl : l.Le l' := by
           cases (IntLow.Le_total l l') <;> [ assumption ; contradiction ]
         have hypl' : l'.max (extract_max_gt constants l) = l' := by
@@ -1023,7 +1012,7 @@ namespace Interval
             skip
           ]
         simp [hypl']
-        rw [dif_pos hle']
+        assumption
       · have hypl : l.Le l' := by
           cases (IntLow.Le_total l l') <;> [ assumption ; contradiction ]
         have hypl' : l'.max (extract_max_gt constants l) = l' := by
@@ -1042,8 +1031,9 @@ namespace Interval
             apply extract_min_ge_correct ;
             skip
           ]
+
         simp [hypl', hyph']
-        rw [dif_pos hle']
+        assumption
 
   theorem covering_right : ∀ (n : Nat),
     BoundedLattice.is_subset y (x.widen y n) :=

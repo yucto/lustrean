@@ -1,7 +1,7 @@
 import Batteries.Data.Vector.Basic
 import Lustrean.Domain.NonRelational.Basic
 
-open Batteries (Vector)
+open Batteries
 
 namespace Lustrean.NonRelational
   variable {α : Type} {n : Nat}
@@ -27,8 +27,8 @@ namespace Lustrean.NonRelational
       rw [BoundedLattice.meet_commutative]
       assumption
 
-  theorem meet_associative : meet (meet x y) z = meet x (meet y z) := by
-    cases x <;> cases y <;> simp [meet, map2_nil, coalesce] <;> cases z
+theorem meet_associative : meet (meet x y) z = meet x (meet y z) := by
+    cases x <;> cases y <;> simp [meet, map2_nil, coalesce] ; cases z
     case bot => simp
     rename_i x y z
     by_cases H : ∀ i : Fin n, x.val.get i ⊓ y.val.get i ⊓ z.val.get i ≠ ⊥
@@ -36,23 +36,21 @@ namespace Lustrean.NonRelational
       dsimp
       rw [dif_pos, dif_pos]
       simp
-      rw [dif_pos]
+      assumption
 
-      all_goals intros i <;> specialize H i
-      <;> have H' : (x.val i ⊓ y.val i) ⊓ z.val i ≠ ⊥ := by {
+      all_goals
+        intros i ; specialize H i;
+        have H' : (x.val.get i ⊓ y.val.get i) ⊓ z.val.get i ≠ ⊥ := by {
         rw [BoundedLattice.meet_associative]
         apply H
-      }
+        }
       · simp
+        apply BoundedLattice.meet_not_bot_left (y := x.val.get i)
+        rw [BoundedLattice.meet_commutative]
         assumption
-      · simp
-        apply BoundedLattice.meet_not_bot_right
-        assumption
-      · simp
-        assumption
+      · simp [*]
       · simp
         apply BoundedLattice.meet_not_bot_left (y := z.val.get i)
-        rw [BoundedLattice.meet_associative]
         assumption
     · have : ¬∀ i : Fin n,
            (Vector.ofFn fun i =>

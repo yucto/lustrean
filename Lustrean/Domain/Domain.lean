@@ -66,8 +66,8 @@ namespace BoundedLattice
     symm
     assumption
 
-  instance {α : Type} [ι : BoundedLattice α] : Antisymm (@is_subset α ι) where
-    antisymm := antisymm
+  instance {α : Type} [ι : BoundedLattice α] : Std.Antisymm (@is_subset α ι) where
+    antisymm := @antisymm _ _
 
   @[simp]
   theorem min_bot_is_bot : ∀ {x : α}, x ⊑ ⊥ → x = bot := by
