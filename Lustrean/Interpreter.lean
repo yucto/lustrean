@@ -1,5 +1,6 @@
 import Lustrean.Imp
 import Lustrean.Domain
+import Misc.PartialFixpoint
 
 namespace Lustrean
 structure Node (nb_var nb_arcs : Nat) : Type where
@@ -333,6 +334,9 @@ namespace State
       arc_env Harc_env
       widening_points.val widening_points.property 0
 
+  instance : Inhabited (State α cfg) where
+    default := init
+
   variable {m : Type → Type} [Monad m]
   variable [Lean.MonadLog m] [Lean.AddMessageContext m] [Lean.MonadOptions m]
 
@@ -354,11 +358,13 @@ namespace State
       | _ => pure ()
     return s
 
-  partial def run (cfg : Cfg ι.nb_var) : m (State α cfg) :=
-    (StateT.run loop init).2 |> check_assert
+  def run (cfg : Cfg ι.nb_var) : m (State α cfg) :=
+    (StateT.run loop init).get!.2 |> check_assert
   where
-    loop : StateM (State α cfg) Unit := do
-      let b ← iter
+    loop : StateT (State α cfg) Option Unit := do
+      let b := (iter (← get)).1
       if b then loop
+    partial_fixpoint
+
 end State
 end Lustrean

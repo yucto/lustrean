@@ -51,16 +51,18 @@ namespace Inline
 
   mutual
     variable (pre : Name)
-    partial def Expr.with_prefix : Expr → Expr
+    def Expr.with_prefix : Expr → Expr
       | .interval lb up => .interval lb up
       | .var name => .var <| name.map (pre ++ ·)
       | .mon_op op e => .mon_op op (e.map (·.with_prefix))
       | .bin_op op l r => .bin_op op (l.map (·.with_prefix)) (r.map (·.with_prefix))
       | .ite cond tb eb => .ite (cond.map (·.with_prefix)) (tb.map (·.with_prefix)) (eb.map (·.with_prefix))
+    termination_by e => sizeOf e
 
-    partial def BoolExpr.with_prefix : BoolExpr → BoolExpr
+    def BoolExpr.with_prefix : BoolExpr → BoolExpr
       | .cmp_op op l r => .cmp_op op (l.map (·.with_prefix)) (r.map (·.with_prefix))
       | .bin_op op l r => .bin_op op (l.map (·.with_prefix)) (r.map (·.with_prefix))
+    termination_by e => sizeOf e
   end
 
   structure Node where
