@@ -156,7 +156,7 @@ namespace Indicise
           let right ← elab_boolexpr right
           return .bin_op op left right
   end
-  end
+end
 
   def elab_node (nod : &Inline.Node) : CoreM (&Node) := nod.mapM fun nod => do
     let input_vars := Vector.mk nod.input_vars rfl

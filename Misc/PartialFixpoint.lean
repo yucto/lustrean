@@ -41,15 +41,3 @@ instance [Monad m] [∀ α, PartialOrder (m α)] [MonoBind m] : MonoBind (StateT
 
 instance [Monad m] [∀ α, PartialOrder (m α)] [MonoBind m] : MonoBind (StateRefT' ω σ m) :=
   inferInstanceAs (MonoBind (ReaderT _ _))
-
-structure State where
-  n : Nat
-
-def f : StateT State Option Nat := do
-  match (← get).n with
-  | x+1 =>
-    set ({n := x} : State)
-    f
-  | 0 =>
-    return 0
-partial_fixpoint

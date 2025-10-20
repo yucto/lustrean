@@ -245,7 +245,6 @@ namespace Reify
           let eb ← elab_expr eb
           return .ite c tb eb
         | _ =>
-          -- withRef s throwUnsupportedSyntax
           throwErrorAt s m!"{repr s}"
 
       partial def elab_bool_expr (s : TSyntax `lustre_assertion) : CoreM (&BoolExpr) :=
