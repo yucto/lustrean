@@ -1,17 +1,20 @@
 open Lean Order
-set_option autoImplicit true
+
+universe u v
+variable {ε σ α ρ ω} {m : Type _ → Type _}
+
 noncomputable instance [Nonempty α] : CCPO (Id α) := inferInstanceAs (CCPO (FlatOrder Classical.ofNonempty))
 noncomputable instance [Nonempty ε] : CCPO (EStateM ε σ α) :=
   inferInstanceAs (CCPO ((s : σ) → FlatOrder (.error Classical.ofNonempty (Classical.choice ⟨s⟩))))
 
 noncomputable instance [Nonempty ε] : CCPO (EIO ε α) := inferInstanceAs (CCPO (EStateM _ _ _))
 
-noncomputable instance {m : Type u → Type v} [∀ α, PartialOrder (m α)] : PartialOrder (ReaderT ρ m α) := inferInstanceAs (PartialOrder (_ → _))
-noncomputable instance {m : Type u → Type v} [∀ α, PartialOrder (m α)] : PartialOrder (StateT ρ m α) := inferInstanceAs (PartialOrder (_ → _))
-noncomputable instance {m : Type → Type} [∀ α, PartialOrder (m α)] : PartialOrder (StateRefT' ω σ m α) := inferInstanceAs (PartialOrder (_ → _))
-noncomputable instance {m : Type u → Type v} [∀ α, CCPO (m α)] : CCPO (ReaderT ρ m α) := inferInstanceAs (CCPO (_ → _))
-noncomputable instance {m : Type u → Type v} [∀ α, CCPO (m α)] : CCPO (StateT ρ m α) := inferInstanceAs (CCPO (_ → _))
-noncomputable instance {m : Type → Type} [∀ α, CCPO (m α)] : CCPO (StateRefT' ω σ m α) := inferInstanceAs (CCPO (_ → _))
+noncomputable instance [∀ α, PartialOrder (m α)] : PartialOrder (ReaderT ρ m α) := inferInstanceAs (PartialOrder (_ → _))
+noncomputable instance [∀ α, PartialOrder (m α)] : PartialOrder (StateT ρ m α) := inferInstanceAs (PartialOrder (_ → _))
+noncomputable instance [∀ α, PartialOrder (m α)] : PartialOrder (StateRefT' ω σ m α) := inferInstanceAs (PartialOrder (_ → _))
+noncomputable instance [∀ α, CCPO (m α)] : CCPO (ReaderT ρ m α) := inferInstanceAs (CCPO (_ → _))
+noncomputable instance [∀ α, CCPO (m α)] : CCPO (StateT ρ m α) := inferInstanceAs (CCPO (_ → _))
+noncomputable instance [∀ α, CCPO (m α)] : CCPO (StateRefT' ω σ m α) := inferInstanceAs (CCPO (_ → _))
 
 instance [Nonempty ε] : MonoBind (EStateM ε σ) where
   bind_mono_left {_ _ a₁ a₂ f} h s := by
