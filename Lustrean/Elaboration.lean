@@ -32,7 +32,7 @@ namespace Lustrean.Elaboration
         let val := env.get var
         -- println! s!"Checking {i}-th variable {var}: {val}..."
         if val.may_be_nil then
-          logErrorAt ref "this variable could be nil"
+          logErrorAt ref s!"variable {ref.getId} could be nil"
           -- println! s!"  The {i}-th output variable can be nil."
 
   elab_rules : command
