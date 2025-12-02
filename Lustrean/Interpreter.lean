@@ -1,6 +1,5 @@
 import Lustrean.Imp
 import Lustrean.Domain
-import Misc.PartialFixpoint
 
 namespace Lustrean
 structure Node (nb_var nb_arcs : Nat) : Type where
@@ -358,13 +357,12 @@ namespace State
       | _ => pure ()
     return s
 
-  def run (cfg : Cfg ι.nb_var) : m (State α cfg) :=
-    (StateT.run loop init).get!.2 |> check_assert
+  partial def run (cfg : Cfg ι.nb_var) : m (State α cfg) :=
+    (StateT.run loop init).2 |> check_assert
   where
-    loop : StateT (State α cfg) Option Unit := do
-      let b := (iter (← get)).1
+    loop : StateM (State α cfg) Unit := do
+      let b ← iter
       if b then loop
-    partial_fixpoint
 
 end State
 end Lustrean
