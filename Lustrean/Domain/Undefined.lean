@@ -108,7 +108,7 @@ namespace Undefined
       intros x y n
       let ⟨x, b⟩ := x
       let ⟨y, b'⟩ := y
-      unfold BoundedLattice.is_subset
+      unfold BoundedLattice.IsSubset
       simp [Widen.widen, widen, meet]
       constructor
       · apply WidenLawful.covering_left
@@ -117,7 +117,7 @@ namespace Undefined
       intros x y n
       let ⟨x, b⟩ := x
       let ⟨y, b'⟩ := y
-      unfold BoundedLattice.is_subset
+      unfold BoundedLattice.IsSubset
       simp [Widen.widen, widen, meet]
       constructor
       · apply WidenLawful.covering_right
@@ -127,7 +127,7 @@ namespace Undefined
       intros x y n
       let ⟨x, b⟩ := x
       let ⟨y, b'⟩ := y
-      unfold BoundedLattice.is_subset
+      unfold BoundedLattice.IsSubset
       simp [Narrow.narrow, narrow, meet]
       rw [← ι.meet_associative]
       apply NarrowLawful.bounding_low
@@ -135,7 +135,7 @@ namespace Undefined
       intros x y n
       let ⟨x, b⟩ := x
       let ⟨y, b'⟩ := y
-      unfold BoundedLattice.is_subset
+      unfold BoundedLattice.IsSubset
       simp [Narrow.narrow, narrow, meet]
       constructor
       · apply NarrowLawful.bounding_high

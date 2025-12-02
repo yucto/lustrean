@@ -36,7 +36,7 @@ namespace Normalize
       | .old_bound_var k => .old_bound_var <| k.castLE h
   end VarRef
 
-  def elab_vr {n m : Nat} : Indicise.VarRef n m → VarRef n m
+  def elabVr {n m : Nat} : Indicise.VarRef n m → VarRef n m
     | .input_var k => .input_var k
     | .bound_var k => .bound_var k
 
@@ -175,7 +175,7 @@ namespace Normalize
       guards := default
       asserts := default
 
-    def total_vars (self : Node) : Nat :=
+    def totalVars (self : Node) : Nat :=
       1 + self.n + self.m + self.m -- step + input vars + bound vars + old bound vars
   end Node
 
@@ -194,7 +194,7 @@ namespace Normalize
 
   abbrev BVar (_n m : Nat) := Fin m
 
-  def add_var {n m : Nat} (ref : Syntax) (e : Expr n m) (t : NodeN n m) : CounterM <| BVar n (m+1) × NodeN n (m+1) := do
+  def addVar {n m : Nat} (ref : Syntax) (e : Expr n m) (t : NodeN n m) : CounterM <| BVar n (m+1) × NodeN n (m+1) := do
     let ⟨t, ⟨tm_eq_m, tn_eq_n⟩⟩ := t
     let e' : Expr t.n (t.m+1) := tn_eq_n ▸ e.upcast <| by
       rewrite [tm_eq_m]
@@ -268,13 +268,13 @@ namespace Normalize
   private abbrev AuxBoolExpr := AuxHelper BoolExpr
 
   mutual
-    partial def elab_simple_expr_aux {n m : Nat} (nod : NodeN n m) (e : Indicise.Expr n m)
+    partial def elabSimpleExprAux {n m : Nat} (nod : NodeN n m) (e : Indicise.Expr n m)
                                      : CounterM <| AuxSimpleExpr n m := do
-      let { m', m_leq_m', e, nod } ← elab_expr_aux nod e
+      let { m', m_leq_m', e, nod } ← elabExprAux nod e
       match e with
       | .simple e => return { m', m_leq_m', e, nod }
       | .ite cond e₁ e₂ =>
-        let (x, nod) ← add_var default (.ite cond e₁ e₂) nod -- TODO: default is a dummy value
+        let (x, nod) ← addVar default (.ite cond e₁ e₂) nod -- TODO: default is a dummy value
         return {
           m' := m' + 1
           m_leq_m' := calc
@@ -284,7 +284,7 @@ namespace Normalize
           nod
         }
 
-    partial def elab_expr_aux {n m : Nat} (nod : NodeN n m) : Indicise.Expr n m → CounterM (AuxExpr n m)
+    partial def elabExprAux {n m : Nat} (nod : NodeN n m) : Indicise.Expr n m → CounterM (AuxExpr n m)
       | .interval lb up =>
         return ⟨m, by simp, .simple (.interval lb up), nod⟩
       | .var ⟨.input_var v, _⟩ =>
@@ -292,7 +292,7 @@ namespace Normalize
       | .var ⟨.bound_var v, _⟩ =>
         return ⟨m, by simp, .simple <| .var <| .bound_var v, nod⟩
       | .mon_op .neg ⟨e, _⟩ => do
-        let ⟨m', m_leq_m', e, nod⟩ ← elab_simple_expr_aux nod e
+        let ⟨m', m_leq_m', e, nod⟩ ← elabSimpleExprAux nod e
         return {
           m'
           m_leq_m'
@@ -300,8 +300,8 @@ namespace Normalize
           nod := nod
         }
       | .bin_op .add ⟨e₁, _⟩ ⟨e₂, _⟩ => do
-        let ⟨m₁, m_leq_m₁, e₁, nod⟩ ← elab_simple_expr_aux nod e₁
-        let ⟨m₂, m₁_leq_m₂, e₂, nod⟩ ← elab_simple_expr_aux nod (e₂.upcast m_leq_m₁)
+        let ⟨m₁, m_leq_m₁, e₁, nod⟩ ← elabSimpleExprAux nod e₁
+        let ⟨m₂, m₁_leq_m₂, e₂, nod⟩ ← elabSimpleExprAux nod (e₂.upcast m_leq_m₁)
         return {
           m' := m₂
           m_leq_m' := calc
@@ -311,8 +311,8 @@ namespace Normalize
           nod := nod
         }
       | .bin_op .sub ⟨e₁, _⟩ ⟨e₂, _⟩ => do
-        let ⟨m₁, m_leq_m₁, e₁, nod⟩ ← elab_simple_expr_aux nod e₁
-        let ⟨m₂, m₁_leq_m₂, e₂, nod⟩ ← elab_simple_expr_aux nod (e₂.upcast m_leq_m₁)
+        let ⟨m₁, m_leq_m₁, e₁, nod⟩ ← elabSimpleExprAux nod e₁
+        let ⟨m₂, m₁_leq_m₂, e₂, nod⟩ ← elabSimpleExprAux nod (e₂.upcast m_leq_m₁)
         return {
           m' := m₂
           m_leq_m' := calc
@@ -321,8 +321,8 @@ namespace Normalize
           e := .simple <| .bin_op .sub (e₁.upcast m₁_leq_m₂) e₂
           nod := nod }
       | .bin_op .mul ⟨e₁, _⟩ ⟨e₂, _⟩ => do
-        let ⟨m₁, m_leq_m₁, e₁, nod⟩ ← elab_simple_expr_aux nod e₁
-        let ⟨m₂, m₁_leq_m₂, e₂, nod⟩ ← elab_simple_expr_aux nod (e₂.upcast m_leq_m₁)
+        let ⟨m₁, m_leq_m₁, e₁, nod⟩ ← elabSimpleExprAux nod e₁
+        let ⟨m₂, m₁_leq_m₂, e₂, nod⟩ ← elabSimpleExprAux nod (e₂.upcast m_leq_m₁)
         return {
           m' := m₂
           m_leq_m' := calc
@@ -332,9 +332,9 @@ namespace Normalize
           nod := nod
         }
       | .bin_op .fby ⟨e₁, _⟩ ⟨e₂, _⟩ => do
-        let ⟨m₁, m_leq_m₁, e₁, nod⟩ ← elab_simple_expr_aux nod e₁
-        let ⟨m₂, m₁_leq_m₂, e₂, nod⟩ ← elab_expr_aux nod (e₂.upcast m_leq_m₁)
-        let (x, nod) ← add_var default e₂ nod -- TODO: default is a dummy value
+        let ⟨m₁, m_leq_m₁, e₁, nod⟩ ← elabSimpleExprAux nod e₁
+        let ⟨m₂, m₁_leq_m₂, e₂, nod⟩ ← elabExprAux nod (e₂.upcast m_leq_m₁)
+        let (x, nod) ← addVar default e₂ nod -- TODO: default is a dummy value
         -- the condition `n = 0`
         let cond := .cmp_op .eq (.var .step) (.interval 0 0)
         return {
@@ -344,9 +344,9 @@ namespace Normalize
           nod := nod
         }
       | .ite ⟨cond, _⟩ ⟨e₁, _⟩ ⟨e₂, _⟩ => do
-        let ⟨m₁, m_leq_m₁, cond, nod⟩ ← elab_boolexpr_aux nod cond
-        let ⟨m₂, m₁_leq_m₂, e₁, nod⟩ ← elab_simple_expr_aux nod (e₁.upcast <| by omega)
-        let ⟨m₃, m₂_leq_m₃, e₂, nod⟩ ← elab_simple_expr_aux nod (e₂.upcast <| by omega)
+        let ⟨m₁, m_leq_m₁, cond, nod⟩ ← elabBoolexprAux nod cond
+        let ⟨m₂, m₁_leq_m₂, e₁, nod⟩ ← elabSimpleExprAux nod (e₁.upcast <| by omega)
+        let ⟨m₃, m₂_leq_m₃, e₂, nod⟩ ← elabSimpleExprAux nod (e₂.upcast <| by omega)
         return {
           m' := m₃
           m_leq_m' := by omega
@@ -354,11 +354,11 @@ namespace Normalize
           nod := nod
         }
 
-    partial def elab_boolexpr_aux {n m : Nat} (nod : NodeN n m)
+    partial def elabBoolexprAux {n m : Nat} (nod : NodeN n m)
                                   : Indicise.BoolExpr n m → CounterM (AuxBoolExpr n m)
       | .bin_op op ⟨l, _⟩ ⟨r, _⟩ => do
-        let ⟨m₁, m_leq_m₁, l, nod⟩ ← elab_boolexpr_aux nod l
-        let ⟨m₂, m₁_leq_m₂, r, nod⟩ ← elab_boolexpr_aux nod (r.upcast m_leq_m₁)
+        let ⟨m₁, m_leq_m₁, l, nod⟩ ← elabBoolexprAux nod l
+        let ⟨m₂, m₁_leq_m₂, r, nod⟩ ← elabBoolexprAux nod (r.upcast m_leq_m₁)
         return {
           m' := m₂
           m_leq_m' := calc
@@ -368,8 +368,8 @@ namespace Normalize
           nod := nod
         }
       | .cmp_op op ⟨l, _⟩ ⟨r, _⟩ => do
-        let ⟨m₁, m_leq_m₁, l, nod⟩ ← elab_simple_expr_aux nod l
-        let ⟨m₂, m₁_leq_m₂, r, nod⟩ ← elab_simple_expr_aux nod (r.upcast m_leq_m₁)
+        let ⟨m₁, m_leq_m₁, l, nod⟩ ← elabSimpleExprAux nod l
+        let ⟨m₂, m₁_leq_m₂, r, nod⟩ ← elabSimpleExprAux nod (r.upcast m_leq_m₁)
         return {
           m' := m₂
           m_leq_m' := calc
@@ -380,14 +380,14 @@ namespace Normalize
         }
   end
 
-  def elab_node (nod : &Indicise.Node) : Node := CounterT.run (m := Id) do
+  def elabNode (nod : &Indicise.Node) : Node := CounterT.run (m := Id) do
     let ⟨nod, _⟩ := nod
     let mut new_nod : { t : Node // nod.n = t.n ∧ nod.m ≤ t.m } := ⟨{
       name := nod.name
       n := nod.n
       m := nod.m
       input_vars := nod.input_vars
-      output_vars := nod.output_vars.map (·.map elab_vr)
+      output_vars := nod.output_vars.map (·.map elabVr)
       -- Random garbage, will be filled in later.  This is necessary, because our expressions can
       -- refer to these variables, so they must appear exactly where they originally appear, so
       -- as not to break the references.  Additional bindings must come *after* these.
@@ -400,7 +400,7 @@ namespace Normalize
       let e : Indicise.Expr new_nod.val.n new_nod.val.m :=
         new_nod.property.1 ▸ nod.bound_vars[i].value.value.upcast new_nod.property.2
       let { m', e, nod := ⟨hnod, hnod_m_m', hnod_n_nod_n⟩, m_leq_m', .. } ←
-        elab_expr_aux ⟨new_nod, rfl, rfl⟩ e
+        elabExprAux ⟨new_nod, rfl, rfl⟩ e
       have : i < hnod.m := by
         have : i < nod.m := by
           apply Membership.get_elem_helper
@@ -426,7 +426,7 @@ namespace Normalize
       let g : Indicise.BoolExpr new_nod.val.n new_nod.val.m :=
         new_nod.property.1 ▸ g.value.upcast new_nod.property.2
       let { m', e, nod := ⟨hnod, hnod_m_m', hnod_n_nod_n⟩, m_leq_m', .. } ←
-        elab_boolexpr_aux ⟨new_nod, rfl, rfl⟩ g
+        elabBoolexprAux ⟨new_nod, rfl, rfl⟩ g
       let b : BoolExpr hnod.n hnod.m := hnod_m_m' ▸ hnod_n_nod_n ▸ e
       new_nod := .mk {
         hnod with
@@ -445,7 +445,7 @@ namespace Normalize
       let a : Indicise.BoolExpr new_nod.val.n new_nod.val.m :=
         new_nod.property.1 ▸ a.value.upcast new_nod.property.2
       let { m', e, nod := ⟨hnod, hnod_m_m', hnod_n_nod_n⟩, m_leq_m', .. } ←
-        elab_boolexpr_aux ⟨new_nod, rfl, rfl⟩ a
+        elabBoolexprAux ⟨new_nod, rfl, rfl⟩ a
       let b : BoolExpr hnod.n hnod.m := hnod_m_m' ▸ hnod_n_nod_n ▸ e
       new_nod := .mk {
         hnod with
@@ -462,8 +462,8 @@ namespace Normalize
     return new_nod
 
 
-  def elab_lustre (nodes : Array (&Indicise.Node)) : Array (Node) :=
-    nodes.map elab_node
+  def elabLustre (nodes : Array (&Indicise.Node)) : Array (Node) :=
+    nodes.map elabNode
 end Normalize
 
 end Lustrean.Elaboration

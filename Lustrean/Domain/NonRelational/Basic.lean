@@ -35,42 +35,42 @@ namespace NonRelational
     else
       .bot
 
-  def map_nil (f : Vector α n → Vector α n) : NonRelational α n :=
+  def mapNil (f : Vector α n → Vector α n) : NonRelational α n :=
     match x with
     | .non_rel x => coalesce <| f x.val
     | .bot => .bot
 
-  def map2_nil (f : Vector α n → Vector α n → Vector α n) : NonRelational α n :=
+  def map2Nil (f : Vector α n → Vector α n → Vector α n) : NonRelational α n :=
     match x, y with
     | .non_rel x, .non_rel y => coalesce (f x.val y.val)
     | _, _ => .bot
 
   protected def add :=
-    map2_nil x y fun x y => Vector.ofFn fun i => x.get i + y.get i
+    map2Nil x y fun x y => Vector.ofFn fun i => x.get i + y.get i
 
   instance : Add (NonRelational α n) where
     add := NonRelational.add
 
   protected def neg :=
-    map_nil x fun x => Vector.ofFn fun i => -x.get i
+    mapNil x fun x => Vector.ofFn fun i => -x.get i
 
   instance : Neg (NonRelational α n) where
     neg := NonRelational.neg
 
   protected def sub :=
-    map2_nil x y fun x y => Vector.ofFn fun i => x.get i - y.get i
+    map2Nil x y fun x y => Vector.ofFn fun i => x.get i - y.get i
 
   instance : Sub (NonRelational α n) where
     sub := NonRelational.sub
 
   protected def mul :=
-    map2_nil x y fun x y => Vector.ofFn fun i => x.get i * y.get i
+    map2Nil x y fun x y => Vector.ofFn fun i => x.get i * y.get i
 
   instance : Mul (NonRelational α n) where
     mul := NonRelational.mul
 
   protected def div :=
-    map2_nil x y fun x y => Vector.ofFn fun i => x.get i / y.get i
+    map2Nil x y fun x y => Vector.ofFn fun i => x.get i / y.get i
 
   instance : Div (NonRelational α n) where
     div := NonRelational.div
@@ -99,6 +99,6 @@ namespace NonRelational
         assumption)
     | .bot, z | z, .bot => z
 
-  def meet : NonRelational α n := map2_nil x y fun x y => Vector.ofFn fun i => x.get i ⊓ y.get i
+  def meet : NonRelational α n := map2Nil x y fun x y => Vector.ofFn fun i => x.get i ⊓ y.get i
 end NonRelational
 end Lustrean

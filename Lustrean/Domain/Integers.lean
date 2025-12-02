@@ -88,14 +88,14 @@ namespace Integers
       cases x <;> dsimp [meet]
     non_trivial := by simp
 
-  def map_int (x y : Integers) (f : Int → Int →  Integers) : Integers :=
+  def mapInt (x y : Integers) (f : Int → Int →  Integers) : Integers :=
     match x, y with
     | .bot, _ | _, .bot => .bot
     | .top, _ | _, .top => .top
     | .int n, .int m => f n m
 
   instance : Add Integers where
-    add x y := map_int x y
+    add x y := mapInt x y
       fun n m => .int (n + m)
 
   instance : Neg Integers where
@@ -105,7 +105,7 @@ namespace Integers
     | .int n => .int (-n)
 
   instance : Sub Integers where
-    sub x y := map_int x y
+    sub x y := mapInt x y
       fun n m => .int (n - m)
 
   instance : Mul Integers where
@@ -139,13 +139,13 @@ namespace Integers
   instance : WidenLawful Integers where
     covering_left := by
       intros x y n
-      dsimp [BoundedLattice.is_subset, Widen.widen]
+      dsimp [BoundedLattice.IsSubset, Widen.widen]
       cases x <;> cases y <;> simp [meet, join]
       rename_i x y
       by_cases h : (x = y) <;> simp [h]
     covering_right := by
       intros x y n
-      dsimp [BoundedLattice.is_subset, Widen.widen]
+      dsimp [BoundedLattice.IsSubset, Widen.widen]
       cases x <;> cases y <;> simp [meet, join]
       rename_i x y
       by_cases h : (x = y) <;> simp [h]
@@ -156,18 +156,18 @@ namespace Integers
   instance : NarrowLawful Integers where
     bounding_low := by
       intros x y n
-      dsimp [BoundedLattice.is_subset, Narrow.narrow]
+      dsimp [BoundedLattice.IsSubset, Narrow.narrow]
       cases x <;> cases y <;> simp [meet]
       rename_i x y
       by_cases h : (x = y) <;> simp [h]
     bounding_high := by
       intros x y n
-      dsimp [BoundedLattice.is_subset, Narrow.narrow]
+      dsimp [BoundedLattice.IsSubset, Narrow.narrow]
       cases x <;> cases y <;> simp [meet]
       rename_i x y
       by_cases h : (x = y) <;> simp [h]
 
-  def compare_int (op : CompareOp) (a b : Int) :
+  def compareInt (op : CompareOp) (a b : Int) :
     Integers × Integers
   :=
     let cond := match op with
@@ -187,7 +187,7 @@ namespace Integers
     match op, x, y with
     | _, .bot, _
     | _, _, .bot => (bot, bot)
-    | _, .int a, .int b => compare_int op a b
+    | _, .int a, .int b => compareInt op a b
     | .eq, .top, z
     | .eq, z, .top => (z, z)
     | _, _, _ => (x, y)
@@ -209,14 +209,14 @@ namespace Integers
     bounding_high := NarrowLawful.bounding_high
 
   /-theorem widen_termination : ∀ (x : Nat -> Integers),
-    IntegersValueDomain.is_increasing x -> ∃ (n : Nat),
-    IntegersValueDomain.widen_seq x (.succ n) = IntegersValueDomain.widen_seq x n :=
+    IntegersValueDomain.IsIncreasing x -> ∃ (n : Nat),
+    IntegersValueDomain.widenSeq x (.succ n) = IntegersValueDomain.widenSeq x n :=
   by
     intros x H
     have H₀ := H 0
     have H₁ := H 1
     have H₂ := H 2
-    simp [BoundedLattice.is_subset] at *
+    simp [BoundedLattice.IsSubset] at *
 
     dsimp [BoundedLattice.meet, meet] at H₀ H₁ H₂
 
@@ -238,11 +238,11 @@ namespace Integers
     (try next => cases H₂) <;>
 
     solve
-    | exists 0; simp [Widen.widen_seq, Widen.widen, join, h₀, h₁, h₂, h₃, H₀, H₁, H₂];
+    | exists 0; simp [Widen.widenSeq, Widen.widen, join, h₀, h₁, h₂, h₃, H₀, H₁, H₂];
       try simp [H₀']
-    | exists 1; simp [Widen.widen_seq, Widen.widen, join, h₀, h₁, h₂, h₃, H₀, H₁, H₂];
+    | exists 1; simp [Widen.widenSeq, Widen.widen, join, h₀, h₁, h₂, h₃, H₀, H₁, H₂];
       try simp [H₁']
-    | exists 2; simp [Widen.widen_seq, Widen.widen, join, h₀, h₁, h₂, h₃, H₀, H₁, H₂];
+    | exists 2; simp [Widen.widenSeq, Widen.widen, join, h₀, h₁, h₂, h₃, H₀, H₁, H₂];
       try simp [H₂']-/
 end Integers
 end Lustrean

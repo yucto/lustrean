@@ -21,7 +21,7 @@ namespace Lustrean.NonRelational
   theorem join_absorption : join x (meet x y) = x := by
     cases x <;> cases y <;> simp only [
       meet,
-      map2_nil,
+      map2Nil,
       coalesce
     ]
     split <;> simp [join]

@@ -22,18 +22,18 @@ namespace ValueDomain
   -- backward_op x y r = (x', y') where
   -- x' = { v ∈ x | ∃ v' ∈ y, v op v' ∈ r }
   -- y' = { v' ∈ y | ∃ v ∈ x, v op v' ∈ r }
-  def backward_neg (x r : α) : α := (-r) ⊓ x
+  def backwardNeg (x r : α) : α := (-r) ⊓ x
 
-  def backward_add (x y r : α) : α × α :=
+  def backwardAdd (x y r : α) : α × α :=
     (x ⊓ (r - y), y ⊓ (r - x))
 
-  def backward_sub (x y r : α) : α × α :=
+  def backwardSub (x y r : α) : α × α :=
     (x ⊓ (r + y), y ⊓ (x - r))
 
-  def backward_mul (x y r : α) : α × α :=
+  def backwardMul (x y r : α) : α × α :=
     (x ⊓ (r / y), y ⊓ (r / x))
 
-  def backward_div (x y r : α) : α × α :=
+  def backwardDiv (x y r : α) : α × α :=
     (x ⊓ (r * y), y ⊓ (x / r))
 end ValueDomain
 

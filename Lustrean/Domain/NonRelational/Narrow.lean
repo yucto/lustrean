@@ -7,7 +7,7 @@ namespace Lustrean.NonRelational
   variable {α : Type} {n : Nat}
   variable [ι : ValueDomain α]
 
-  protected def narrow (x y : NonRelational α n) (m : Nat) := map2_nil x y fun x y => Vector.ofFn fun i =>
+  protected def narrow (x y : NonRelational α n) (m : Nat) := map2Nil x y fun x y => Vector.ofFn fun i =>
     Narrow.narrow (x.get i) (y.get i) m
 
   instance : Narrow (NonRelational α n) where
@@ -16,7 +16,7 @@ namespace Lustrean.NonRelational
   instance : NarrowLawful (NonRelational α n) where
     bounding_low := by
       intros x y m
-      cases x <;> cases y <;> simp [Narrow.narrow, NonRelational.narrow, meet, map2_nil, coalesce]
+      cases x <;> cases y <;> simp [Narrow.narrow, NonRelational.narrow, meet, map2Nil, coalesce]
       ;(try apply BoundedLattice.bot_min)
       ;(try apply BoundedLattice.refl)
       rename_i x y
@@ -42,7 +42,7 @@ namespace Lustrean.NonRelational
 
     bounding_high := by
       intros x y n
-      cases x <;> cases y <;> simp [Narrow.narrow, NonRelational.narrow, map2_nil, coalesce]
+      cases x <;> cases y <;> simp [Narrow.narrow, NonRelational.narrow, map2Nil, coalesce]
       ; (try apply BoundedLattice.bot_min)
       ; (try apply BoundedLattice.refl)
       rename_i x y

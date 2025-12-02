@@ -55,7 +55,7 @@ namespace WithRef
       binderNameHint x f <| binderNameHint h () <| f (wfParam x) := by
   rfl
 
-  def sizeOf_lt_of_mem {α : Type _} {a : α} [inst : SizeOf α] {as : &α}: a ∈ as → sizeOf a < sizeOf as := by
+  theorem sizeOf_lt_of_mem  {α : Type _} {a : α} [inst : SizeOf α] {as : &α}: a ∈ as → sizeOf a < sizeOf as := by
     intro h
     cases as
     cases h
@@ -63,9 +63,9 @@ namespace WithRef
 
   macro "sizeOf_withRef_dec" : tactic =>
     `(tactic| first
-      | with_reducible apply sizeOf_lt_of_mem; assumption; done
+      | with_reducible apply sizeOf_lt_of_mem ; assumption; done
       | with_reducible
-          apply Nat.lt_of_lt_of_le (sizeOf_lt_of_mem ?h)
+          apply Nat.lt_of_lt_of_le (sizeOf_lt_of_mem  ?h)
           case' h => assumption
         simp +arith)
 
@@ -151,148 +151,148 @@ namespace BoolBinOp
 end BoolBinOp
 
 namespace Reify
-  inductive BinOp where
-    | add
-    | sub
-    | mul
-    | fby
-    deriving Repr, Inhabited
+inductive BinOp where
+  | add
+  | sub
+  | mul
+  | fby
+  deriving Repr, Inhabited
 
-  namespace BinOp
-    protected def toString : BinOp → String
-      | .add => "+"
-      | .sub => "-"
-      | .mul => "*"
-      | .fby => "fby"
+namespace BinOp
+protected def toString : BinOp → String
+  | .add => "+"
+  | .sub => "-"
+  | .mul => "*"
+  | .fby => "fby"
 
-    instance : ToString BinOp where
-      toString := BinOp.toString
-  end BinOp
+instance : ToString BinOp where
+  toString := BinOp.toString
+end BinOp
 
-  mutual
-    inductive Expr where
-      | int (lb : &LowerBound) (up : &UpperBound)
-      | var (name : &Name)
-      | mon_op (op : MonOp) (e : &Expr)
-      | bin_op (op : BinOp) (left right : &Expr)
-      | node (name : &Name) (args : Array (&Expr))
-      | ite (cond : &BoolExpr) (tb : &Expr) (eb : &Expr)
-      deriving Repr, Inhabited
+mutual
+inductive Expr where
+  | int (lb : &LowerBound) (up : &UpperBound)
+  | var (name : &Name)
+  | mon_op (op : MonOp) (e : &Expr)
+  | bin_op (op : BinOp) (left right : &Expr)
+  | node (name : &Name) (args : Array (&Expr))
+  | ite (cond : &BoolExpr) (tb : &Expr) (eb : &Expr)
+  deriving Repr, Inhabited
 
-    inductive BoolExpr where
-      | cmp_op (op : CmpOp) (left right : &Expr)
-      | bin_op (op : BoolBinOp) (left right : &BoolExpr)
-      deriving Repr, Inhabited
-  end
+inductive BoolExpr where
+  | cmp_op (op : CmpOp) (left right : &Expr)
+  | bin_op (op : BoolBinOp) (left right : &BoolExpr)
+  deriving Repr, Inhabited
+end
 
-  structure Variable where
-    name : &Name
-    deriving Repr, Inhabited
+structure Variable where
+  name : &Name
+  deriving Repr, Inhabited
 
-  structure BoundVars where
-    names : Array (&Name)
-    value : &Expr
-    deriving Repr, Inhabited
+structure BoundVars where
+  names : Array (&Name)
+  value : &Expr
+  deriving Repr, Inhabited
 
-  structure Node where
-    name : &Name
-    input_vars : Array Variable
-    bound_vars : Array BoundVars
-    output_vars : Array (&Name)
-    guards : Array (&BoolExpr)
-    asserts : Array (&BoolExpr)
-    deriving Repr, Inhabited
+structure Node where
+  name : &Name
+  input_vars : Array Variable
+  bound_vars : Array BoundVars
+  output_vars : Array (&Name)
+  guards : Array (&BoolExpr)
+  asserts : Array (&BoolExpr)
+  deriving Repr, Inhabited
 
-  mutual
-    partial def elab_expr (s : TSyntax `lustre_expr ) : CoreM (&Expr) :=
-      WithRef.withRefM s do match s with
-        | `(lustre_expr| [$lbs, $ups]) =>
-          let lb ← match lbs with
-            | `(lustre_lower_bound| -∞) => pure .minf
-            | `(lustre_lower_bound| $n:num) => pure <| .nat n.getNat
-            | _ => throwUnsupportedSyntax
-          let up ← match ups with
-            | `(lustre_upper_bound| ∞) => pure .pinf
-            | `(lustre_upper_bound| $n:num) => pure <| .nat n.getNat
-            | _ => throwUnsupportedSyntax
-          return .int ⟨lb, lbs⟩ ⟨up, ups⟩
-        | `(lustre_expr| $v:ident) => return .var ⟨v.getId, v⟩
-        | `(lustre_expr| $l + $r) =>
-          let left ← elab_expr l
-          let right ← elab_expr r
-          return .bin_op .add left right
-        | `(lustre_expr| $l fby $r) =>
-          let left ← elab_expr l
-          let right ← elab_expr r
-          return .bin_op .fby left right
-        | `(lustre_expr| - $e) =>
-          let e ← elab_expr e
-          return .mon_op .neg e
-        | `(lustre_expr| $l * $r) =>
-          let left ← elab_expr l
-          let right ← elab_expr r
-          return .bin_op .mul left right
-        | `(lustre_expr| $l - $r) =>
-          let left ← elab_expr l
-          let right ← elab_expr r
-          return .bin_op .sub left right
-        | `(lustre_expr| $f:ident($args:lustre_expr,*)) =>
-          let args ← args.getElems.mapM elab_expr
-          return .node ⟨f.getId, f⟩ args
-        | `(lustre_expr| if $c then $tb else $eb) =>
-          let c ← elab_bool_expr c
-          let tb ← elab_expr tb
-          let eb ← elab_expr eb
-          return .ite c tb eb
-        | _ =>
-          throwErrorAt s m!"{repr s}"
-
-      partial def elab_bool_expr (s : TSyntax `lustre_assertion) : CoreM (&BoolExpr) :=
-        WithRef.withRefM s do match s with
-          | `(lustre_assertion| $l:lustre_expr ≤ $r:lustre_expr) =>
-            let left ← elab_expr l
-            let right ← elab_expr r
-            return .cmp_op .leq left right
-          | `(lustre_assertion| $l:lustre_expr = $r:lustre_expr) =>
-            let left ← elab_expr l
-            let right ← elab_expr r
-            return .cmp_op .eq left right
-          | `(lustre_assertion| $l:lustre_expr < $r:lustre_expr) =>
-            let left ← elab_expr l
-            let right ← elab_expr r
-            return .cmp_op .lt left right
-          | `(lustre_assertion| $l:lustre_assertion ∧ $r:lustre_assertion) =>
-            let left ← elab_bool_expr l
-            let right ← elab_bool_expr r
-            return .bin_op .and left right
-          | `(lustre_assertion| $l:lustre_assertion ∨ $r:lustre_assertion) =>
-            let left ← elab_bool_expr l
-            let right ← elab_bool_expr r
-            return .bin_op .or left right
-          | ref =>
-            println! s!"{repr ref}"
-            withRef ref throwUnsupportedSyntax
-  end
-
-  def elab_node (s : TSyntax `lustre_node) : CoreM (&Node) := do match s with
-    | `(lustre_node| node $name($inputs:ident,*) $[= $output_vars,*]? $[guard $guards*]?
-                     where $decls* $[assert $asserts*]?) =>
-      let name := ⟨name.getId, name⟩
-      let input_vars := inputs.getElems.map fun x => ⟨x.getId, x⟩
-      let bound_vars ← decls.mapM fun
-        | `(lustre_node_decl| $vars:ident,* = $expr:lustre_expr) => do pure {
-          names := vars.getElems.map fun var => ⟨var.getId, var⟩
-          value := ← elab_expr expr
-        }
-        | ref => withRef ref throwUnsupportedSyntax
-      let output_vars := output_vars.map (·.getElems.map (fun var => ⟨var.getId, var⟩)) |>.getD default
-      let guards ← guards.getD #[] |>.mapM elab_bool_expr
-      let asserts ← asserts.getD #[] |>.mapM elab_bool_expr
-      return ⟨{name, input_vars, bound_vars, output_vars, guards, asserts}, s⟩
+mutual
+partial def elabExpr (s : TSyntax `lustre_expr ) : CoreM (&Expr) :=
+  WithRef.withRefM s do match s with
+    | `(lustre_expr| [$lbs, $ups]) =>
+      let lb ← match lbs with
+        | `(lustre_lower_bound| -∞) => pure .minf
+        | `(lustre_lower_bound| $n:num) => pure <| .nat n.getNat
+        | _ => throwUnsupportedSyntax
+      let up ← match ups with
+        | `(lustre_upper_bound| ∞) => pure .pinf
+        | `(lustre_upper_bound| $n:num) => pure <| .nat n.getNat
+        | _ => throwUnsupportedSyntax
+      return .int ⟨lb, lbs⟩ ⟨up, ups⟩
+    | `(lustre_expr| $v:ident) => return .var ⟨v.getId, v⟩
+    | `(lustre_expr| $l + $r) =>
+      let left ← elabExpr l
+      let right ← elabExpr r
+      return .bin_op .add left right
+    | `(lustre_expr| $l fby $r) =>
+      let left ← elabExpr l
+      let right ← elabExpr r
+      return .bin_op .fby left right
+    | `(lustre_expr| - $e) =>
+      let e ← elabExpr e
+      return .mon_op .neg e
+    | `(lustre_expr| $l * $r) =>
+      let left ← elabExpr l
+      let right ← elabExpr r
+      return .bin_op .mul left right
+    | `(lustre_expr| $l - $r) =>
+      let left ← elabExpr l
+      let right ← elabExpr r
+      return .bin_op .sub left right
+    | `(lustre_expr| $f:ident($args:lustre_expr,*)) =>
+      let args ← args.getElems.mapM elabExpr
+      return .node ⟨f.getId, f⟩ args
+    | `(lustre_expr| if $c then $tb else $eb) =>
+      let c ← elabBoolExpr c
+      let tb ← elabExpr tb
+      let eb ← elabExpr eb
+      return .ite c tb eb
     | _ =>
-      throwUnsupportedSyntax
+      throwErrorAt s m!"{repr s}"
 
-  def elab_lustre (nodes : TSyntaxArray `lustre_node) : CoreM (Array (&Node)) :=
-    nodes.mapM elab_node
+partial def elabBoolExpr (s : TSyntax `lustre_assertion) : CoreM (&BoolExpr) :=
+  WithRef.withRefM s do match s with
+    | `(lustre_assertion| $l:lustre_expr ≤ $r:lustre_expr) =>
+      let left ← elabExpr l
+      let right ← elabExpr r
+      return .cmp_op .leq left right
+    | `(lustre_assertion| $l:lustre_expr = $r:lustre_expr) =>
+      let left ← elabExpr l
+      let right ← elabExpr r
+      return .cmp_op .eq left right
+    | `(lustre_assertion| $l:lustre_expr < $r:lustre_expr) =>
+      let left ← elabExpr l
+      let right ← elabExpr r
+      return .cmp_op .lt left right
+    | `(lustre_assertion| $l:lustre_assertion ∧ $r:lustre_assertion) =>
+      let left ← elabBoolExpr l
+      let right ← elabBoolExpr r
+      return .bin_op .and left right
+    | `(lustre_assertion| $l:lustre_assertion ∨ $r:lustre_assertion) =>
+      let left ← elabBoolExpr l
+      let right ← elabBoolExpr r
+      return .bin_op .or left right
+    | ref =>
+      println! s!"{repr ref}"
+      withRef ref throwUnsupportedSyntax
+end
+
+def elabNode (s : TSyntax `lustre_node) : CoreM (&Node) := do match s with
+  | `(lustre_node| node $name($inputs:ident,*) $[= $output_vars,*]? $[guard $guards*]?
+                   where $decls* $[assert $asserts*]?) =>
+    let name := ⟨name.getId, name⟩
+    let input_vars := inputs.getElems.map fun x => ⟨x.getId, x⟩
+    let bound_vars ← decls.mapM fun
+      | `(lustre_node_decl| $vars:ident,* = $expr:lustre_expr) => do pure {
+        names := vars.getElems.map fun var => ⟨var.getId, var⟩
+        value := ← elabExpr expr
+      }
+      | ref => withRef ref throwUnsupportedSyntax
+    let output_vars := output_vars.map (·.getElems.map (fun var => ⟨var.getId, var⟩)) |>.getD default
+    let guards ← guards.getD #[] |>.mapM elabBoolExpr
+    let asserts ← asserts.getD #[] |>.mapM elabBoolExpr
+    return ⟨{name, input_vars, bound_vars, output_vars, guards, asserts}, s⟩
+  | _ =>
+    throwUnsupportedSyntax
+
+def elabLustre (nodes : TSyntaxArray `lustre_node) : CoreM (Array (&Node)) :=
+  nodes.mapM elabNode
 end Reify
 end Lustrean.Elaboration

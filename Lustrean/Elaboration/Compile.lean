@@ -43,9 +43,9 @@ section
 end
 
 /-- How many iterations of the main loop to unroll. -/
-def unroll_loop : Nat := 1
+def unrollLoop : Nat := 1
 
-def elab_into_cfg (nod : Normalize.Node) : List (PreNode nod.total_vars) × Array (&Fin nod.total_vars) := Id.run do
+def elabIntoCfg (nod : Normalize.Node) : List (PreNode nod.totalVars) × Array (&Fin nod.totalVars) := Id.run do
   -- TODO: default is a dummy value
   let mut result := #[
     { id := 0, out_nodes := [(2, .assign step (IExpr.const 0), default)] },
@@ -58,7 +58,7 @@ def elab_into_cfg (nod : Normalize.Node) : List (PreNode nod.total_vars) × Arra
       -- TODO: default is a dummy value
       out_nodes := [(result.size + 1, .assign (bound_var k) .nil, default)]
     }
-  for _ in [0:unroll_loop] do
+  for _ in [0:unrollLoop] do
     for h : i in [0:nod.m] do
       let k := Fin.mk i <| Membership.get_elem_helper h rfl
       result := result.push {
@@ -212,21 +212,21 @@ def elab_into_cfg (nod : Normalize.Node) : List (PreNode nod.total_vars) × Arra
     | .old_bound_var k => old_bound_var k)
   return (result.toList, output_vars)
 where
-  step : Fin nod.total_vars := .mk 0 <| by
-    unfold Normalize.Node.total_vars
+  step : Fin nod.totalVars := .mk 0 <| by
+    unfold Normalize.Node.totalVars
     omega
-  input_var (k : Fin nod.n) : Fin nod.total_vars := .mk (1+k) <| by
-    unfold Normalize.Node.total_vars
+  input_var (k : Fin nod.n) : Fin nod.totalVars := .mk (1+k) <| by
+    unfold Normalize.Node.totalVars
     omega
-  bound_var (k : Fin nod.m) : Fin nod.total_vars := .mk (1+nod.n+k) <| by
-    unfold Normalize.Node.total_vars
+  bound_var (k : Fin nod.m) : Fin nod.totalVars := .mk (1+nod.n+k) <| by
+    unfold Normalize.Node.totalVars
     omega
-  old_bound_var (k : Fin nod.m) : Fin nod.total_vars := .mk (1+nod.n+nod.m+k) <| by
-    unfold Normalize.Node.total_vars
+  old_bound_var (k : Fin nod.m) : Fin nod.totalVars := .mk (1+nod.n+nod.m+k) <| by
+    unfold Normalize.Node.totalVars
     omega
 
-def elab_lustre (a : Array Normalize.Node) : Array (Σ n, List (PreNode n) × Array (&Fin n)) :=
+def elabLustre (a : Array Normalize.Node) : Array (Σ n, List (PreNode n) × Array (&Fin n)) :=
   a.map fun nod =>
-    ⟨nod.total_vars, elab_into_cfg nod⟩
+    ⟨nod.totalVars, elabIntoCfg nod⟩
 
 end Lustrean.Elaboration.Compile

@@ -9,7 +9,7 @@ namespace Lustrean.NonRelational
   variable (x y z : NonRelational α n)
 
   theorem meet_commutative : meet x y = meet y x := by
-    cases x <;> cases y <;> simp [meet, map2_nil, coalesce]
+    cases x <;> cases y <;> simp [meet, map2Nil, coalesce]
     rename_i x y
     simp [BoundedLattice.meet_commutative]
     split <;> rename_i h
@@ -28,7 +28,7 @@ namespace Lustrean.NonRelational
       assumption
 
 theorem meet_associative : meet (meet x y) z = meet x (meet y z) := by
-    cases x <;> cases y <;> simp [meet, map2_nil, coalesce] ; cases z
+    cases x <;> cases y <;> simp [meet, map2Nil, coalesce] ; cases z
     case bot => simp
     rename_i x y z
     by_cases H : ∀ i : Fin n, x.val.get i ⊓ y.val.get i ⊓ z.val.get i ≠ ⊥
@@ -103,7 +103,7 @@ theorem meet_associative : meet (meet x y) z = meet x (meet y z) := by
         · rw [dif_neg y_z_bot]
 
   theorem meet_absorption : meet x (join x y) = x := by
-    cases x <;> cases y <;> simp [meet, join, map2_nil, coalesce]
+    cases x <;> cases y <;> simp [meet, join, map2Nil, coalesce]
     case bot x =>
       simp [BoundedLattice.meet_idempotent, x.property]
       ext
@@ -118,7 +118,7 @@ theorem meet_associative : meet (meet x y) z = meet x (meet y z) := by
     simp [BoundedLattice.meet_absorption, x.property]
 
   theorem meet_top : x.meet top = x := by
-    cases x <;> simp [meet, top, map2_nil, coalesce]
+    cases x <;> simp [meet, top, map2Nil, coalesce]
     rename_i x
     rw [dif_pos]
     · congr
@@ -128,5 +128,5 @@ theorem meet_associative : meet (meet x y) z = meet x (meet y z) := by
     · simp [BoundedLattice.meet_top, x.property]
 
   theorem meet_bot : x.meet bot = bot := by
-    cases x <;> simp [meet, map2_nil]
+    cases x <;> simp [meet, map2Nil]
 end Lustrean.NonRelational

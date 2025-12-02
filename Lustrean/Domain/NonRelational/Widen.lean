@@ -12,8 +12,8 @@ namespace Lustrean.NonRelational
   := by
     intros x y
     constructor <;> intros H
-    · simp [BoundedLattice.is_subset, meet] at H
-      unfold map2_nil at H
+    · simp [BoundedLattice.IsSubset, meet] at H
+      unfold map2Nil at H
       unfold coalesce at H
       simp at H
       split at H <;> rename_i h'
@@ -21,10 +21,10 @@ namespace Lustrean.NonRelational
         rw [H]
         simp
       · cases H
-    · simp [BoundedLattice.is_subset, meet]
-      unfold map2_nil
+    · simp [BoundedLattice.IsSubset, meet]
+      unfold map2Nil
       simp [coalesce]
-      simp [BoundedLattice.is_subset] at H
+      simp [BoundedLattice.IsSubset] at H
       rw [dif_pos]
       case hc =>
         intros i

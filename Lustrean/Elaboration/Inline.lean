@@ -89,15 +89,15 @@ namespace Inline
     instance : MonadLift m (NodeAddT m) :=
       inferInstanceAs (MonadLift m (StateT _ _))
 
-    def add_var (var : BoundVar) : NodeAddT m PUnit := do
+    def addVar (var : BoundVar) : NodeAddT m PUnit := do
       let nod ← StateT.get
       StateT.set { nod with bound_vars := nod.bound_vars.push var }
 
-    def add_guard (g : &BoolExpr) : NodeAddT m PUnit := do
+    def addGuard (g : &BoolExpr) : NodeAddT m PUnit := do
       let nod ← StateT.get
       StateT.set { nod with guards := nod.guards.push g }
 
-    def add_assert (a : &BoolExpr) : NodeAddT m PUnit := do
+    def addAssert (a : &BoolExpr) : NodeAddT m PUnit := do
       let nod ← StateT.get
       StateT.set { nod with asserts := nod.asserts.push a }
   end NodeAddT
@@ -107,14 +107,14 @@ namespace Inline
   abbrev InlineM := NodeAddT <| Except Error
 
   namespace InlineM
-    abbrev add_var (var : BoundVar) : InlineM PUnit :=
-      NodeAddT.add_var var
+    abbrev addVar (var : BoundVar) : InlineM PUnit :=
+      NodeAddT.addVar var
 
-    abbrev add_guard (g : &BoolExpr) : InlineM PUnit :=
-      NodeAddT.add_guard g
+    abbrev addGuard (g : &BoolExpr) : InlineM PUnit :=
+      NodeAddT.addGuard g
 
-    abbrev add_assert (a : &BoolExpr) : InlineM PUnit :=
-      NodeAddT.add_assert a
+    abbrev addAssert (a : &BoolExpr) : InlineM PUnit :=
+      NodeAddT.addAssert a
 
     protected def run (name : &Name) (input_vars : Array Variable) (output_vars : Array (&Name))
                       (self : InlineM Unit) : Except Error Node := do
@@ -132,39 +132,39 @@ namespace Inline
   include env
 
   mutual
-    partial def elab_expr_aux (bounds : Option (Array (&Name))) (var_name : Name) (e : &Reify.Expr)
+    partial def elabExprAux (bounds : Option (Array (&Name))) (var_name : Name) (e : &Reify.Expr)
                               : CounterT InlineM (&Expr) :=
       e.mapM fun
         | .int lb up => do_bounds <| .interval lb up
         | .var n => do_bounds <| .var n
         | .mon_op op e => do
-          let e ← elab_expr_aux none var_name e
+          let e ← elabExprAux none var_name e
           do_bounds <| .mon_op op e
         | .bin_op op l r => do
-          let left ← elab_expr_aux none var_name l
-          let right ← elab_expr_aux none var_name r
+          let left ← elabExprAux none var_name l
+          let right ← elabExprAux none var_name r
           do_bounds <| .bin_op op left right
         | .ite cond tb eb => do
-          let cond ← elab_boolexpr_aux var_name cond
-          let tb ← elab_expr_aux none var_name tb
-          let eb ← elab_expr_aux none var_name eb
+          let cond ← elabBoolexprAux var_name cond
+          let tb ← elabExprAux none var_name tb
+          let eb ← elabExprAux none var_name eb
           do_bounds <| .ite cond tb eb
         | .node nod args => do
           let .some node_def := env.get? nod | throw <| .undefined_node nod
           let pre := var_name.num (← CounterT.incr)
           for g in node_def.guards do
-            add_assert <| g.map (·.with_prefix pre) -- here, we add the guards of the called node
+            addAssert <| g.map (·.with_prefix pre) -- here, we add the guards of the called node
                                                     -- as an *assert* of the calling node
           for a in node_def.asserts do
-            add_assert <| a.map (·.with_prefix pre)
+            addAssert <| a.map (·.with_prefix pre)
           unless node_def.input_vars.size = args.size do
             throw <| .arity_mismatch nod node_def.input_vars.size args.size
           for (v, arg) in node_def.input_vars.zip args do
             let name := v.name.map (pre ++ ·)
-            let value ← elab_expr_aux none name arg
-            add_var { name, value := value }
+            let value ← elabExprAux none name arg
+            addVar { name, value := value }
           for bvar in node_def.bound_vars do
-            add_var {
+            addVar {
               name := bvar.name.map (pre ++ ·)
               value := bvar.value.map (·.with_prefix pre)
             }
@@ -173,7 +173,7 @@ namespace Inline
             unless vars.size = node_def.output_vars.size do
               throw <| .unpacking_mismatch e.ref node_def.name vars.size node_def.output_vars.size
             for (var, old_var) in vars.zip node_def.output_vars do
-              add_var {
+              addVar {
                 name := var
                 value := old_var.map (.var <| ⟨pre ++ ·, old_var.ref⟩)
               }
@@ -188,7 +188,7 @@ namespace Inline
       do_bounds (e' : Expr) : CounterT InlineM (&Expr) := do
         if let some b := bounds then
           if h : b.size = 1 then
-            add_var {
+            addVar {
               name := b[0]
               value := .mk e' e.ref
             }
@@ -197,45 +197,45 @@ namespace Inline
         return ⟨e', e.ref⟩
 
 
-    partial def elab_boolexpr_aux (pre : Name) (b : &Reify.BoolExpr) : InlineM (&BoolExpr) :=
+    partial def elabBoolexprAux (pre : Name) (b : &Reify.BoolExpr) : InlineM (&BoolExpr) :=
       b.mapM fun
         | .bin_op op l r => do
-          let left ← elab_boolexpr_aux pre l
-          let right ← elab_boolexpr_aux pre r
+          let left ← elabBoolexprAux pre l
+          let right ← elabBoolexprAux pre r
           return .bin_op op left right
         | .cmp_op op l r => do
-          let left ← elab_expr_aux none pre l |>.run
-          let right ← elab_expr_aux none pre r |>.run
+          let left ← elabExprAux none pre l |>.run
+          let right ← elabExprAux none pre r |>.run
           return .cmp_op op left right
   end
 
-  def elab_expr (bounds : Array (&Name)) (e : &Reify.Expr) : InlineM Unit := do
-    let _ ← elab_expr_aux env bounds bounds[0]! e |>.run
+  def elabExpr (bounds : Array (&Name)) (e : &Reify.Expr) : InlineM Unit := do
+    let _ ← elabExprAux env bounds bounds[0]! e |>.run
     return ()
 
-  def elab_boolexpr (guards : Bool) (i : Nat) (b : &Reify.BoolExpr) : InlineM Unit := do
-    let b ← elab_boolexpr_aux env ((if guards then `guards else `asserts) ++ (.num .anonymous i)) b
+  def elabBoolexpr (guards : Bool) (i : Nat) (b : &Reify.BoolExpr) : InlineM Unit := do
+    let b ← elabBoolexprAux env ((if guards then `guards else `asserts) ++ (.num .anonymous i)) b
     if guards then
-      add_guard b
+      addGuard b
     else
-      add_assert b
+      addAssert b
 
-  def elab_node (nod : &Reify.Node) : Except Exception (&Node) :=
+  def elabNode (nod : &Reify.Node) : Except Exception (&Node) :=
     nod.mapM fun nod => Except.mapError Error.as_exception <|
       InlineM.run nod.name nod.input_vars nod.output_vars do
         for { names, value } in nod.bound_vars do
-          elab_expr env names value
+          elabExpr env names value
         for (b, i) in nod.guards.zipIdx do
-          elab_boolexpr env true i b
+          elabBoolexpr env true i b
         for (b, i) in nod.asserts.zipIdx do
-          elab_boolexpr env false i b
+          elabBoolexpr env false i b
   end
 
-  def elab_lustre (nodes : Array (&Reify.Node)) : CoreM (Array (&Node)) := do
+  def elabLustre (nodes : Array (&Reify.Node)) : CoreM (Array (&Node)) := do
     let mut env := {}
     let mut result := Array.mkEmpty nodes.size
     for nod in nodes do
-      let nod ← liftExcept <| elab_node env nod
+      let nod ← liftExcept <| elabNode env nod
       result := result.push nod
       env := env.insert nod.value.name nod
     return result

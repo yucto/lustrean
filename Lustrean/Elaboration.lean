@@ -12,13 +12,13 @@ open Elab.Command (liftTermElabM)
 open Core (CoreM)
 
 namespace Lustrean.Elaboration
-  def elab_lustre (nodes : TSyntaxArray `lustre_node) : CoreM Unit := do
+  def elabLustre (nodes : TSyntaxArray `lustre_node) : CoreM Unit := do
     let nodes :=
-      Compile.elab_lustre <|
-      Normalize.elab_lustre <|
-      ← Indicise.elab_lustre <|
-      ← Inline.elab_lustre <|
-      ← Reify.elab_lustre <|
+      Compile.elabLustre <|
+      Normalize.elabLustre <|
+      ← Indicise.elabLustre <|
+      ← Inline.elabLustre <|
+      ← Reify.elabLustre <|
       nodes
     for ⟨n, vertices, output_vars⟩ in nodes do
       let some cfg := Cfg.new vertices | continue
@@ -40,5 +40,5 @@ namespace Lustrean.Elaboration
       let nodes ← nodes.mapM fun nod => do
         let nod ← liftMacroM <| expandMacros nod.raw
         return .mk nod
-      liftTermElabM <| elab_lustre nodes
+      liftTermElabM <| elabLustre nodes
 end Lustrean.Elaboration

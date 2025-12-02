@@ -126,39 +126,39 @@ namespace Indicise
   variable (local_vars : HashMap Name (VarRef n m))
 
   mutual
-    partial def elab_expr (e : &Inline.Expr) : CoreM (&Expr n m) :=
+    partial def elabExpr (e : &Inline.Expr) : CoreM (&Expr n m) :=
       e.mapM fun
         | .interval lb up => return .interval lb up
         | .var ⟨name, ref⟩ => do
           let some k := local_vars.get? name | throwErrorAt ref "unbound variable"
           return .var ⟨k, ref⟩
         | .mon_op op e => do
-          let e ← elab_expr e
+          let e ← elabExpr e
           return .mon_op op e
         | .bin_op op left right => do
-          let left ← elab_expr left
-          let right ← elab_expr right
+          let left ← elabExpr left
+          let right ← elabExpr right
           return .bin_op op left right
         | .ite cond tb eb => do
-          let cond ← elab_boolexpr cond
-          let tb ← elab_expr tb
-          let eb ← elab_expr eb
+          let cond ← elabBoolexpr cond
+          let tb ← elabExpr tb
+          let eb ← elabExpr eb
           return .ite cond tb eb
 
-    partial def elab_boolexpr (b : &Inline.BoolExpr) : CoreM (&BoolExpr n m) :=
+    partial def elabBoolexpr (b : &Inline.BoolExpr) : CoreM (&BoolExpr n m) :=
       b.mapM fun
         | .cmp_op op left right => do
-          let left ← elab_expr left
-          let right ← elab_expr right
+          let left ← elabExpr left
+          let right ← elabExpr right
           return .cmp_op op left right
         | .bin_op op left right => do
-          let left ← elab_boolexpr left
-          let right ← elab_boolexpr right
+          let left ← elabBoolexpr left
+          let right ← elabBoolexpr right
           return .bin_op op left right
   end
 end
 
-  def elab_node (nod : &Inline.Node) : CoreM (&Node) := nod.mapM fun nod => do
+  def elabNode (nod : &Inline.Node) : CoreM (&Node) := nod.mapM fun nod => do
     let input_vars := Vector.mk nod.input_vars rfl
     let bound_vars := Vector.mk nod.bound_vars rfl
     let n := input_vars.size
@@ -171,17 +171,17 @@ end
     let input_vars := input_vars.map fun { name, } => { name }
     let bound_vars ← bound_vars.mapM fun var => do
       let { name, value } := var
-      let value ← elab_expr env value
+      let value ← elabExpr env value
       return { name, value }
     let output_vars ← nod.output_vars.mapM (m := CoreM) fun var : &Name => do
       let some i := env.get? var | throwErrorAt var.ref "unbound variable"
       return ⟨i, var.ref⟩
-    let guards ← nod.guards.mapM <| elab_boolexpr env
-    let asserts ← nod.asserts.mapM <| elab_boolexpr env
+    let guards ← nod.guards.mapM <| elabBoolexpr env
+    let asserts ← nod.asserts.mapM <| elabBoolexpr env
     return { name := nod.name, n, m, input_vars, bound_vars, guards, asserts, output_vars }
 
-  def elab_lustre (nodes : Array (&Inline.Node)) : CoreM (Array (&Node)) :=
-    nodes.mapM elab_node
+  def elabLustre (nodes : Array (&Inline.Node)) : CoreM (Array (&Node)) :=
+    nodes.mapM elabNode
 end Indicise
 
 end Lustrean.Elaboration

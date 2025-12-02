@@ -14,18 +14,18 @@ open Batteries
 namespace Lustrean
 
 namespace NonRelational
-  variable {α : Type} {n : Nat}
-  variable [ι : ValueDomain α]
-  variable (x : NonRelational α n)
+variable {α : Type} {n : Nat}
+variable [ι : ValueDomain α]
+variable (x : NonRelational α n)
 
-  def get (i : Fin n) : α := match x with
+def get (i : Fin n) : α := match x with
   | .non_rel x => x.val.get i
   | .bot => ⊥
 
-  def update (i : Fin n) (a : α) : NonRelational α n :=
-    x.map_nil fun x => x.set i a
+def update (i : Fin n) (a : α) : NonRelational α n :=
+  x.mapNil fun x => x.set i a
 
-  def eval : IExpr n → α
+def eval : IExpr n → α
   | .nil => nil
   | .var i => get x i
   | .rand a b => ι.rand a b
@@ -39,32 +39,32 @@ namespace NonRelational
     | .imul => i₁ * i₂
     | .idiv => i₁ / i₂
 
-  def assign (i : Fin n) (e : IExpr n) : NonRelational α n :=
-    update x i <| eval x e
+def assign (i : Fin n) (e : IExpr n) : NonRelational α n :=
+  update x i <| eval x e
 
-  def backward_eval (e : IExpr n) (r : α) : NonRelational α n :=
+  def backwardEval (e : IExpr n) (r : α) : NonRelational α n :=
     have : DecidableEq α := ι.eq_dec -- help class inference
     match e with
-    | .nil => if ι.is_bot (r ⊓ nil)
+    | .nil => if ι.IsBot (r ⊓ nil)
       then ⊥
       else x
     | .var i => update x i ((get x i) ⊓ r)
-    | .rand a b => if ι.is_bot (r ⊓ (ι.rand a b))
+    | .rand a b => if ι.IsBot (r ⊓ (ι.rand a b))
       then ⊥
       else x
     | .neg e =>
       let i := eval x e
-      let r := ι.backward_neg i r
-      backward_eval e r
+      let r := ι.backwardNeg i r
+      backwardEval e r
     | .binop e₁ op e₂ =>
       let i₁ := eval x e₁
       let i₂ := eval x e₂
       let (r₁, r₂) := match op with
-      | .iadd => ι.backward_add i₁ i₂ r
-      | .isub => ι.backward_sub i₁ i₂ r
-      | .imul => ι.backward_mul i₁ i₂ r
-      | .idiv => ι.backward_div i₁ i₂ r
-      backward_eval e₁ r₁ ⊓ backward_eval e₂ r₂
+      | .iadd => ι.backwardAdd i₁ i₂ r
+      | .isub => ι.backwardSub i₁ i₂ r
+      | .imul => ι.backwardMul i₁ i₂ r
+      | .idiv => ι.backwardDiv i₁ i₂ r
+      backwardEval e₁ r₁ ⊓ backwardEval e₂ r₂
 
   def guard : BExpr n → NonRelational α n
   | .random | .const true => x
@@ -73,7 +73,7 @@ namespace NonRelational
     let i₁ := eval x e₁
     let i₂ := eval x e₂
     let (r₁, r₂) := ι.compare op i₁ i₂
-    backward_eval x e₁ r₁ ⊓ backward_eval x e₂ r₂
+    backwardEval x e₁ r₁ ⊓ backwardEval x e₂ r₂
   | .or b₁ b₂ => guard b₁ ⊔ guard b₂
   | .and b₁ b₂ => guard b₁ ⊓ guard b₂
 

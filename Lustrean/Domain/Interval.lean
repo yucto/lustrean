@@ -463,14 +463,14 @@ namespace HLe
 end HLe
 
 namespace IntLow
-  def sub_l_h (l : IntLow) (h : IntHigh) : IntLow :=
+  def subLH (l : IntLow) (h : IntHigh) : IntLow :=
     match l, h with
     | .minf, _ | _, .pinf => .minf
     | .int n, .int m => .int (n - m)
 end IntLow
 
 namespace IntHigh
-  def sub_h_l (h : IntHigh) (l : IntLow) : IntHigh :=
+  def subHL (h : IntHigh) (l : IntLow) : IntHigh :=
     match h, l with
     | .pinf, _ | _, .minf => .pinf
     | .int n, .int m => .int (n - m)
@@ -478,7 +478,7 @@ end IntHigh
 
 namespace HLe
   theorem sub_monotone : ∀ (l₁ l₂ : IntLow) (h₁ h₂ : IntHigh),
-    l₁ ≤∘ h₁ → l₂ ≤∘ h₂ → IntLow.sub_l_h l₁ h₂ ≤∘ IntHigh.sub_h_l h₁ l₂ :=
+    l₁ ≤∘ h₁ → l₂ ≤∘ h₂ → IntLow.subLH l₁ h₂ ≤∘ IntHigh.subHL h₁ l₂ :=
   by
     intro l₁ l₂ h₁ h₂ hyp₁ hyp₂
     cases l₁ <;> cases l₂ <;> cases h₁ <;> cases h₂ <;> try constructor
@@ -519,7 +519,7 @@ namespace IntLow
   | .minf => .pinf
   | .int n => .int (-n)
 
-  def mul_l_h (l : IntLow) (h : IntHigh) : Option IntLow :=
+  def mulLH (l : IntLow) (h : IntHigh) : Option IntLow :=
     match l, h with
     | .minf, .pinf => some .minf
     | .minf, .int n => match compare n 0 with
@@ -532,7 +532,7 @@ namespace IntLow
       | .gt => none
     | .int n, .int m => some (.int (n * m))
 
-  def mul_l_l (l₁ l₂ : IntLow) : Option IntLow :=
+  def mulLL (l₁ l₂ : IntLow) : Option IntLow :=
     match l₁, l₂ with
     | .minf, .minf => none
     | .int n, .int m => some (.int (n * m))
@@ -542,7 +542,7 @@ namespace IntLow
       | .eq => some (.int 0)
       | .gt => some .minf
 
-  def mul_h_h (h₁ h₂ : IntHigh) : Option IntLow :=
+  def mulHH (h₁ h₂ : IntHigh) : Option IntLow :=
     match h₁, h₂ with
     | .pinf, .pinf => none
     | .int n, .int m => some (.int (n * m))
@@ -559,7 +559,7 @@ namespace IntHigh
   | .pinf => .minf
   | .int n => .int (-n)
 
-  def mul_h_l (h : IntHigh) (l : IntLow) : Option IntHigh :=
+  def mulHL (h : IntHigh) (l : IntLow) : Option IntHigh :=
     match h, l with
     | .pinf, .minf => some .pinf
     | .pinf, .int n => match compare n 0 with
@@ -572,7 +572,7 @@ namespace IntHigh
       | .gt => none
     | .int n, .int m => some (.int (n * m))
 
-  def mul_h_h (h₁ h₂ : IntHigh) : Option IntHigh :=
+  def mulHH (h₁ h₂ : IntHigh) : Option IntHigh :=
     match h₁, h₂ with
     | .pinf, .pinf => some .pinf
     | .int n, .int m => some (.int (n * m))
@@ -582,7 +582,7 @@ namespace IntHigh
       | .eq => some (.int 0)
       | .gt => some .pinf
 
-  def mul_l_l (l₁ l₂ : IntLow) : Option IntHigh :=
+  def mulLL (l₁ l₂ : IntLow) : Option IntHigh :=
     match l₁, l₂ with
     | .minf, .minf => some .pinf
     | .int n, .int m => some (.int (n * m))
@@ -616,7 +616,7 @@ namespace Interval
   variable {constants : List Int}
   variable (x y z : Interval constants)
 
-  def map_empty (f : (low₁ low₂ : IntLow) → (high₁ high₂ : IntHigh) →
+  def mapEmpty (f : (low₁ low₂ : IntLow) → (high₁ high₂ : IntHigh) →
                      low₁ ≤∘ high₁ → low₂ ≤∘ high₂ →
                      Interval constants)
                 : Interval constants :=
@@ -625,7 +625,7 @@ namespace Interval
     | .interval l₁ h₁ o₁, .interval l₂ h₂ o₂ => f l₁ l₂ h₁ h₂ o₁ o₂
 
   def add : Interval constants :=
-    map_empty x y <| fun l₁ l₂ h₁ h₂ o₁ o₂ =>
+    mapEmpty x y <| fun l₁ l₂ h₁ h₂ o₁ o₂ =>
       .interval (l₁ + l₂) (h₁ + h₂) <| by apply HLe.add_monotone <;> assumption
 
   instance : Add (Interval constants) where
@@ -641,8 +641,8 @@ namespace Interval
     neg := neg
 
   def sub : Interval constants :=
-    map_empty x y <| fun l₁ l₂ h₁ h₂ le₁ le₂ =>
-      .interval (IntLow.sub_l_h l₁ h₂) (IntHigh.sub_h_l h₁ l₂)
+    mapEmpty x y <| fun l₁ l₂ h₁ h₂ le₁ le₂ =>
+      .interval (IntLow.subLH l₁ h₂) (IntHigh.subHL h₁ l₂)
         <| by apply HLe.sub_monotone <;> assumption
 
   instance : Sub (Interval constants) where
@@ -779,33 +779,33 @@ namespace Interval
     meet_top := meet_top
     non_trivial := non_trivial
 
-  def split_at_zero : Interval constants × Interval constants :=
+  def splitAtZero : Interval constants × Interval constants :=
     (
       x.meet (.interval .minf (.int 0) <| by constructor),
       x.meet (.interval (.int 0) .pinf <| by constructor),
     )
 
-  def mul_neg_neg : Interval constants := map_empty x y
+  def mulNegNeg : Interval constants := mapEmpty x y
   fun l₁ l₂ h₁ h₂ _ _ =>
-  match IntLow.mul_h_h h₁ h₂, IntHigh.mul_l_l l₁ l₂ with
+  match IntLow.mulHH h₁ h₂, IntHigh.mulLL l₁ l₂ with
   | .none, _
   | _, .none => .empty
   | .some l, .some h => if hyp : l ≤∘ h
     then .interval l h hyp
     else .empty
 
-  def mul_neg_pos : Interval constants := map_empty x y
+  def mulNegPos : Interval constants := mapEmpty x y
   fun l₁ l₂ h₁ h₂ _ _ =>
-  match IntLow.mul_l_h l₁ h₂, IntHigh.mul_h_l h₁ l₂ with
+  match IntLow.mulLH l₁ h₂, IntHigh.mulHL h₁ l₂ with
   | .none, _
   | _, .none => .empty
   | .some l, .some h => if hyp : l ≤∘ h
     then .interval l h hyp
     else .empty
 
-  def mul_pos_pos : Interval constants := map_empty x y
+  def mulPosPos : Interval constants := mapEmpty x y
   fun l₁ l₂ h₁ h₂ _ _ =>
-  match IntLow.mul_l_l l₁ l₂, IntHigh.mul_h_h h₁ h₂ with
+  match IntLow.mulLL l₁ l₂, IntHigh.mulHH h₁ h₂ with
   | .none, _
   | _, .none => .empty
   | .some l, .some h => if hyp : l ≤∘ h
@@ -813,16 +813,16 @@ namespace Interval
     else .empty
 
   def mul : Interval constants :=
-    let (x₁, x₂) := split_at_zero x
-    let (y₁, y₂) := split_at_zero y
+    let (x₁, x₂) := splitAtZero x
+    let (y₁, y₂) := splitAtZero y
     join
-      ((mul_neg_neg x₁ y₁).join (mul_neg_pos x₁ y₂))
-      ((mul_neg_pos y₁ x₂).join (mul_pos_pos x₂ y₂))
+      ((mulNegNeg x₁ y₁).join (mulNegPos x₁ y₂))
+      ((mulNegPos y₁ x₂).join (mulPosPos x₂ y₂))
 
   instance : Mul (Interval constants) where
     mul := mul
 
-  def div_pos_pos : Interval constants := map_empty x y
+  def divPosPos : Interval constants := mapEmpty x y
   fun _ _ h₁ h₂ _ _ =>
   match h₁, h₂ with
   | _, .int 0 => .bot
@@ -832,21 +832,21 @@ namespace Interval
     then .interval (.int 0) (.int (n / m)) <| by constructor ; assumption
     else .bot
 
-  def div_neg_pos : Interval constants :=
-    neg (div_pos_pos (neg x) y)
+  def divNegPos : Interval constants :=
+    neg (divPosPos (neg x) y)
 
-  def div_pos_neg : Interval constants :=
-    neg (div_pos_pos x (neg y))
+  def divPosNeg : Interval constants :=
+    neg (divPosPos x (neg y))
 
-  def div_neg_neg : Interval constants :=
-    div_pos_pos (neg x) (neg y)
+  def divNegNeg : Interval constants :=
+    divPosPos (neg x) (neg y)
 
   def div : Interval constants :=
-    let (x₁, x₂) := split_at_zero x
-    let (y₁, y₂) := split_at_zero y
+    let (x₁, x₂) := splitAtZero x
+    let (y₁, y₂) := splitAtZero y
     join
-      ((div_neg_neg x₁ y₁).join (div_neg_pos x₁ y₂))
-      ((div_neg_pos y₁ x₂).join (div_pos_pos x₂ y₂))
+      ((divNegNeg x₁ y₁).join (divNegPos x₁ y₂))
+      ((divNegPos y₁ x₂).join (divPosPos x₂ y₂))
 
   instance : Div (Interval constants) where
     div := div
@@ -863,25 +863,25 @@ namespace Interval
     cases a <;> cases b <;> simp <;>
     exact inferInstance
 
-  def extract_max_gt (l : List Int) (h : IntLow) : IntLow :=
+  def extractMaxGt (l : List Int) (h : IntLow) : IntLow :=
     match l with
     | [] => .minf
     | m :: l => if IntLow.Le h (.int m) -- if h <= m
-        then extract_max_gt l h
-        else max (.int m) (extract_max_gt l h)
+        then extractMaxGt l h
+        else max (.int m) (extractMaxGt l h)
 
-  def extract_max_gt_correct : ∀ (l : List Int) (n : IntLow),
-    IntLow.Le (extract_max_gt l n) n :=
+  def extractMaxGtCorrect : ∀ (l : List Int) (n : IntLow),
+    IntLow.Le (extractMaxGt l n) n :=
   by
     clear x y z
     intros l h
     induction l
     case nil => constructor
     case cons hd tl IH =>
-      dsimp [extract_max_gt]
+      dsimp [extractMaxGt]
       split <;> rename_i hle
       · assumption
-      · generalize heq : extract_max_gt tl h = x
+      · generalize heq : extractMaxGt tl h = x
         rw [heq] at IH
         cases IH
         · simp [max]
@@ -909,25 +909,25 @@ namespace Interval
           constructor
           assumption
 
-  def extract_min_ge (l : List Int) (h : IntHigh) : IntHigh :=
+  def extractMinGe (l : List Int) (h : IntHigh) : IntHigh :=
     match l with
     | [] => .pinf
     | m :: l => if IntHigh.Le (.int m) h -- if m <= h
-        then extract_min_ge l h
-        else min (.int m) (extract_min_ge l h)
+        then extractMinGe l h
+        else min (.int m) (extractMinGe l h)
 
-  def extract_min_ge_correct : ∀ (l : List Int) (h : IntHigh),
-    IntHigh.Le h (extract_min_ge l h) :=
+  def extractMinGeCorrect : ∀ (l : List Int) (h : IntHigh),
+    IntHigh.Le h (extractMinGe l h) :=
   by
     clear x y z
     intros l h
     induction l
     case nil => constructor
     case cons hd tl IH =>
-      dsimp [extract_min_ge]
+      dsimp [extractMinGe]
       split <;> rename_i hle
       · assumption
-      · generalize heq : extract_min_ge tl h = x
+      · generalize heq : extractMinGe tl h = x
         rw [heq] at IH
         cases IH
         · simp [min]
@@ -962,27 +962,27 @@ namespace Interval
     | .interval l₁ h₁ _, .interval l₂ h₂ o₂ =>
       let l := if IntLow.Le l₁ l₂
         then l₁
-        else extract_max_gt constants l₂
+        else extractMaxGt constants l₂
       let h := if IntHigh.Le h₂ h₁
         then h₁
-        else extract_min_ge constants h₂
+        else extractMinGe constants h₂
       .interval l h <| by
         dsimp [l, h]
         apply HLe.HLe_Le
         · by_cases hl : IntLow.Le l₁ l₂ <;> simp [hl]
           · assumption
-          · apply extract_max_gt_correct constants l₂
+          · apply extractMaxGtCorrect constants l₂
         · by_cases hr : IntHigh.Le h₂ h₁ <;> simp [hr]
           · assumption
-          · apply extract_min_ge_correct constants h₂
+          · apply extractMinGeCorrect constants h₂
         · assumption
 
   set_option linter.unreachableTactic false in
   theorem covering_left : ∀ (n : Nat),
-    BoundedLattice.is_subset x (x.widen y n) :=
+    BoundedLattice.IsSubset x (x.widen y n) :=
   by
     intros n
-    cases x <;> simp [BoundedLattice.is_subset, BoundedLattice.meet, meet, widen]
+    cases x <;> simp [BoundedLattice.IsSubset, BoundedLattice.meet, meet, widen]
     by_cases h : n ≤ 10 <;> simp [h, join] <;>
     cases y <;> rename_i hle <;> simp [max, min, hle] <;> clear h
     · simp [IntLow.max_min_absorb, IntHigh.min_max_absorb]
@@ -993,21 +993,21 @@ namespace Interval
       · assumption
       · have hyph : h'.Le h := by
           cases (IntHigh.Le_total h' h) <;> [ assumption ; contradiction ]
-        have hyph' : h'.min (extract_min_ge constants h) = h' := by
+        have hyph' : h'.min (extractMinGe constants h) = h' := by
           apply IntHigh.min_eq_left
           apply IntHigh.Le_trans <;> [
             assumption ;
-            apply extract_min_ge_correct ;
+            apply extractMinGeCorrect ;
             skip
           ]
         simp [hyph']
         assumption
       · have hypl : l.Le l' := by
           cases (IntLow.Le_total l l') <;> [ assumption ; contradiction ]
-        have hypl' : l'.max (extract_max_gt constants l) = l' := by
+        have hypl' : l'.max (extractMaxGt constants l) = l' := by
           apply IntLow.max_eq_left
           apply IntLow.Le_trans <;> [
-            apply extract_max_gt_correct ;
+            apply extractMaxGtCorrect ;
             assumption ;
             skip
           ]
@@ -1015,20 +1015,20 @@ namespace Interval
         assumption
       · have hypl : l.Le l' := by
           cases (IntLow.Le_total l l') <;> [ assumption ; contradiction ]
-        have hypl' : l'.max (extract_max_gt constants l) = l' := by
+        have hypl' : l'.max (extractMaxGt constants l) = l' := by
           apply IntLow.max_eq_left
           apply IntLow.Le_trans <;> [
-            apply extract_max_gt_correct ;
+            apply extractMaxGtCorrect ;
             assumption ;
             skip
           ]
         have hyph : h'.Le h := by
           cases (IntHigh.Le_total h' h) <;> [ assumption ; contradiction ]
-        have hyph' : h'.min (extract_min_ge constants h) = h' := by
+        have hyph' : h'.min (extractMinGe constants h) = h' := by
           apply IntHigh.min_eq_left
           apply IntHigh.Le_trans <;> [
             assumption ;
-            apply extract_min_ge_correct ;
+            apply extractMinGeCorrect ;
             skip
           ]
 
@@ -1036,10 +1036,10 @@ namespace Interval
         assumption
 
   theorem covering_right : ∀ (n : Nat),
-    BoundedLattice.is_subset y (x.widen y n) :=
+    BoundedLattice.IsSubset y (x.widen y n) :=
   by
     intros n
-    cases x <;> simp [BoundedLattice.is_subset, BoundedLattice.meet, meet, widen] <;>
+    cases x <;> simp [BoundedLattice.IsSubset, BoundedLattice.meet, meet, widen] <;>
     by_cases h : n ≤ 10 <;> cases y <;>
     simp [h, join] <;> clear h <;>
     rename_i l h hle  <;> simp [max, min, hle] <;>
@@ -1049,12 +1049,12 @@ namespace Interval
         constructor <;> rfl ;
         assumption
       ]
-    · have hypl : l = l.max (extract_max_gt constants l) := by
+    · have hypl : l = l.max (extractMaxGt constants l) := by
           rw [IntLow.max_eq_left]
-          apply extract_max_gt_correct
-      have hyph : h = h.min (extract_min_ge constants h) := by
+          apply extractMaxGtCorrect
+      have hyph : h = h.min (extractMinGe constants h) := by
           rw [IntHigh.min_eq_left]
-          apply extract_min_ge_correct
+          apply extractMinGeCorrect
       split <;> split <;> rename_i hyp' hyp <;>
       rw [dif_pos] <;> (try simp) <;>
       (repeat first
@@ -1081,7 +1081,7 @@ namespace Interval
     intros x y n
     have hx : x.meet x = x := BoundedLattice.meet_idempotent x
     have hy : y.meet y = y := BoundedLattice.meet_idempotent y
-    simp [BoundedLattice.is_subset, narrow]
+    simp [BoundedLattice.IsSubset, narrow]
     conv =>
       rhs
       arg 2
@@ -1099,7 +1099,7 @@ namespace Interval
   by
     intros x y n
     simp [narrow]
-    rw [BoundedLattice.is_subset]
+    rw [BoundedLattice.IsSubset]
     unfold BoundedLattice.meet
     unfold BoundedLatticeInterval
     simp
