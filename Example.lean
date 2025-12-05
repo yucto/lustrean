@@ -127,3 +127,7 @@ lustre
         if 0 ≠ 0 then 1 else 2
       else
         0
+
+lustre
+  node f() = x where
+    x = 0 -> x

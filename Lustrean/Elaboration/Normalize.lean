@@ -343,6 +343,16 @@ partial def elabExprAux {n m : Nat} (nod : NodeN n m) : Indicise.Expr n m → Co
       e := .ite cond (e₁.upcast <| by omega) (.var <| .old_bound_var x)
       nod := nod
     }
+  | .bin_op .arr ⟨e₁, _⟩ ⟨e₂, _⟩ => do
+    let ⟨m₁, m_leq_m₁, e₁, nod⟩ ← elabSimpleExprAux nod e₁
+    let ⟨m₂, m₁_leq_m₂, e₂, nod⟩ ← elabSimpleExprAux nod (e₂.upcast m_leq_m₁)
+    let cond := .cmp_op .eq (.var .step) (.interval 0 0)
+    return {
+      m' := m₂
+      m_leq_m' := by omega
+      e := .ite cond (e₁.upcast <| by omega) (e₂.upcast <| by omega)
+      nod := nod
+    }
   | .ite ⟨cond, _⟩ ⟨e₁, _⟩ ⟨e₂, _⟩ => do
     let ⟨m₁, m_leq_m₁, cond, nod⟩ ← elabBoolexprAux nod cond
     let ⟨m₂, m₁_leq_m₂, e₁, nod⟩ ← elabSimpleExprAux nod (e₁.upcast <| by omega)

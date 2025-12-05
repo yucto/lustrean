@@ -36,6 +36,7 @@ syntax:max ident : lustre_expr
 syntax "-" lustre_expr : lustre_expr
 syntax:max " if " lustre_assertion:0 " then " lustre_expr:0 " else " lustre_expr:0 : lustre_expr
 syntax:35 lustre_expr:36 " fby " lustre_expr:35 : lustre_expr
+syntax:35 lustre_expr:36 " -> " lustre_expr:35 : lustre_expr
 syntax:40 lustre_expr:40 " + " lustre_expr:41 : lustre_expr
 syntax:40 lustre_expr:40 " - " lustre_expr:41 : lustre_expr
 syntax:50 lustre_expr:50 " * " lustre_expr:51 : lustre_expr

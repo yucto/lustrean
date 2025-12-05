@@ -156,6 +156,7 @@ inductive BinOp where
   | sub
   | mul
   | fby
+  | arr
   deriving Repr, Inhabited
 
 namespace BinOp
@@ -164,6 +165,7 @@ protected def toString : BinOp → String
   | .sub => "-"
   | .mul => "*"
   | .fby => "fby"
+  | .arr => "->"
 
 instance : ToString BinOp where
   toString := BinOp.toString
@@ -225,6 +227,10 @@ partial def elabExpr (s : TSyntax `lustre_expr ) : CoreM (&Expr) :=
       let left ← elabExpr l
       let right ← elabExpr r
       return .bin_op .fby left right
+    | `(lustre_expr| $l -> $r) =>
+      let left ← elabExpr l
+      let right ← elabExpr r
+      return .bin_op .arr left right
     | `(lustre_expr| - $e) =>
       let e ← elabExpr e
       return .mon_op .neg e
