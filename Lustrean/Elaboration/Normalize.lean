@@ -306,7 +306,7 @@ partial def elabExprAux {n m : Nat} (nod : NodeN n m) : Indicise.Expr n m → Co
     return {
       m' := m' + 1
       m_leq_m' := by omega
-      e := .old_bound_var x
+      e := .simple <| .var (.old_bound_var x)
       nod := nod
     }
   | .bin_op .add ⟨e₁, _⟩ ⟨e₂, _⟩ => do
