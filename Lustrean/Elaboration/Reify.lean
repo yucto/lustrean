@@ -1,4 +1,5 @@
 import Lustrean.Elaboration.Syntax
+import Misc.Lean
 
 open Lean Meta Elab
 
@@ -189,6 +190,27 @@ inductive BoolExpr where
   deriving Repr, Inhabited
 end
 
+mutual
+partial def Expr.toString : Expr → String
+  | .int {value := .nat n,..} {value := .nat k,..} => if n = k then s!"{n}" else s!"[{n},{k}]"
+  | .int lb up => s!"[{lb},{up}]"
+  | .var v => toString v.value
+  | .mon_op op e => s!"{op.toString} {Expr.toString e}"
+  | .bin_op op e₁ e₂ => s!"{Expr.toString e₁} {op.toString} {Expr.toString e₂}"
+  | .node n args => s!"{n.value}({args.map (Expr.toString ∘ WithRef.value) |>.toStringNoBrackets})"
+  | .ite cond tb eb => s!"if {BoolExpr.toString cond} then {Expr.toString tb} else {Expr.toString eb}"
+
+partial def BoolExpr.toString : BoolExpr → String
+  | .cmp_op op left right => s!"{Expr.toString left.value} {op.toString} {Expr.toString right.value}"
+  | .bin_op op left right => s!"{BoolExpr.toString left.value} {op.toString} {BoolExpr.toString right.value}"
+end
+
+instance : ToString Expr where
+  toString := Expr.toString
+
+instance : ToString BoolExpr where
+  toString := BoolExpr.toString
+
 structure Variable where
   name : &Name
   deriving Repr, Inhabited
@@ -205,11 +227,48 @@ structure Node where
   output_vars : Array (&Name)
   guards : Array (&BoolExpr)
   asserts : Array (&BoolExpr)
-  deriving Repr, Inhabited
+deriving Repr, Inhabited
+
+section
+
+open Std.Format
+
+def formatInputVars (input_vars : Array Variable) : Format :=
+  paren (joinSep (input_vars.map (Variable.name) |>.toList) ",")
+
+def formatBoundVars (bound_vars : Array BoundVars) : Format :=
+  Std.Format.indentD <| "where " ++ Std.Format.indentD (joinSep (bound_vars.toList.map formatBvar) Format.line)
+where
+  formatBvar bvar :=
+    joinSep (bvar.names |>.toList) "," ++ " = " ++ toString bvar.value
+
+def formatOutputVars (output_vars : Array (&Name)) : Format :=
+  if output_vars.size = 0 then "" else
+  " = " ++ joinSep (output_vars |>.toList) ","
+
+def formatGuards (guards : Array (&BoolExpr)) : Format :=
+  if guards.size = 0 then "" else
+  Std.Format.indentD <| "guard" ++ Std.Format.indentD (joinSep (guards |>.toList) Format.line)
+
+def formatAsserts (asserts : Array (&BoolExpr)) : Format :=
+  if asserts.size = 0 then "" else
+  Std.Format.indentD <| "assert" ++ Std.Format.indentD (joinSep (asserts |>.toList) Format.line)
+
+instance : ToFormat Node where
+  format n :=
+    (format ("node " ++ n.name.value.toString)) ++
+    (formatInputVars n.input_vars) ++
+    (formatOutputVars n.output_vars)  ++
+    (formatGuards n.guards) ++
+    (formatBoundVars n.bound_vars) ++
+    (formatAsserts n.asserts)
+end
 
 mutual
 partial def elabExpr (s : TSyntax `lustre_expr ) : CoreM (&Expr) :=
-  WithRef.withRefM s do match s with
+  WithRef.withRefM s do
+  withTraceNode `Lustrean.Reify (msg := fun e => return m!"{exceptEmoji e} elabExpr {s} = {e.toOption.map toString}") do
+    match s with
     | `(lustre_expr| [$lbs, $ups]) =>
       let lb ← match lbs with
         | `(lustre_lower_bound| -∞) => pure .minf
@@ -285,7 +344,8 @@ partial def elabBoolExpr (s : TSyntax `lustre_assertion) : CoreM (&BoolExpr) :=
       withRef ref throwUnsupportedSyntax
 end
 
-def elabNode (s : TSyntax `lustre_node) : CoreM (&Node) := do match s with
+def elabNode (s : TSyntax `lustre_node) : CoreM (&Node) :=
+  withTraceNode `Lustrean.Reify (msg := fun e => return m!"{exceptEmoji e} elabNode {s} ⇒ \n{if let .ok n := e then (format n.value).pretty else ""}") do match s with
   | `(lustre_node| node $name($inputs:ident,*) $[= $output_vars,*]? $[guard $guards*]?
                    where $decls* $[assert $asserts*]?) =>
     let name := ⟨name.getId, name⟩
@@ -307,3 +367,6 @@ def elabLustre (nodes : TSyntaxArray `lustre_node) : CoreM (Array (&Node)) :=
   nodes.mapM elabNode
 end Reify
 end Lustrean.Elaboration
+
+initialize
+  registerTraceClass `Lustrean.Reify

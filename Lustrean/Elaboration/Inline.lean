@@ -159,7 +159,7 @@ partial def elabExprAux (bounds : Option (Array (&Name))) (var_name : Name) (e :
         addAssert <| a.map (·.with_prefix pre₁)
       unless node_def.input_vars.size = args.size do
         throw <| .arity_mismatch nod node_def.input_vars.size args.size
-      for (v, arg) in node_def.input_vars.zip args do
+      for v in node_def.input_vars, arg in args do
         let name := v.name.map (pre₁ ++ ·)
         let value ← elabExprAux none name arg
         addVar { name, value := value }

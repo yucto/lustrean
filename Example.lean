@@ -1,5 +1,7 @@
 import Lustrean
 
+-- set_option trace.Lustrean.Reify true
+
 lustre
   node inc(x) = o where
     o = x + 1
@@ -129,5 +131,4 @@ lustre
         0
 
 lustre
-  node f() = x where
-    x = 0 -> x
+  node f() where

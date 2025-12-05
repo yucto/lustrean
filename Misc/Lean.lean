@@ -7,3 +7,6 @@ def Lean.logErrorAt? {m : Type → Type} [Monad m] [MonadLog m] [AddMessageConte
       logErrorAt ref msgData
     else
       logError msgData
+
+def Array.toStringNoBrackets (xs : Array String) : String :=
+  (Std.Format.joinSep xs.toList ("," ++ Std.Format.line)) |>.pretty

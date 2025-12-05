@@ -485,5 +485,7 @@ def elabNode (nod : &Indicise.Node) : Node := CounterT.run (m := Id) do
 def elabLustre (nodes : Array (&Indicise.Node)) : Array (Node) :=
   nodes.map elabNode
 end Normalize
-
 end Lustrean.Elaboration
+
+initialize
+  registerTraceClass `Lustrean.Normalize
