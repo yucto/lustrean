@@ -1,5 +1,6 @@
 import Lustrean.Imp
 import Lustrean.Domain
+import Misc.Lean
 
 namespace Lustrean
 structure Node (nb_var nb_arcs : Nat) : Type where
@@ -10,7 +11,7 @@ structure Arc (nb_var nb_nodes : Nat) : Type where
   src : Fin nb_nodes
   dst : Fin nb_nodes
   inst : Instruction nb_var
-  synt : Lean.Syntax
+  ref? : Option Lean.Syntax
   deriving Repr
 
 namespace Arc
@@ -82,7 +83,7 @@ namespace Cfg
 
     structure StepAux (nb_var nb_nodes nb_arcs : Nat)
       (l : List (PreNode nb_var))
-      (out : List (Nat × Instruction nb_var × Lean.Syntax)) : Type
+      (out : List (OutNode nb_var)) : Type
     where
       nodes : Array (Node nb_var nb_arcs)
       Hnodes : nb_nodes = nodes.size
@@ -97,21 +98,21 @@ namespace Cfg
     def step.aux (l : List (PreNode nb_var)) (i : Fin nb_nodes)
       (out_node : Nat)
       (out_inst : Instruction nb_var)
-      (synt : Lean.Syntax)
+      (stx : Option (Lean.Syntax))
       (Hout : out_node < nb_nodes)
-      (out_nodes : List (Nat × Instruction nb_var × Lean.Syntax))
+      (out_nodes : List (OutNode nb_var))
       (Harcs : findNbArcs l + out_nodes.length < nb_arcs)
       (cfg : StepAux nb_var nb_nodes nb_arcs l out_nodes) :
-      StepAux nb_var nb_nodes nb_arcs l ((out_node, out_inst, synt) :: out_nodes)
+      StepAux nb_var nb_nodes nb_arcs l (⟨out_node, out_inst, stx⟩ :: out_nodes)
     :=
       let dst := .mk out_node Hout
-      let arc := .mk i dst out_inst synt
+      let arc := .mk i dst out_inst stx
       have H : cfg.arcs.size < nb_arcs := by
         rw [← cfg.Harcs]
         assumption
       let arc_idx := .mk cfg.arcs.size H
       let arcs := cfg.arcs.push arc
-      have Harcs : findNbArcs l + ((out_node, out_inst, synt) :: out_nodes).length = arcs.size := by
+      have Harcs : findNbArcs l + (⟨out_node, out_inst, stx⟩ :: out_nodes).length = arcs.size := by
         simp [arcs, ← Nat.add_assoc]
         apply cfg.Harcs
       let old_in_arcs := cfg.nodes[cfg.Hnodes ▸ dst].in_nodes
@@ -122,14 +123,14 @@ namespace Cfg
       .mk nodes Hnodes arcs Harcs
 
     def step.run (l : List (PreNode nb_var)) (i : Fin nb_nodes)
-      (out_nodes : List (Nat × Instruction nb_var × Lean.Syntax))
-      (Hn : ∀ p, p ∈ out_nodes → p.fst < nb_nodes)
+      (out_nodes : List (OutNode nb_var))
+      (Hn : ∀ p, p ∈ out_nodes → p.out_node < nb_nodes)
       (Harcs : findNbArcs l + out_nodes.length ≤ nb_arcs)
       (cfg : NewAux nb_var nb_nodes nb_arcs l) :
       StepAux nb_var nb_nodes nb_arcs l out_nodes
     := match out_nodes with
     | [] => step.init nb_nodes nb_arcs l cfg
-    | (out_node, out_inst, synt) :: out_nodes =>
+    | ⟨out_node, out_inst, stx⟩ :: out_nodes =>
       let Hl : findNbArcs l + out_nodes.length ≤ nb_arcs := by
         dsimp at Harcs
         omega
@@ -138,27 +139,26 @@ namespace Cfg
         apply Hn
         simp [Hp]
       ) Hl cfg
-      step.aux nb_nodes nb_arcs l i out_node out_inst synt (by simpa using Hn (out_node, out_inst, synt))
+      step.aux nb_nodes nb_arcs l i out_node out_inst stx (Hn ⟨out_node, out_inst, stx⟩ List.mem_cons_self)
         out_nodes Harcs cfg
 
     def step (l : List (PreNode nb_var))
       (i : Fin nb_nodes) (cfg : NewAux nb_var nb_nodes nb_arcs l)
       (pn : PreNode nb_var) (Hn : pn.id = i ∧
-        ∀ p, p ∈ pn.out_nodes → p.fst < nb_nodes
+        ∀ p, p ∈ pn.out_nodes → p.out_node < nb_nodes
       )
       (Harcs : findNbArcs l + pn.out_nodes.length ≤ nb_arcs)
       : NewAux nb_var nb_nodes nb_arcs (pn :: l)
     :=
       let cfg := step.run nb_nodes nb_arcs l i pn.out_nodes Hn.right Harcs cfg
-      let Heq : findNbArcs l + pn.out_nodes.length = findNbArcs (pn :: l) := by
-        apply find_nb_arcs_cons
+      let Heq : findNbArcs l + pn.out_nodes.length = findNbArcs (pn :: l) := find_nb_arcs_cons l pn
       .mk cfg.nodes cfg.Hnodes cfg.arcs (Heq ▸ cfg.Harcs)
 
     def aux (l : List (PreNode nb_var))
       (Hlength : List.length l ≤ nb_nodes)
       (Harcs : findNbArcs l ≤ nb_arcs)
       (Hsorted : ∀ i, (l.get i).id = (i + nb_nodes - List.length l) ∧
-        ∀ p ∈ (l.get i).out_nodes, p.fst < nb_nodes
+        ∀ p ∈ (l.get i).out_nodes, p.out_node < nb_nodes
       ) : NewAux nb_var nb_nodes nb_arcs l
     := match l with
     | [] => init nb_nodes nb_arcs
@@ -192,7 +192,7 @@ namespace Cfg
   def new (l : List (PreNode nb_var)) : Option (Cfg nb_var) :=
     let lsorted := l.mergeSort (fun n₁ n₂ => if n₁.id ≤ n₂.id then true else false)
     if Hsorted : ∀ i, (lsorted.get i).id = i ∧ (
-        ∀ p ∈ (lsorted.get i).out_nodes, p.fst < lsorted.length
+        ∀ p ∈ (lsorted.get i).out_nodes, p.out_node < lsorted.length
       )
     then
       let nb_arcs := new.findNbArcs lsorted
@@ -261,10 +261,10 @@ namespace State
     let src_env := s.getNodeEnv arc.src
     let old_env := s.getArcEnv arc_idx
     let new_env := match arc.inst with
-    | .skip => src_env
-    | .assign var expr => assign src_env var expr
-    | .guard b  => guard src_env b
-    | .assert _ => src_env
+      | .skip => src_env
+      | .assign var expr => assign src_env var expr
+      | .guard b  => guard src_env b
+      | .assert _ => src_env
     setArcEnv arc_idx new_env
     -- this is actually faster than checking just one inclusion:
     --   ¬ (new_env ⊑ old_env)
@@ -350,9 +350,9 @@ namespace State
         let new_env := ι.guard old_env b.not
         if new_env ≠ ⊥
         then
-          Lean.logErrorAt arc.synt m!"assert failed, got {new_env}"
+          Lean.logErrorAt? arc.ref? m!"assert failed, got {new_env}"
           -- let _ ← Lean.AddErrorMessageContext.add
-            -- arc.synt
+            -- arc.stx
             -- m!"assert failed, got {old_env}"
       | _ => pure ()
     return s

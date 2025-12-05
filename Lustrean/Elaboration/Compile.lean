@@ -46,45 +46,39 @@ end
 def unrollLoop : Nat := 1
 
 def elabIntoCfg (nod : Normalize.Node) : List (PreNode nod.totalVars) × Array (&Fin nod.totalVars) := Id.run do
-  -- TODO: default is a dummy value
   let mut result := #[
-    { id := 0, out_nodes := [(2, .assign step (IExpr.const 0), default)] },
+    { id := 0, out_nodes := [{ out_node := 2, out_inst := .assign step (IExpr.const 0)}] },
     { id := 1, out_nodes := [] }
   ]
   for h : i in [0:nod.m] do
     let k := Fin.mk i <| Membership.get_elem_helper h rfl
     result := result.push {
       id := result.size
-      -- TODO: default is a dummy value
-      out_nodes := [(result.size + 1, .assign (bound_var k) .nil, default)]
+      out_nodes := [{ out_node :=result.size + 1, out_inst := .assign (bound_var k) .nil}]
     }
   for _ in [0:unrollLoop] do
     for h : i in [0:nod.m] do
       let k := Fin.mk i <| Membership.get_elem_helper h rfl
       result := result.push {
         id := result.size
-        -- TODO: default is a dummy value
-        out_nodes := [(result.size + 1, .assign (old_bound_var k) (.var <| bound_var k), default)]
+        out_nodes := [{ out_node := result.size + 1,out_inst := .assign (old_bound_var k) (.var <| bound_var k)}]
       }
     for h : i in [0:nod.n] do
       let k := Fin.mk i <| Membership.get_elem_helper h rfl
       result := result.push {
         id := result.size
-        -- TODO: default is a dummy value
-        out_nodes := [(result.size + 1, .assign (input_var k) (.rand none none), default)]
+        out_nodes := [{ out_node := result.size + 1, out_inst :=  .assign (input_var k) (.rand none none)}]
       }
     for g in nod.guards do
       result := result.push {
         id := result.size
-        -- TODO: default is a dummy value
-        out_nodes := [(result.size + 1, .guard g.to_cfg_expr, default)]
+        out_nodes := [{ out_node := result.size + 1,  out_inst := .guard g.to_cfg_expr}]
       }
     for h : i in [0:nod.m] do
       let k := Fin.mk i <| Membership.get_elem_helper h rfl
       result := result.push {
         id := result.size
-        -- TODO: default is a dummy value
-        out_nodes := [(result.size + 1, .assign (bound_var k) .nil, default)]
+        out_nodes := [{ out_node := result.size + 1,  out_inst := .assign (bound_var k) .nil}]
       }
     let there_id := result.size
     for h : i in [0:nod.m] do
@@ -93,35 +87,30 @@ def elabIntoCfg (nod : Normalize.Node) : List (PreNode nod.totalVars) × Array (
       | .simple e =>
         result := result.push {
           id := result.size
-          -- TODO: default is a dummy value
-          out_nodes := [(result.size + 1, .assign (bound_var k) e.to_cfg_expr, default)]
+          out_nodes := [{ out_node := result.size + 1,  out_inst := .assign (bound_var k) e.to_cfg_expr}]
         }
       | .ite cond e₁ e₂ =>
         result := result.push {
           id := result.size
-          -- TODO: default are dummy values
           out_nodes := [
-            (result.size + 1, .guard cond.to_cfg_expr, default),
-            (result.size + 2, .guard cond.to_cfg_expr.not, default)
+            { out_node := result.size + 1,  out_inst := .guard cond.to_cfg_expr},
+            { out_node := result.size + 2,  out_inst := .guard cond.to_cfg_expr.not}
           ]
         }
         result := result.push {
           id := result.size
-          -- TODO: default is a dummy value
-          out_nodes := [(result.size+2, .assign (bound_var k) e₁.to_cfg_expr, default)]
+          out_nodes := [{ out_node := result.size+2,  out_inst := .assign (bound_var k) e₁.to_cfg_expr}]
         }
         result := result.push {
           id := result.size
-          out_nodes := [(result.size+1, .assign (bound_var k) e₂.to_cfg_expr, default)]
+          out_nodes := [{ out_node := result.size+1,  out_inst := .assign (bound_var k) e₂.to_cfg_expr}]
         }
     result := result.push {
       id := result.size
-      -- TODO: default are dummy values
       out_nodes := [
-        (there_id, .skip, default),                   -- loop again current iteration
-        (1, .skip, default),                          -- exit program
-        -- next iteration
-        (result.size + 1, .assign step (.binop (.var step) .iadd (IExpr.const 1)), default)
+        { out_node := there_id,  out_inst := .skip},                   -- loop again current iteration
+        { out_node := 1,  out_inst := .skip},                          -- exit program
+        { out_node := result.size + 1, out_inst := .assign step (.binop (.var step) .iadd (IExpr.const 1))} -- next iteration
       ]
     }
   let here_id := result.size
@@ -129,28 +118,24 @@ def elabIntoCfg (nod : Normalize.Node) : List (PreNode nod.totalVars) × Array (
     let k := Fin.mk i <| Membership.get_elem_helper h rfl
     result := result.push {
       id := result.size
-      -- TODO: default is a dummy value
-      out_nodes := [(result.size + 1, .assign (old_bound_var k) (.var <| bound_var k), default)]
+      out_nodes := [{ out_node := result.size + 1, out_inst := .assign (old_bound_var k) (.var <| bound_var k)}]
     }
   for h : i in [0:nod.n] do
     let k := Fin.mk i <| Membership.get_elem_helper h rfl
     result := result.push {
       id := result.size
-      -- TODO: default is a dummy value
-      out_nodes := [(result.size + 1, .assign (input_var k) (.rand none none), default)]
+      out_nodes := [{ out_node := result.size + 1, out_inst := .assign (input_var k) (.rand none none)}]
     }
   for g in nod.guards do
     result := result.push {
       id := result.size
-      -- TODO: default is a dummy value
-      out_nodes := [(result.size + 1, .guard g.to_cfg_expr, default)]
+      out_nodes := [{ out_node := result.size + 1, out_inst := .guard g.to_cfg_expr}]
     }
   for h : i in [0:nod.m] do
     let k := Fin.mk i <| Membership.get_elem_helper h rfl
     result := result.push {
       id := result.size
-      -- TODO: default is a dummy value
-      out_nodes := [(result.size + 1, .assign (bound_var k) .nil, default)]
+      out_nodes := [{ out_node := result.size + 1, out_inst := .assign (bound_var k) .nil}]
     }
   let there_id := result.size
   for h : i in [0:nod.m] do
@@ -159,40 +144,36 @@ def elabIntoCfg (nod : Normalize.Node) : List (PreNode nod.totalVars) × Array (
     | .simple e =>
       result := result.push {
         id := result.size
-        -- TODO: default is a dummy value
-        out_nodes := [(result.size + 1, .assign (bound_var k) e.to_cfg_expr, default)]
+        out_nodes := [{ out_node := result.size + 1, out_inst := .assign (bound_var k) e.to_cfg_expr}]
       }
     | .ite cond e₁ e₂ =>
       result := result.push {
         id := result.size
-        -- TODO: default are dummy values
         out_nodes := [
-          (result.size + 1, .guard cond.to_cfg_expr, default),
-          (result.size + 2, .guard cond.to_cfg_expr.not, default)
+          { out_node := result.size + 1, out_inst := .guard cond.to_cfg_expr},
+          { out_node := result.size + 2, out_inst := .guard cond.to_cfg_expr.not}
         ]
       }
       result := result.push {
         id := result.size
-        -- TODO: default is a dummy value
-        out_nodes := [(result.size+2, .assign (bound_var k) e₁.to_cfg_expr, default)]
+        out_nodes := [{ out_node := result.size+2, out_inst := .assign (bound_var k) e₁.to_cfg_expr}]
       }
       result := result.push {
         id := result.size
-        out_nodes := [(result.size+1, .assign (bound_var k) e₂.to_cfg_expr, default)]
+        out_nodes := [{ out_node := result.size+1, out_inst := .assign (bound_var k) e₂.to_cfg_expr}]
       }
   result := result.push {
     id := result.size
-    -- TODO: default are dummy values
     out_nodes := [
-      (here_id, .assign step (.binop (.var step) .iadd (IExpr.const 1)), default), -- go to next iteration
-      (there_id, .skip, default),                   -- loop again current iteration
-      (result.size + 1, .skip, default)             -- exit program
+      { out_node := here_id, out_inst := .assign step (.binop (.var step) .iadd (IExpr.const 1))}, -- go to next iteration
+      { out_node := there_id, out_inst := .skip},                   -- loop again current iteration
+      { out_node := result.size + 1,  out_inst := .skip}             -- exit program
     ]
   }
   for a in nod.asserts do
     result := result.push {
       id := result.size
-      out_nodes := [(result.size+1, .assert a.value.to_cfg_expr, a.ref)]
+      out_nodes := [{ out_node := result.size+1, out_inst := .assert a.value.to_cfg_expr, ref? := a.ref}]
     }
   let exit_id := result.size
   result := result.push {
@@ -202,7 +183,7 @@ def elabIntoCfg (nod : Normalize.Node) : List (PreNode nod.totalVars) × Array (
   result := { result with [1] := {
     id := 1
     out_nodes := [
-      (exit_id, .skip, default)
+      { out_node := exit_id, out_inst := .skip}
     ]
   }}
   let output_vars := nod.output_vars.map (·.map fun

@@ -131,9 +131,15 @@ namespace Instruction
     toString := Instruction.toString
 end Instruction
 
+structure OutNode (nb_var : Nat) where
+  out_node: Nat
+  out_inst : Instruction nb_var
+  ref? : Option (Lean.Syntax) := none
+deriving Repr
+
 structure PreNode (nb_var : Nat) : Type where
   id : Nat
-  out_nodes : List (Nat × Instruction nb_var × Lean.Syntax)
+  out_nodes : List (OutNode nb_var)
   deriving Repr, Inhabited
 
 end Lustrean
