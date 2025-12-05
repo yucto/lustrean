@@ -299,6 +299,16 @@ partial def elabExprAux {n m : Nat} (nod : NodeN n m) : Indicise.Expr n m → Co
       e := .simple <| .bin_op .sub (.interval 0 0) e
       nod := nod
     }
+  | .mon_op .pre ⟨e, _⟩ => do
+    let ⟨m', m_leq_m', e, nod⟩ ← elabExprAux nod e
+    let (x, nod) ← addVar default e nod -- TODO: default is a dummy value
+    -- the condition `n = 0`
+    return {
+      m' := m' + 1
+      m_leq_m' := by omega
+      e := .old_bound_var x
+      nod := nod
+    }
   | .bin_op .add ⟨e₁, _⟩ ⟨e₂, _⟩ => do
     let ⟨m₁, m_leq_m₁, e₁, nod⟩ ← elabSimpleExprAux nod e₁
     let ⟨m₂, m₁_leq_m₂, e₂, nod⟩ ← elabSimpleExprAux nod (e₂.upcast m_leq_m₁)

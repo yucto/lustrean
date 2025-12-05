@@ -34,6 +34,7 @@ syntax:max "[" lustre_lower_bound ", " lustre_upper_bound "]" : lustre_expr
 syntax:max num : lustre_expr
 syntax:max ident : lustre_expr
 syntax "-" lustre_expr : lustre_expr
+syntax " pre " lustre_expr : lustre_expr
 syntax:max " if " lustre_assertion:0 " then " lustre_expr:0 " else " lustre_expr:0 : lustre_expr
 syntax:35 lustre_expr:36 " fby " lustre_expr:35 : lustre_expr
 syntax:35 lustre_expr:36 " -> " lustre_expr:35 : lustre_expr

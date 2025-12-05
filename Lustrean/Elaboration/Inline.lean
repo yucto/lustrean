@@ -50,10 +50,10 @@ structure BoundVar extends Variable where
   deriving Repr, Inhabited
 
 mutual
-variable (pre : Name)
+variable (pre₁ : Name)
 def Expr.with_prefix : Expr → Expr
   | .interval lb up => .interval lb up
-  | .var name => .var <| name.map (pre ++ ·)
+  | .var name => .var <| name.map (pre₁ ++ ·)
   | .mon_op op e => .mon_op op (e.map (·.with_prefix))
   | .bin_op op l r => .bin_op op (l.map (·.with_prefix)) (r.map (·.with_prefix))
   | .ite cond tb eb => .ite (cond.map (·.with_prefix)) (tb.map (·.with_prefix)) (eb.map (·.with_prefix))
@@ -151,22 +151,22 @@ partial def elabExprAux (bounds : Option (Array (&Name))) (var_name : Name) (e :
       do_bounds <| .ite cond tb eb
     | .node nod args => do
       let .some node_def := env.get? nod | throw <| .undefined_node nod
-      let pre := var_name.num (← CounterT.incr)
+      let pre₁ := var_name.num (← CounterT.incr)
       for g in node_def.guards do
-        addAssert <| g.map (·.with_prefix pre) -- here, we add the guards of the called node
+        addAssert <| g.map (·.with_prefix pre₁) -- here, we add the guards of the called node
                                                 -- as an *assert* of the calling node
       for a in node_def.asserts do
-        addAssert <| a.map (·.with_prefix pre)
+        addAssert <| a.map (·.with_prefix pre₁)
       unless node_def.input_vars.size = args.size do
         throw <| .arity_mismatch nod node_def.input_vars.size args.size
       for (v, arg) in node_def.input_vars.zip args do
-        let name := v.name.map (pre ++ ·)
+        let name := v.name.map (pre₁ ++ ·)
         let value ← elabExprAux none name arg
         addVar { name, value := value }
       for bvar in node_def.bound_vars do
         addVar {
-          name := bvar.name.map (pre ++ ·)
-          value := bvar.value.map (·.with_prefix pre)
+          name := bvar.name.map (pre₁ ++ ·)
+          value := bvar.value.map (·.with_prefix pre₁)
         }
       match bounds with
       | some vars =>
@@ -175,13 +175,13 @@ partial def elabExprAux (bounds : Option (Array (&Name))) (var_name : Name) (e :
         for (var, old_var) in vars.zip node_def.output_vars do
           addVar {
             name := var
-            value := old_var.map (.var <| ⟨pre ++ ·, old_var.ref⟩)
+            value := old_var.map (.var <| ⟨pre₁ ++ ·, old_var.ref⟩)
           }
         return default        -- This is a bit ugly, but this result will never be actually
                               -- used...
       | none =>
         if h : node_def.output_vars.size = 1 then
-          return .var <| node_def.output_vars[0].map (pre ++ ·)
+          return .var <| node_def.output_vars[0].map (pre₁ ++ ·)
         else
           throw <| .multiple_output_vars_in_expr e.ref nod node_def.output_vars.size
 where
@@ -197,15 +197,15 @@ where
     return ⟨e', e.ref⟩
 
 
-partial def elabBoolexprAux (pre : Name) (b : &Reify.BoolExpr) : InlineM (&BoolExpr) :=
+partial def elabBoolexprAux (pre₁ : Name) (b : &Reify.BoolExpr) : InlineM (&BoolExpr) :=
   b.mapM fun
     | .bin_op op l r => do
-      let left ← elabBoolexprAux pre l
-      let right ← elabBoolexprAux pre r
+      let left ← elabBoolexprAux pre₁ l
+      let right ← elabBoolexprAux pre₁ r
       return .bin_op op left right
     | .cmp_op op l r => do
-      let left ← elabExprAux none pre l |>.run
-      let right ← elabExprAux none pre r |>.run
+      let left ← elabExprAux none pre₁ l |>.run
+      let right ← elabExprAux none pre₁ r |>.run
       return .cmp_op op left right
 end
 

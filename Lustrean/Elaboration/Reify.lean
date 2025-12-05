@@ -109,11 +109,13 @@ end UpperBound
 
 inductive MonOp where
   | neg
+  | «pre»
   deriving Repr, Inhabited
 
 namespace MonOp
 protected def toString : MonOp → String
   | neg => "-"
+  | «pre» => "pre"
 
 instance : ToString MonOp where
   toString := MonOp.toString
@@ -234,6 +236,9 @@ partial def elabExpr (s : TSyntax `lustre_expr ) : CoreM (&Expr) :=
     | `(lustre_expr| - $e) =>
       let e ← elabExpr e
       return .mon_op .neg e
+    | `(lustre_expr| pre $e) =>
+      let e ← elabExpr e
+      return .mon_op .pre e
     | `(lustre_expr| $l * $r) =>
       let left ← elabExpr l
       let right ← elabExpr r
