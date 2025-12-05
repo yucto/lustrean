@@ -198,10 +198,10 @@ class Narrow (α : Type) where
   narrow : α → α → Nat → α
 
 namespace Narrow
-  variable {α : Type} [Narrow α]
+variable {α : Type} [Narrow α]
 
-  @[simp]
-  def narrowSeq (x : Nat → α) (n : Nat) : α := match n with
+@[simp]
+def narrowSeq (x : Nat → α) (n : Nat) : α := match n with
   | 0 => x 0
   | .succ n => Narrow.narrow (narrowSeq x n) (x n.succ) n
 end Narrow

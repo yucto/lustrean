@@ -5,41 +5,41 @@ namespace Lustrean.Elaboration.Compile
 open Normalize
 
 section
-  variable {n m : Nat}
+variable {n m : Nat}
 
-  def _root_.Lustrean.Elaboration.Normalize.SimpleExpr.to_cfg_expr : SimpleExpr n m → IExpr (1 + n + m + m)
-    | .interval lb ub =>
-      let lb := match lb with
-        | .minf => none
-        | .nat n => some n
-      let ub := match ub with
-        | .pinf => none
-        | .nat n => some n
-      .rand lb ub
-    | .bin_op op l r =>
-      let op := match op with
-        | .add => .iadd
-        | .mul => .imul
-        | .sub => .isub
-      .binop l.to_cfg_expr op r.to_cfg_expr
-    | .var .step => .var <| .mk 0 <| by omega
-    | .var (.input_var k) => .var <| .mk (1+k) <| by omega
-    | .var (.bound_var k) => .var <| .mk (1+n+k) <| by omega
-    | .var (.old_bound_var k) => .var <| .mk (1+n+m+k) <| by omega
+def _root_.Lustrean.Elaboration.Normalize.SimpleExpr.to_cfg_expr : SimpleExpr n m → IExpr (1 + n + m + m)
+  | .interval lb ub =>
+    let lb := match lb with
+      | .minf => none
+      | .nat n => some n
+    let ub := match ub with
+      | .pinf => none
+      | .nat n => some n
+    .rand lb ub
+  | .bin_op op l r =>
+    let op := match op with
+      | .add => .iadd
+      | .mul => .imul
+      | .sub => .isub
+    .binop l.to_cfg_expr op r.to_cfg_expr
+  | .var .step => .var <| .mk 0 <| by omega
+  | .var (.input_var k) => .var <| .mk (1+k) <| by omega
+  | .var (.bound_var k) => .var <| .mk (1+n+k) <| by omega
+  | .var (.old_bound_var k) => .var <| .mk (1+n+m+k) <| by omega
 
-  def _root_.Lustrean.Elaboration.Normalize.BoolExpr.to_cfg_expr : BoolExpr n m → BExpr (1 + n + m + m)
-    | .cmp_op op l r =>
-      let op := match op with
-        | .eq => .eq
-        | .lt => .lt
-        | .leq => .le
-      .compare l.to_cfg_expr op r.to_cfg_expr
-    | .bin_op op l r =>
-      let l := l.to_cfg_expr
-      let r := r.to_cfg_expr
-      match op with
-      | .or => .or l r
-      | .and => .and l r
+def _root_.Lustrean.Elaboration.Normalize.BoolExpr.to_cfg_expr : BoolExpr n m → BExpr (1 + n + m + m)
+  | .cmp_op op l r =>
+    let op := match op with
+      | .eq => .eq
+      | .lt => .lt
+      | .leq => .le
+    .compare l.to_cfg_expr op r.to_cfg_expr
+  | .bin_op op l r =>
+    let l := l.to_cfg_expr
+    let r := r.to_cfg_expr
+    match op with
+    | .or => .or l r
+    | .and => .and l r
 end
 
 /-- How many iterations of the main loop to unroll. -/

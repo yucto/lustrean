@@ -17,24 +17,24 @@ where
 export ValueDomain (nil)
 
 namespace ValueDomain
-  variable {α : Type} [ValueDomain α]
-  -- backward operations :
-  -- backward_op x y r = (x', y') where
-  -- x' = { v ∈ x | ∃ v' ∈ y, v op v' ∈ r }
-  -- y' = { v' ∈ y | ∃ v ∈ x, v op v' ∈ r }
-  def backwardNeg (x r : α) : α := (-r) ⊓ x
+variable {α : Type} [ValueDomain α]
+-- backward operations :
+-- backward_op x y r = (x', y') where
+-- x' = { v ∈ x | ∃ v' ∈ y, v op v' ∈ r }
+-- y' = { v' ∈ y | ∃ v ∈ x, v op v' ∈ r }
+def backwardNeg (x r : α) : α := (-r) ⊓ x
 
-  def backwardAdd (x y r : α) : α × α :=
-    (x ⊓ (r - y), y ⊓ (r - x))
+def backwardAdd (x y r : α) : α × α :=
+  (x ⊓ (r - y), y ⊓ (r - x))
 
-  def backwardSub (x y r : α) : α × α :=
-    (x ⊓ (r + y), y ⊓ (x - r))
+def backwardSub (x y r : α) : α × α :=
+  (x ⊓ (r + y), y ⊓ (x - r))
 
-  def backwardMul (x y r : α) : α × α :=
-    (x ⊓ (r / y), y ⊓ (r / x))
+def backwardMul (x y r : α) : α × α :=
+  (x ⊓ (r / y), y ⊓ (r / x))
 
-  def backwardDiv (x y r : α) : α × α :=
-    (x ⊓ (r * y), y ⊓ (x / r))
+def backwardDiv (x y r : α) : α × α :=
+  (x ⊓ (r * y), y ⊓ (x / r))
 end ValueDomain
 
 end Lustrean

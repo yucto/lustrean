@@ -8,14 +8,14 @@ inductive IntOp : Type where
 deriving Repr, Inhabited
 
 namespace IntOp
-  protected def toString : IntOp → String
-    | .iadd => "+"
-    | .isub => "-"
-    | .imul => "*"
-    | .idiv => "/"
+protected def toString : IntOp → String
+  | .iadd => "+"
+  | .isub => "-"
+  | .imul => "*"
+  | .idiv => "/"
 
-  instance : ToString IntOp where
-    toString := IntOp.toString
+instance : ToString IntOp where
+  toString := IntOp.toString
 end IntOp
 
 -- n : number of variable
@@ -28,27 +28,27 @@ inductive IExpr (n : Nat) : Type where
 deriving Repr, Inhabited
 
 namespace IExpr
-  variable {n : Nat}
+variable {n : Nat}
 
-  def const (x : Int) : IExpr n :=
-    .rand x x
+def const (x : Int) : IExpr n :=
+  .rand x x
 
-  protected def toString : IExpr n → String
-    | .nil => "nil"
-    | .var k => toString k
-    | .rand left right =>
-      let l := match left with
-        | some n => toString n
-        | none => "-∞"
-      let r := match right with
-        | some n => toString n
-        | none => "∞"
-      s!"[{l}, {r}]"
-    | .neg e => s!"(- {e.toString})"
-    | .binop left op right => s!"({op} {left.toString} {right.toString})"
+protected def toString : IExpr n → String
+  | .nil => "nil"
+  | .var k => toString k
+  | .rand left right =>
+    let l := match left with
+      | some n => toString n
+      | none => "-∞"
+    let r := match right with
+      | some n => toString n
+      | none => "∞"
+    s!"[{l}, {r}]"
+  | .neg e => s!"(- {e.toString})"
+  | .binop left op right => s!"({op} {left.toString} {right.toString})"
 
-  instance : ToString (IExpr n) where
-    toString := IExpr.toString
+instance : ToString (IExpr n) where
+  toString := IExpr.toString
 end IExpr
 
 inductive CompareOp : Type where
@@ -61,24 +61,24 @@ inductive CompareOp : Type where
 deriving Repr, Inhabited
 
 namespace CompareOp
-  def not : CompareOp → CompareOp
-  | eq => neq
-  | neq => eq
-  | le => gt
-  | lt => ge
-  | ge => lt
-  | gt => le
+def not : CompareOp → CompareOp
+| eq => neq
+| neq => eq
+| le => gt
+| lt => ge
+| ge => lt
+| gt => le
 
-  protected def toString : CompareOp → String
-    | eq => "="
-    | neq => "≠"
-    | le => "≤"
-    | lt => "<"
-    | ge => "≥"
-    | gt => ">"
+protected def toString : CompareOp → String
+  | eq => "="
+  | neq => "≠"
+  | le => "≤"
+  | lt => "<"
+  | ge => "≥"
+  | gt => ">"
 
-  instance : ToString CompareOp where
-    toString := CompareOp.toString
+instance : ToString CompareOp where
+  toString := CompareOp.toString
 end CompareOp
 
 -- no negated expression. it must be eliminated by simplification
@@ -91,24 +91,24 @@ inductive BExpr (n : Nat) : Type where
 deriving Repr, Inhabited
 
 namespace BExpr
-  variable {n : Nat}
+variable {n : Nat}
 
-  def not : BExpr n → BExpr n
+def not : BExpr n → BExpr n
   | random => random
   | const b => const (.not b)
   | compare a op b => compare a op.not b
   | and b b' => or b.not b'.not
   | or b b' => and b.not b'.not
 
-  protected def toString : BExpr n → String
-    | .random => "?"
-    | .const b => toString b
-    | .compare left op right => s!"({op} {left} {right})"
-    | .and left right => s!"(and {left.toString} {right.toString})"
-    | .or left right => s!"(or {left.toString} {right.toString})"
+protected def toString : BExpr n → String
+  | .random => "?"
+  | .const b => toString b
+  | .compare left op right => s!"({op} {left} {right})"
+  | .and left right => s!"(and {left.toString} {right.toString})"
+  | .or left right => s!"(or {left.toString} {right.toString})"
 
-  instance : ToString (BExpr n) where
-    toString := BExpr.toString
+instance : ToString (BExpr n) where
+  toString := BExpr.toString
 end BExpr
 
 inductive Instruction (n : Nat) : Type where
@@ -119,16 +119,16 @@ inductive Instruction (n : Nat) : Type where
 deriving Repr, Inhabited
 
 namespace Instruction
-  variable {n : Nat}
+variable {n : Nat}
 
-  protected def toString : Instruction n → String
-    | .skip => "skip"
-    | .assign k e => s!"{k} := {e}"
-    | .guard b => s!"guard {b}"
-    | .assert b => s!"assert {b}"
+protected def toString : Instruction n → String
+  | .skip => "skip"
+  | .assign k e => s!"{k} := {e}"
+  | .guard b => s!"guard {b}"
+  | .assert b => s!"assert {b}"
 
-  instance : ToString (Instruction n) where
-    toString := Instruction.toString
+instance : ToString (Instruction n) where
+  toString := Instruction.toString
 end Instruction
 
 structure OutNode (nb_var : Nat) where
