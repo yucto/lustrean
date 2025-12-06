@@ -6,29 +6,29 @@ open Lean Meta Elab
 open Std (HashMap)
 -- Inline phase.  This is responsible for removing node calls from the AST.
 
+namespace Lean.Exception
+
+def undefinedNode (nod : &Name) : Exception :=
+  .error nod.ref m!"node call of undefined node '{nod.value}'"
+
+def arityMismatch (nod : &Name) (expected : Nat) (got : Nat) : Exception :=
+  .error nod.ref m!"node '{nod.value}' expects {expected} arguments, but was given {got}"
+
+def multipleOutputVarsInExpr (ref : Syntax) (nod : &Name) (nb_vars : Nat) : Exception :=
+  .error ref m!"node '{nod.value}' returns {nb_vars} values, so it must be unpacked"
+
+def multipleVarsForSimpleExpr (ref : Syntax) (nb_vars : Nat) : Exception :=
+  .error ref m!"cannot unpack into {nb_vars} values a simple expression"
+
+def unpackingMismatch (ref : Syntax) (nod : &Name) (expected : Nat) (got : Nat) : Exception :=
+  .error ref m!"node '{nod.value}' returns {got} values, but {expected} are being unpacked"
+
+end Lean.Exception
+
 namespace Lustrean.Elaboration
 
 namespace Inline
 export Reify (Variable)
-
-inductive Error where
-  | undefined_node (nod : &Name)
-  | arity_mismatch (nod : &Name) (expected : Nat) (got : Nat)
-  | multiple_output_vars_in_expr (ref : Syntax) (nod : &Name) (nb_vars : Nat)
-  | multiple_vars_for_simple_expr (ref : Syntax) (nb_vars : Nat)
-  | unpacking_mismatch (ref : Syntax) (nod : &Name) (expected : Nat) (got : Nat)
-
-def Error.as_exception : Error → Exception
-  | undefined_node nod =>
-    .error nod.ref m!"node call of undefined node '{nod.value}'"
-  | arity_mismatch nod expected got =>
-    .error nod.ref m!"node '{nod.value}' expects {expected} arguments, but was given {got}"
-  | multiple_output_vars_in_expr ref nod nb_vars =>
-    .error ref m!"node '{nod.value}' returns {nb_vars} values, so it must be unpacked"
-  | multiple_vars_for_simple_expr ref nb_vars =>
-    .error ref m!"cannot unpack into {nb_vars} values a simple expression"
-  | unpacking_mismatch ref nod expected got =>
-    .error ref m!"node '{nod.value}' returns {got} values, but {expected} are being unpacked"
 
 mutual
 inductive Expr where
@@ -44,6 +44,27 @@ inductive BoolExpr where
   | bin_op (op : BoolBinOp) (left right : &BoolExpr)
   deriving Repr, Inhabited
 end
+
+mutual
+partial def Expr.toString : Expr → String
+  | .interval {value := .nat n,..} {value := .nat k,..} => if n = k then s!"{n}" else s!"[{n},{k}]"
+  | .interval lb up => s!"[{lb},{up}]"
+  | .var v => toString v.value
+  | .mon_op op e => s!"{op.toString} {Expr.toString e}"
+  | .bin_op op e₁ e₂ => s!"{Expr.toString e₁} {op.toString} {Expr.toString e₂}"
+  | .ite cond tb eb => s!"if {BoolExpr.toString cond} then {Expr.toString tb} else {Expr.toString eb}"
+
+partial def BoolExpr.toString : BoolExpr → String
+  | .cmp_op op left right => s!"{Expr.toString left.value} {op.toString} {Expr.toString right.value}"
+  | .bin_op op left right => s!"{BoolExpr.toString left.value} {op.toString} {BoolExpr.toString right.value}"
+end
+
+instance : ToString Expr where
+  toString := Expr.toString
+
+instance : ToString BoolExpr where
+  toString := BoolExpr.toString
+
 
 structure BoundVar extends Variable where
   value : &Expr
@@ -73,6 +94,35 @@ structure Node where
   guards : Array (&BoolExpr)
   asserts : Array (&BoolExpr)
   deriving Repr, Inhabited
+
+section
+
+open Std.Format
+
+def formatGuards (guards : Array (&BoolExpr)) : Format :=
+  if guards.size = 0 then "" else
+  Std.Format.indentD <| "guard" ++ Std.Format.indentD (joinSep (guards |>.toList) Format.line)
+
+def formatAsserts (asserts : Array (&BoolExpr)) : Format :=
+  if asserts.size = 0 then "" else
+  Std.Format.indentD <| "assert" ++ Std.Format.indentD (joinSep (asserts |>.toList) Format.line)
+
+def formatBoundVars (bound_vars : Array BoundVar) : Format :=
+  Std.Format.indentD <| "where " ++ Std.Format.indentD (joinSep (bound_vars.toList.map formatBvar) Format.line)
+where
+  formatBvar bvar :=
+    (format bvar.name.value) ++ " = " ++ toString bvar.value
+
+instance : ToFormat Node where
+  format n :=
+    (format ("node " ++ n.name.value.toString)) ++
+    (Reify.formatInputVars n.input_vars) ++
+    (Reify.formatOutputVars n.output_vars)  ++
+    (formatGuards n.guards) ++
+    (formatBoundVars n.bound_vars) ++
+    (formatAsserts n.asserts)
+end
+
 
 def NodeAddT := StateT Node
 
@@ -104,7 +154,7 @@ end NodeAddT
 
 abbrev NodeAddM := NodeAddT Id
 
-abbrev InlineM := NodeAddT <| Except Error
+abbrev InlineM := NodeAddT CoreM
 
   namespace InlineM
   abbrev addVar (var : BoundVar) : InlineM PUnit :=
@@ -117,7 +167,7 @@ abbrev InlineM := NodeAddT <| Except Error
     NodeAddT.addAssert a
 
   protected def run (name : &Name) (input_vars : Array Variable) (output_vars : Array (&Name))
-                    (self : InlineM Unit) : Except Error Node := do
+                    (self : InlineM Unit) : CoreM Node := do
     let initial_node : Node := {
       name, input_vars, output_vars
       bound_vars := #[], guards := #[], asserts := #[]
@@ -135,7 +185,7 @@ mutual
 partial def elabExprAux (bounds : Option (Array (&Name))) (var_name : Name) (e : &Reify.Expr)
                           : CounterT InlineM (&Expr) :=
   e.mapM fun
-    | .int lb up => do_bounds <| .interval lb up
+    | .interval lb up => do_bounds <| .interval lb up
     | .var n => do_bounds <| .var n
     | .mon_op op e => do
       let e ← elabExprAux none var_name e
@@ -150,7 +200,7 @@ partial def elabExprAux (bounds : Option (Array (&Name))) (var_name : Name) (e :
       let eb ← elabExprAux none var_name eb
       do_bounds <| .ite cond tb eb
     | .node nod args => do
-      let .some node_def := env.get? nod | throw <| .undefined_node nod
+      let .some node_def := env.get? nod | throw <| .undefinedNode nod
       let pre₁ := var_name.num (← CounterT.incr)
       for g in node_def.guards do
         addAssert <| g.map (·.with_prefix pre₁) -- here, we add the guards of the called node
@@ -158,7 +208,7 @@ partial def elabExprAux (bounds : Option (Array (&Name))) (var_name : Name) (e :
       for a in node_def.asserts do
         addAssert <| a.map (·.with_prefix pre₁)
       unless node_def.input_vars.size = args.size do
-        throw <| .arity_mismatch nod node_def.input_vars.size args.size
+        throw <| .arityMismatch nod node_def.input_vars.size args.size
       for v in node_def.input_vars, arg in args do
         let name := v.name.map (pre₁ ++ ·)
         let value ← elabExprAux none name arg
@@ -171,7 +221,7 @@ partial def elabExprAux (bounds : Option (Array (&Name))) (var_name : Name) (e :
       match bounds with
       | some vars =>
         unless vars.size = node_def.output_vars.size do
-          throw <| .unpacking_mismatch e.ref node_def.name vars.size node_def.output_vars.size
+          throw <| .unpackingMismatch e.ref node_def.name vars.size node_def.output_vars.size
         for (var, old_var) in vars.zip node_def.output_vars do
           addVar {
             name := var
@@ -183,7 +233,7 @@ partial def elabExprAux (bounds : Option (Array (&Name))) (var_name : Name) (e :
         if h : node_def.output_vars.size = 1 then
           return .var <| node_def.output_vars[0].map (pre₁ ++ ·)
         else
-          throw <| .multiple_output_vars_in_expr e.ref nod node_def.output_vars.size
+          throw <| .multipleOutputVarsInExpr e.ref nod node_def.output_vars.size
 where
   do_bounds (e' : Expr) : CounterT InlineM (&Expr) := do
     if let some b := bounds then
@@ -193,7 +243,7 @@ where
           value := .mk e' e.ref
         }
       else
-        throw <| .multiple_vars_for_simple_expr e.ref b.size
+        throw <| .multipleVarsForSimpleExpr e.ref b.size
     return ⟨e', e.ref⟩
 
 
@@ -220,25 +270,31 @@ def elabBoolexpr (guards : Bool) (i : Nat) (b : &Reify.BoolExpr) : InlineM Unit 
   else
     addAssert b
 
-def elabNode (nod : &Reify.Node) : Except Exception (&Node) :=
-  nod.mapM fun nod => Except.mapError Error.as_exception <|
-    InlineM.run nod.name nod.input_vars nod.output_vars do
-      for { names, value } in nod.bound_vars do
-        elabExpr env names value
-      for (b, i) in nod.guards.zipIdx do
-        elabBoolexpr env true i b
-      for (b, i) in nod.asserts.zipIdx do
-        elabBoolexpr env false i b
+def elabNode (nod : &Reify.Node) : CoreM (&Node) :=
+  nod.mapM fun nod =>
+  withTraceNode `Lustrean.Inline
+    (msg := fun e =>
+      return m!"{exceptEmoji e} elabNode {nod} ⇒ \n{if let .ok n := e then toMessageData n else ""}") do
+  InlineM.run nod.name nod.input_vars nod.output_vars do
+        for { names, value } in nod.bound_vars do
+          elabExpr env names value
+        for (b, i) in nod.guards.zipIdx do
+          elabBoolexpr env true i b
+        for (b, i) in nod.asserts.zipIdx do
+          elabBoolexpr env false i b
 end
 
 def elabLustre (nodes : Array (&Reify.Node)) : CoreM (Array (&Node)) := do
   let mut env := {}
   let mut result := Array.mkEmpty nodes.size
   for nod in nodes do
-    let nod ← liftExcept <| elabNode env nod
+    let nod ← elabNode env nod
     result := result.push nod
     env := env.insert nod.value.name nod
   return result
 
 end Inline
 end Lustrean.Elaboration
+
+initialize
+  registerTraceClass `Lustrean.Inline

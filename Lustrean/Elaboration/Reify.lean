@@ -23,6 +23,10 @@ protected def toString {α} [ToString α] (self : &α) :=
 instance {α} [ToString α] : ToString (&α) where
   toString := WithRef.toString
 
+
+instance {α} [ToMessageData α] : ToMessageData (&α) where
+  toMessageData x := toMessageData x.value
+
 protected abbrev map {α β} (self : &α) (f : α → β) : &β where
   ref := self.ref
   value := f self.value
@@ -176,7 +180,7 @@ end BinOp
 
 mutual
 inductive Expr where
-  | int (lb : &LowerBound) (up : &UpperBound)
+  | interval (lb : &LowerBound) (up : &UpperBound)
   | var (name : &Name)
   | mon_op (op : MonOp) (e : &Expr)
   | bin_op (op : BinOp) (left right : &Expr)
@@ -192,8 +196,8 @@ end
 
 mutual
 partial def Expr.toString : Expr → String
-  | .int {value := .nat n,..} {value := .nat k,..} => if n = k then s!"{n}" else s!"[{n},{k}]"
-  | .int lb up => s!"[{lb},{up}]"
+  | .interval {value := .nat n,..} {value := .nat k,..} => if n = k then s!"{n}" else s!"[{n},{k}]"
+  | .interval lb up => s!"[{lb},{up}]"
   | .var v => toString v.value
   | .mon_op op e => s!"{op.toString} {Expr.toString e}"
   | .bin_op op e₁ e₂ => s!"{Expr.toString e₁} {op.toString} {Expr.toString e₂}"
@@ -278,7 +282,7 @@ partial def elabExpr (s : TSyntax `lustre_expr ) : CoreM (&Expr) :=
         | `(lustre_upper_bound| ∞) => pure .pinf
         | `(lustre_upper_bound| $n:num) => pure <| .nat n.getNat
         | _ => throwUnsupportedSyntax
-      return .int ⟨lb, lbs⟩ ⟨up, ups⟩
+      return .interval ⟨lb, lbs⟩ ⟨up, ups⟩
     | `(lustre_expr| $v:ident) => return .var ⟨v.getId, v⟩
     | `(lustre_expr| $l + $r) =>
       let left ← elabExpr l
@@ -318,7 +322,9 @@ partial def elabExpr (s : TSyntax `lustre_expr ) : CoreM (&Expr) :=
       throwErrorAt s m!"{repr s}"
 
 partial def elabBoolExpr (s : TSyntax `lustre_assertion) : CoreM (&BoolExpr) :=
-  WithRef.withRefM s do match s with
+  WithRef.withRefM s do
+  withTraceNode `Lustrean.Reify (msg := fun e => return m!"{exceptEmoji e} elabBoolExpr {s} = {e.toOption.map toString}") do
+  match s with
     | `(lustre_assertion| $l:lustre_expr ≤ $r:lustre_expr) =>
       let left ← elabExpr l
       let right ← elabExpr r
@@ -345,7 +351,10 @@ partial def elabBoolExpr (s : TSyntax `lustre_assertion) : CoreM (&BoolExpr) :=
 end
 
 def elabNode (s : TSyntax `lustre_node) : CoreM (&Node) :=
-  withTraceNode `Lustrean.Reify (msg := fun e => return m!"{exceptEmoji e} elabNode {s} ⇒ \n{if let .ok n := e then (format n.value).pretty else ""}") do match s with
+  withTraceNode `Lustrean.Reify
+    (msg := fun e =>
+      return m!"{exceptEmoji e} elabNode {s} ⇒ \n{if let .ok n := e then toMessageData n else ""}") do
+  match s with
   | `(lustre_node| node $name($inputs:ident,*) $[= $output_vars,*]? $[guard $guards*]?
                    where $decls* $[assert $asserts*]?) =>
     let name := ⟨name.getId, name⟩

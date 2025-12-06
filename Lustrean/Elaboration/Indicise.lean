@@ -158,7 +158,11 @@ partial def elabBoolexpr (b : &Inline.BoolExpr) : CoreM (&BoolExpr n m) :=
 end
 end
 
-def elabNode (nod : &Inline.Node) : CoreM (&Node) := nod.mapM fun nod => do
+def elabNode (nod : &Inline.Node) : CoreM (&Node) :=
+  nod.mapM fun nod =>
+  withTraceNode `Lustrean.Indicise
+    (msg := fun e =>
+      return m!"{exceptEmoji e} elabNode {nod} ⇒ \n{if let .ok n := e then toMessageData n else ""}") do
   let input_vars := Vector.mk nod.input_vars rfl
   let bound_vars := Vector.mk nod.bound_vars rfl
   let n := input_vars.size
@@ -185,3 +189,6 @@ def elabLustre (nodes : Array (&Inline.Node)) : CoreM (Array (&Node)) :=
 end Indicise
 
 end Lustrean.Elaboration
+
+initialize
+  registerTraceClass `Lustrean.Indicise
