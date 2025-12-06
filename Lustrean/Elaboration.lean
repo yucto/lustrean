@@ -14,8 +14,8 @@ open Core (CoreM)
 namespace Lustrean.Elaboration
 def elabLustre (nodes : TSyntaxArray `lustre_node) : CoreM Unit := do
   let nodes :=
-    Compile.elabLustre <|
-    Normalize.elabLustre <|
+    ← Compile.elabLustre <|
+    ← Normalize.elabLustre <|
     ← Indicise.elabLustre <|
     ← Inline.elabLustre <|
     ← Reify.elabLustre <|
@@ -42,3 +42,6 @@ elab_rules : command
       return .mk nod
     liftTermElabM <| elabLustre nodes
 end Lustrean.Elaboration
+
+initialize
+  registerTraceClass `Lustrean.Elab  (inherited := true)

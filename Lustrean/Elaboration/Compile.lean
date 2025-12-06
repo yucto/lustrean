@@ -1,9 +1,10 @@
 import Lustrean.Elaboration.Normalize
 import Lustrean.Imp
+import Misc.Lean
 
+open Lean
 namespace Lustrean.Elaboration.Compile
 open Normalize
-
 section
 variable {n m : Nat}
 
@@ -45,7 +46,8 @@ end
 /-- How many iterations of the main loop to unroll. -/
 def unrollLoop : Nat := 1
 
-def elabIntoCfg (nod : Normalize.Node) : List (PreNode nod.totalVars) × Array (&Fin nod.totalVars) := Id.run do
+def elabIntoCfg (nod : Normalize.Node) : CoreM (List (PreNode nod.totalVars) × Array &(Fin nod.totalVars)) :=
+  withTraceNode `Lustrean.Elab.Compile (msg := fun e => return m!"{exceptEmoji e} elabExpr {nod} = {e.toOption.map toString}") do
   let mut result := #[
     { id := 0, out_nodes := [{ out_node := 2, out_inst := .assign step (IExpr.const 0)}] },
     { id := 1, out_nodes := [] }
@@ -206,8 +208,11 @@ where
     unfold Normalize.Node.totalVars
     omega
 
-def elabLustre (a : Array Normalize.Node) : Array (Σ n, List (PreNode n) × Array (&Fin n)) :=
-  a.map fun nod =>
-    ⟨nod.totalVars, elabIntoCfg nod⟩
+def elabLustre (a : Array Normalize.Node) : CoreM (Array (Σ n, List (PreNode n) × Array &(Fin n))) :=
+  a.mapM fun nod => do
+    return ⟨nod.totalVars, ← elabIntoCfg nod⟩
 
 end Lustrean.Elaboration.Compile
+
+initialize
+  registerTraceClass `Lustrean.Elab.Compile (inherited := true)

@@ -12,37 +12,40 @@ structure WithRef (α : Type _) where
   deriving Repr, Inhabited
 
 namespace WithRef
-prefix:50 "&" => WithRef
+prefix:arg "&" => WithRef
 
-instance (α : Type _) : CoeSort (&α) α where
+-- instance (α : Type _) : Coe (&α) α where
+  -- coe := value
+
+instance (α : Type _) : CoeSort &α α where
   coe := value
 
 protected def toString {α} [ToString α] (self : &α) :=
   toString self.value
 
-instance {α} [ToString α] : ToString (&α) where
+instance {α} [ToString α] : ToString &α where
   toString := WithRef.toString
 
 
-instance {α} [ToMessageData α] : ToMessageData (&α) where
+instance {α} [ToMessageData α] : ToMessageData &α where
   toMessageData x := toMessageData x.value
 
 protected abbrev map {α β} (self : &α) (f : α → β) : &β where
   ref := self.ref
   value := f self.value
 
-protected abbrev mapM {α β m} [Monad m] (self : &α) (f : α → m β) : m (&β) := do
+protected abbrev mapM {α β m} [Monad m] (self : &α) (f : α → m β) : m &β := do
   let ⟨value, ref⟩ := self
   let value' ← f value
   return ⟨value', ref⟩
 
-def withRefM {α m} [Monad m] (ref : Syntax) (value : m α) : m (&α) := do
+def withRefM {α m} [Monad m] (ref : Syntax) (value : m α) : m &α := do
   return {
     value := ← value
     ref
   }
 
-instance {α : Type _} : Membership α (&α) where
+instance {α : Type _} : Membership α &α where
   mem aref a  := a = aref.value
 
 def attach {α : Type _}  (xs : &α) : &{ x // x ∈ xs } :=
@@ -238,7 +241,7 @@ section
 open Std.Format
 
 def formatInputVars (input_vars : Array Variable) : Format :=
-  paren (joinSep (input_vars.map (Variable.name) |>.toList) ",")
+  paren (joinSep (input_vars.map Variable.name |>.toList) ",")
 
 def formatBoundVars (bound_vars : Array BoundVars) : Format :=
   Std.Format.indentD <| "where " ++ Std.Format.indentD (joinSep (bound_vars.toList.map formatBvar) Format.line)
@@ -271,7 +274,7 @@ end
 mutual
 partial def elabExpr (s : TSyntax `lustre_expr ) : CoreM (&Expr) :=
   WithRef.withRefM s do
-  withTraceNode `Lustrean.Reify (msg := fun e => return m!"{exceptEmoji e} elabExpr {s} = {e.toOption.map toString}") do
+  withTraceNode `Lustrean.Elab.Reify (msg := fun e => return m!"{exceptEmoji e} elabExpr {s} = {e.toOption.map toString}") do
     match s with
     | `(lustre_expr| [$lbs, $ups]) =>
       let lb ← match lbs with
@@ -323,7 +326,7 @@ partial def elabExpr (s : TSyntax `lustre_expr ) : CoreM (&Expr) :=
 
 partial def elabBoolExpr (s : TSyntax `lustre_assertion) : CoreM (&BoolExpr) :=
   WithRef.withRefM s do
-  withTraceNode `Lustrean.Reify (msg := fun e => return m!"{exceptEmoji e} elabBoolExpr {s} = {e.toOption.map toString}") do
+  withTraceNode `Lustrean.Elab.Reify (msg := fun e => return m!"{exceptEmoji e} elabBoolExpr {s} = {e.toOption.map toString}") do
   match s with
     | `(lustre_assertion| $l:lustre_expr ≤ $r:lustre_expr) =>
       let left ← elabExpr l
@@ -351,7 +354,7 @@ partial def elabBoolExpr (s : TSyntax `lustre_assertion) : CoreM (&BoolExpr) :=
 end
 
 def elabNode (s : TSyntax `lustre_node) : CoreM (&Node) :=
-  withTraceNode `Lustrean.Reify
+  withTraceNode `Lustrean.Elab.Reify
     (msg := fun e =>
       return m!"{exceptEmoji e} elabNode {s} ⇒ \n{if let .ok n := e then toMessageData n else ""}") do
   match s with
@@ -378,4 +381,4 @@ end Reify
 end Lustrean.Elaboration
 
 initialize
-  registerTraceClass `Lustrean.Reify
+  registerTraceClass `Lustrean.Elab.Reify (inherited := true)

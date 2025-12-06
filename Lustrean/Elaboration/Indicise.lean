@@ -25,15 +25,15 @@ def VarRef.upcast {n m m' : Nat} (h : m ≤ m') : VarRef n m → VarRef n m'
 mutual
 inductive Expr (n m : Nat) where
   | interval (lb : &LowerBound) (up : &UpperBound)
-  | var (k : &VarRef n m)
-  | mon_op (op : MonOp) (e : &Expr n m)
-  | bin_op (op : Reify.BinOp) (left right : &Expr n m)
-  | ite (cond : &BoolExpr n m) (tb : &Expr n m) (eb : &Expr n m)
+  | var (k : &(VarRef n m))
+  | mon_op (op : MonOp) (e : &(Expr n m))
+  | bin_op (op : Reify.BinOp) (left right : &(Expr n m))
+  | ite (cond : &(BoolExpr n m)) (tb : &(Expr n m)) (eb : &(Expr n m))
   deriving Repr, Inhabited
 
 inductive BoolExpr (n m : Nat) where
-  | cmp_op (op : CmpOp) (left right : &Expr n m)
-  | bin_op (op : BoolBinOp) (left right : &BoolExpr n m)
+  | cmp_op (op : CmpOp) (left right : &(Expr n m))
+  | bin_op (op : BoolBinOp) (left right : &(BoolExpr n m))
   deriving Repr, Inhabited
 end
 
@@ -60,7 +60,7 @@ structure Var where
 
 /-- A locally bound variable.  This is a local variable that is bound to a value -/
 structure BoundVar (n m : Nat) extends Var where
-  value : &Expr n m
+  value : &(Expr n m)
   deriving Repr, Inhabited
 
 mutual
@@ -85,9 +85,9 @@ structure Node where
   m : Nat
   input_vars : Vector Var n
   bound_vars : Vector (BoundVar n m) m
-  output_vars : Array (&VarRef n m)
-  guards : Array (&BoolExpr n m)
-  asserts : Array (&BoolExpr n m)
+  output_vars : Array &(VarRef n m)
+  guards : Array &(BoolExpr n m)
+  asserts : Array &(BoolExpr n m)
   deriving Repr, Inhabited
 
 namespace Node
@@ -98,35 +98,50 @@ protected def getElem {n m} (nod : Node) (vr : VarRef n m) (p : n = nod.n ∧ m 
 
 instance (n m : Nat) : GetElem Node (VarRef n m) Var fun nod _ => n = nod.n ∧ m = nod.m where
   getElem := Node.getElem
-
-protected def toString (self : Node) : String :=
-  let args := ", ".intercalate <| self.input_vars.map (·.name.toString) |>.toList
-  let outputs :=
-    if self.output_vars.size > 0 then
-      " = " ++ (", ".intercalate <| self.output_vars.map (self[·.value].name.toString) |>.toList)
-    else
-      ""
-  let guards :=
-    "guards" ++ (self.guards.map (fun b => s!"\n  {b.value.toString self.input_vars self.bound_vars}") |>.toList |> String.join)
-  let asserts :=
-    "asserts" ++ (self.asserts.map (fun b => s!"\n  {b.value.toString self.input_vars self.bound_vars}") |>.toList |> String.join)
-  let vars :=
-    "where" ++ (self.bound_vars.map (fun v =>
-        s!"\n  {v.name.toString} = {v.value.value.toString self.input_vars self.bound_vars}")
-      |>.toList
-      |> String.join)
-  s!"node {self.name}({args}){outputs}\n{guards}\n{vars}\n{asserts}"
-
-instance : ToString Node where
-  toString := Node.toString
 end Node
+
+section
+open Std.Format
+
+variable {n m : Nat} (input_vars : Vector Var n) (bound_vars : Vector (BoundVar n m) m)
+
+def formatInputVars (input_vars :  Vector Var n) : Format :=
+  paren (joinSep (input_vars.map Var.name |>.toList) ",")
+
+def formatBoundVars (bound_vars : Vector (BoundVar n m) m) : Format :=
+  Std.Format.indentD <| "where " ++ Std.Format.indentD (joinSep (bound_vars.toList.map formatBvar) Format.line)
+where
+  formatBvar bvar :=
+    (format bvar.name.value) ++ " = " ++ Expr.toString input_vars bound_vars bvar.value
+
+def formatOutputVars (nod : Node) (output_vars : Array &(VarRef n m)) : Format :=
+  if output_vars.size = 0 then "" else
+  " = " ++ joinSep (output_vars.map (nod[·.value]!.name) |>.toList) ","
+
+def formatGuards (guards : Array &(BoolExpr n m)) : Format :=
+  if guards.size = 0 then "" else
+  Std.Format.indentD <| "guard" ++ Std.Format.indentD (joinSep (guards.map (BoolExpr.toString input_vars bound_vars ∘ WithRef.value) |>.toList) Format.line)
+
+def formatAsserts (asserts : Array &(BoolExpr n m)) : Format :=
+  if asserts.size = 0 then "" else
+  Std.Format.indentD <| "assert" ++ Std.Format.indentD (joinSep (asserts.map (BoolExpr.toString input_vars bound_vars ∘ WithRef.value) |>.toList) Format.line)
+
+instance : ToFormat Node where
+  format n :=
+    (format ("node " ++ n.name.toString)) ++
+    (formatInputVars n.input_vars) ++
+    (formatOutputVars n n.output_vars)  ++
+    (formatGuards n.input_vars n.bound_vars n.guards) ++
+    (formatBoundVars n.input_vars n.bound_vars) ++
+    (formatAsserts n.input_vars n.bound_vars n.asserts)
+end
 
 section
 variable {n m : Nat}
 variable (local_vars : HashMap Name (VarRef n m))
 
   mutual
-partial def elabExpr (e : &Inline.Expr) : CoreM (&Expr n m) :=
+partial def elabExpr (e : &Inline.Expr) : CoreM &(Expr n m) :=
   e.mapM fun
     | .interval lb up => return .interval lb up
     | .var ⟨name, ref⟩ => do
@@ -145,7 +160,7 @@ partial def elabExpr (e : &Inline.Expr) : CoreM (&Expr n m) :=
       let eb ← elabExpr eb
       return .ite cond tb eb
 
-partial def elabBoolexpr (b : &Inline.BoolExpr) : CoreM (&BoolExpr n m) :=
+partial def elabBoolexpr (b : &Inline.BoolExpr) : CoreM &(BoolExpr n m) :=
   b.mapM fun
     | .cmp_op op left right => do
       let left ← elabExpr left
@@ -160,7 +175,7 @@ end
 
 def elabNode (nod : &Inline.Node) : CoreM (&Node) :=
   nod.mapM fun nod =>
-  withTraceNode `Lustrean.Indicise
+  withTraceNode `Lustrean.Elab.Indicise
     (msg := fun e =>
       return m!"{exceptEmoji e} elabNode {nod} ⇒ \n{if let .ok n := e then toMessageData n else ""}") do
   let input_vars := Vector.mk nod.input_vars rfl
@@ -191,4 +206,4 @@ end Indicise
 end Lustrean.Elaboration
 
 initialize
-  registerTraceClass `Lustrean.Indicise
+  registerTraceClass `Lustrean.Elab.Indicise (inherited := true)

@@ -1,5 +1,6 @@
 import Lustrean.Imp
 import Batteries.Tactic.SeqFocus
+import LeanSearchClient
 
 namespace Lustrean
 class BoundedLattice (α : Type) where

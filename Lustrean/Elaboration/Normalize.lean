@@ -18,6 +18,9 @@ open Std (HashMap)
 -- just for variables for which this is useful.
 
 namespace Lustrean.Elaboration
+
+abbrev NormalizeM := CounterT CoreM
+
 namespace Normalize
 export Indicise (Var)
 
@@ -101,38 +104,38 @@ def BoundVar.upcast {n m m' : Nat} (h : m ≤ m') (self : BoundVar n m) : BoundV
   value := self.value.upcast h
 }
 
-  mutual
-  variable {n m : Nat} (input_vars : Vector Var n) (bound_vars : Vector (BoundVar n m) m)
+mutual
+variable {n m : Nat} (input_vars : Vector Var n) (bound_vars : Vector (BoundVar n m) m)
 
-  def SimpleExpr.toString : SimpleExpr n m → String
-    | .interval lb up => s!"[{lb}, {up}]"
-    | .var (.old_bound_var k) => s!"(pre {bound_vars[k].name})"
-    | .var (.input_var k) => input_vars[k].name.toString
-    | .var (.bound_var k) => bound_vars[k].name.toString
-    | .var .step => "@"
-    | .bin_op op l r => s!"({op} {l.toString} {r.toString})"
+def SimpleExpr.toString : SimpleExpr n m → String
+  | .interval lb up => s!"[{lb}, {up}]"
+  | .var (.old_bound_var k) => s!"(pre {bound_vars[k].name})"
+  | .var (.input_var k) => input_vars[k].name.toString
+  | .var (.bound_var k) => bound_vars[k].name.toString
+  | .var .step => "@"
+  | .bin_op op l r => s!"({op} {l.toString} {r.toString})"
 
-  def BoolExpr.toString : BoolExpr n m → String
-    | .cmp_op op left right
-    | .bin_op op left right => s!"({op} {left.toString} {right.toString})"
+def BoolExpr.toString : BoolExpr n m → String
+  | .cmp_op op left right
+  | .bin_op op left right => s!"({op} {left.toString} {right.toString})"
 
-  def Expr.toString : Expr n m → String
-    | .simple e => e.toString
-    | .ite cond tb eb => s!"(if {cond.toString} {tb.toString} {eb.toString})"
+def Expr.toString : Expr n m → String
+  | .simple e => e.toString
+  | .ite cond tb eb => s!"(if {cond.toString} {tb.toString} {eb.toString})"
 end
 
-  structure Node where
-    name : Name
-    n : Nat
-    m : Nat
-    input_vars : Vector Var n
-    bound_vars : Vector (BoundVar n m) m
-    output_vars : Array (&VarRef n m)
-    guards : Array (BoolExpr n m)
-    asserts : Array (&BoolExpr n m)
-    deriving Repr, Inhabited
+structure Node where
+  name : Name
+  n : Nat
+  m : Nat
+  input_vars : Vector Var n
+  bound_vars : Vector (BoundVar n m) m
+  output_vars : Array &(VarRef n m)
+  guards : Array (BoolExpr n m)
+  asserts : Array &(BoolExpr n m)
+  deriving Repr, Inhabited
 
-  namespace Node
+namespace Node
 protected def getElem {n m} (nod : Node) (vr : VarRef n m) (p : n = nod.n ∧ m = nod.m) : Var :=
   match vr with
   | .input_var k => nod.input_vars[k]
@@ -142,26 +145,38 @@ protected def getElem {n m} (nod : Node) (vr : VarRef n m) (p : n = nod.n ∧ m 
   instance (n m : Nat) : GetElem Node (VarRef n m) Var (fun nod _ => n = nod.n ∧ m = nod.m) where
     getElem := Node.getElem
 
-protected def toString (self : Node) : String :=
-  let args := ", ".intercalate <| self.input_vars.map (·.name.toString) |>.toList
-  let outputs :=
-    if self.output_vars.size > 0 then
-      " = " ++ (", ".intercalate <| self.output_vars.map (self[·.value].name.toString) |>.toList)
-    else
-      ""
-  let guards :=
-    "guards" ++ (self.guards.map (fun b => s!"\n  {b.toString self.input_vars self.bound_vars}") |>.toList |> String.join)
-  let asserts :=
-    "asserts" ++ (self.asserts.map (fun b => s!"\n  {b.value.toString self.input_vars self.bound_vars}") |>.toList |> String.join)
-  let vars :=
-    "where" ++ (self.bound_vars.map (fun v =>
-        s!"\n  {v.name.toString} = {v.value.toString self.input_vars self.bound_vars}")
-      |>.toList
-      |> String.join)
-  s!"node {self.name}({args}){outputs}\n{guards}\n{vars}\n{asserts}"
+section
+open Std.Format
 
-instance : ToString Node where
-  toString := Node.toString
+variable {n m : Nat} (input_vars : Vector Var n) (bound_vars : Vector (BoundVar n m) m)
+
+def formatBoundVars (bound_vars : Vector (BoundVar n m) m) : Format :=
+  Std.Format.indentD <| "where " ++ Std.Format.indentD (joinSep (bound_vars.toList.map formatBvar) Format.line)
+where
+  formatBvar bvar :=
+    (format bvar.name.value) ++ " = " ++ Expr.toString input_vars bound_vars bvar.value
+
+def formatOutputVars (nod : Node) (output_vars : Array &(VarRef n m)) : Format :=
+  if output_vars.size = 0 then "" else
+  " = " ++ joinSep (output_vars.map (nod[·.value]!.name) |>.toList) ","
+
+def formatGuards (guards : Array (BoolExpr n m)) : Format :=
+  if guards.size = 0 then "" else
+  Std.Format.indentD <| "guard" ++ Std.Format.indentD (joinSep (guards.map (BoolExpr.toString input_vars bound_vars) |>.toList) Format.line)
+
+def formatAsserts (asserts : Array &(BoolExpr n m)) : Format :=
+  if asserts.size = 0 then "" else
+  Std.Format.indentD <| "assert" ++ Std.Format.indentD (joinSep (asserts.map (BoolExpr.toString input_vars bound_vars ∘ WithRef.value) |>.toList) Format.line)
+
+instance : ToFormat Node where
+  format n :=
+    (format ("node " ++ n.name.toString)) ++
+    (Indicise.formatInputVars n.input_vars) ++
+    (formatOutputVars n n.output_vars)  ++
+    (formatGuards n.input_vars n.bound_vars n.guards) ++
+    (formatBoundVars n.input_vars n.bound_vars) ++
+    (formatAsserts n.input_vars n.bound_vars n.asserts)
+end
 
 protected def default (n m : Nat) : Node where
   n := n
@@ -192,7 +207,7 @@ end NodeN
 
 abbrev BVar (_n m : Nat) := Fin m
 
-def addVar {n m : Nat} (ref : Syntax) (e : Expr n m) (t : NodeN n m) : CounterM <| BVar n (m+1) × NodeN n (m+1) := do
+def addVar {n m : Nat} (ref : Syntax) (e : Expr n m) (t : NodeN n m) : NormalizeM (BVar n (m+1) × NodeN n (m+1)) := do
   let ⟨t, ⟨tm_eq_m, tn_eq_n⟩⟩ := t
   let e' : Expr t.n (t.m+1) := tm_eq_m ▸ tn_eq_n ▸ e.upcast (Nat.le_succ m)
   have this : t.m ≤ t.m + 1 := Nat.le_succ _
@@ -265,7 +280,7 @@ private abbrev AuxBoolExpr := AuxHelper BoolExpr
 
 mutual
 partial def elabSimpleExprAux {n m : Nat} (nod : NodeN n m) (e : Indicise.Expr n m)
-                                 : CounterM <| AuxSimpleExpr n m := do
+                                 : NormalizeM (AuxSimpleExpr n m) := do
   let { m', m_leq_m', e, nod } ← elabExprAux nod e
   match e with
   | .simple e => return { m', m_leq_m', e, nod }
@@ -280,7 +295,7 @@ partial def elabSimpleExprAux {n m : Nat} (nod : NodeN n m) (e : Indicise.Expr n
       nod
     }
 
-partial def elabExprAux {n m : Nat} (nod : NodeN n m) : Indicise.Expr n m → CounterM (AuxExpr n m)
+partial def elabExprAux {n m : Nat} (nod : NodeN n m) : Indicise.Expr n m → NormalizeM (AuxExpr n m)
   | .interval lb up =>
     return ⟨m, by simp, .simple (.interval lb up), nod⟩
   | .var ⟨.input_var v, _⟩ =>
@@ -371,7 +386,7 @@ partial def elabExprAux {n m : Nat} (nod : NodeN n m) : Indicise.Expr n m → Co
     }
 
 partial def elabBoolexprAux {n m : Nat} (nod : NodeN n m)
-                              : Indicise.BoolExpr n m → CounterM (AuxBoolExpr n m)
+                              : Indicise.BoolExpr n m → NormalizeM (AuxBoolExpr n m)
   | .bin_op op ⟨l, _⟩ ⟨r, _⟩ => do
     let ⟨m₁, m_leq_m₁, l, nod⟩ ← elabBoolexprAux nod l
     let ⟨m₂, m₁_leq_m₂, r, nod⟩ ← elabBoolexprAux nod (r.upcast m_leq_m₁)
@@ -396,7 +411,9 @@ partial def elabBoolexprAux {n m : Nat} (nod : NodeN n m)
     }
 end
 
-def elabNode (nod : &Indicise.Node) : Node := CounterT.run (m := Id) do
+def elabNode (nod : &Indicise.Node) : CoreM Node :=
+  withTraceNode `Lustrean.Elab.Normalize (msg := fun e => return m!"{exceptEmoji e} elabExpr {nod} = {toMessageData e.toOption}") do
+  CounterT.run do
   let ⟨nod, _⟩ := nod
   let mut new_nod : { t : Node // nod.n = t.n ∧ nod.m ≤ t.m } := ⟨{
     name := nod.name
@@ -477,11 +494,11 @@ def elabNode (nod : &Indicise.Node) : Node := CounterT.run (m := Id) do
         m' = hnod.m := by symm; assumption
   return new_nod
 
+def elabLustre (nodes : Array (&Indicise.Node)) : CoreM (Array Node) :=
+  nodes.mapM elabNode
 
-def elabLustre (nodes : Array (&Indicise.Node)) : Array (Node) :=
-  nodes.map elabNode
 end Normalize
 end Lustrean.Elaboration
 
 initialize
-  registerTraceClass `Lustrean.Normalize
+  registerTraceClass `Lustrean.Elab.Normalize (inherited := true)

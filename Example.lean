@@ -1,7 +1,6 @@
 import Lustrean
 
--- set_option trace.Lustrean.Reify true
--- set_option trace.Lustrean.Inline true
+set_option trace.Lustrean.Elab true
 
 lustre
   node inc(x) = o where

@@ -96,7 +96,6 @@ structure Node where
   deriving Repr, Inhabited
 
 section
-
 open Std.Format
 
 def formatGuards (guards : Array (&BoolExpr)) : Format :=
@@ -122,7 +121,6 @@ instance : ToFormat Node where
     (formatBoundVars n.bound_vars) ++
     (formatAsserts n.asserts)
 end
-
 
 def NodeAddT := StateT Node
 
@@ -272,7 +270,7 @@ def elabBoolexpr (guards : Bool) (i : Nat) (b : &Reify.BoolExpr) : InlineM Unit 
 
 def elabNode (nod : &Reify.Node) : CoreM (&Node) :=
   nod.mapM fun nod =>
-  withTraceNode `Lustrean.Inline
+  withTraceNode `Lustrean.Elab.Inline
     (msg := fun e =>
       return m!"{exceptEmoji e} elabNode {nod} ⇒ \n{if let .ok n := e then toMessageData n else ""}") do
   InlineM.run nod.name nod.input_vars nod.output_vars do
@@ -297,4 +295,4 @@ end Inline
 end Lustrean.Elaboration
 
 initialize
-  registerTraceClass `Lustrean.Inline
+  registerTraceClass `Lustrean.Elab.Inline (inherited := true)

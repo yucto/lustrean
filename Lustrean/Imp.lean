@@ -142,4 +142,8 @@ structure PreNode (nb_var : Nat) : Type where
   out_nodes : List (OutNode nb_var)
   deriving Repr, Inhabited
 
+-- TODO could we provide a better instance for this ?
+instance {n}: ToString (PreNode n) where
+  toString p := reprStr p
+
 end Lustrean
