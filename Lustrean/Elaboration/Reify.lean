@@ -274,7 +274,7 @@ end
 mutual
 partial def elabExpr (s : TSyntax `lustre_expr ) : CoreM (&Expr) :=
   WithRef.withRefM s do
-  withTraceNode `Lustrean.Elab.Reify (msg := fun e => return m!"{exceptEmoji e} elabExpr {s} = {e.toOption.map toString}") do
+  withTraceNode `Lustrean.Elab.Reify (msg := fun e => return m!"{exceptEmoji e} elabExpr\n{s}\n⇒\n{e.toOption.map toString}") do
     match s with
     | `(lustre_expr| [$lbs, $ups]) =>
       let lb ← match lbs with
@@ -326,7 +326,7 @@ partial def elabExpr (s : TSyntax `lustre_expr ) : CoreM (&Expr) :=
 
 partial def elabBoolExpr (s : TSyntax `lustre_assertion) : CoreM (&BoolExpr) :=
   WithRef.withRefM s do
-  withTraceNode `Lustrean.Elab.Reify (msg := fun e => return m!"{exceptEmoji e} elabBoolExpr {s} = {e.toOption.map toString}") do
+  withTraceNode `Lustrean.Elab.Reify (msg := fun e => return m!"{exceptEmoji e} elabBoolExpr\n{s}\n⇒\n{e.toOption.map toString}") do
   match s with
     | `(lustre_assertion| $l:lustre_expr ≤ $r:lustre_expr) =>
       let left ← elabExpr l
@@ -356,7 +356,7 @@ end
 def elabNode (s : TSyntax `lustre_node) : CoreM (&Node) :=
   withTraceNode `Lustrean.Elab.Reify
     (msg := fun e =>
-      return m!"{exceptEmoji e} elabNode {s} ⇒ \n{if let .ok n := e then toMessageData n else ""}") do
+      return m!"{exceptEmoji e} elabNode\n{s}\n⇒\n{if let .ok n := e then toMessageData n else ""}") do
   match s with
   | `(lustre_node| node $name($inputs:ident,*) $[= $output_vars,*]? $[guard $guards*]?
                    where $decls* $[assert $asserts*]?) =>

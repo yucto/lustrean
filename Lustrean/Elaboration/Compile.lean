@@ -47,7 +47,7 @@ end
 def unrollLoop : Nat := 1
 
 def elabIntoCfg (nod : Normalize.Node) : CoreM (List (PreNode nod.totalVars) × Array &(Fin nod.totalVars)) :=
-  withTraceNode `Lustrean.Elab.Compile (msg := fun e => return m!"{exceptEmoji e} elabExpr {nod} = {e.toOption.map toString}") do
+  withTraceNode `Lustrean.Elab.Compile (msg := fun e => return m!"{exceptEmoji e} elabExpr\n{nod}\n⇒\n{toMessageData e.toOption}") do
   let mut result := #[
     { id := 0, out_nodes := [{ out_node := 2, out_inst := .assign step (IExpr.const 0)}] },
     { id := 1, out_nodes := [] }

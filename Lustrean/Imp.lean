@@ -123,7 +123,7 @@ variable {n : Nat}
 
 protected def toString : Instruction n → String
   | .skip => "skip"
-  | .assign k e => s!"{k} := {e}"
+  | .assign k e => s!"x_{k} := {e}"
   | .guard b => s!"guard {b}"
   | .assert b => s!"assert {b}"
 
@@ -142,8 +142,15 @@ structure PreNode (nb_var : Nat) : Type where
   out_nodes : List (OutNode nb_var)
   deriving Repr, Inhabited
 
--- TODO could we provide a better instance for this ?
-instance {n}: ToString (PreNode n) where
-  toString p := reprStr p
+section
+open Std.Format
+open Std.ToFormat
 
+instance {n} : Std.ToFormat (OutNode n) where
+  format node := paren ("l_" ++ format node.out_node) ++ " " ++ format node.out_inst
+
+instance {n}: Std.ToFormat (PreNode n) where
+  format p :=
+    "node f_" ++ format p.id ++ " where" ++ (indentD <| joinSep p.out_nodes line)
+end
 end Lustrean

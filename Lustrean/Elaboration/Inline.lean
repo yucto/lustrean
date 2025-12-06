@@ -272,7 +272,7 @@ def elabNode (nod : &Reify.Node) : CoreM (&Node) :=
   nod.mapM fun nod =>
   withTraceNode `Lustrean.Elab.Inline
     (msg := fun e =>
-      return m!"{exceptEmoji e} elabNode {nod} ⇒ \n{if let .ok n := e then toMessageData n else ""}") do
+      return m!"{exceptEmoji e} elabNode\n{nod}\n⇒\n{if let .ok n := e then toMessageData n else ""}") do
   InlineM.run nod.name nod.input_vars nod.output_vars do
         for { names, value } in nod.bound_vars do
           elabExpr env names value

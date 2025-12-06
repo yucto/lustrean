@@ -177,7 +177,7 @@ def elabNode (nod : &Inline.Node) : CoreM (&Node) :=
   nod.mapM fun nod =>
   withTraceNode `Lustrean.Elab.Indicise
     (msg := fun e =>
-      return m!"{exceptEmoji e} elabNode {nod} ⇒ \n{if let .ok n := e then toMessageData n else ""}") do
+      return m!"{exceptEmoji e} elabNode\n{nod}\n⇒\n{if let .ok n := e then toMessageData n else ""}") do
   let input_vars := Vector.mk nod.input_vars rfl
   let bound_vars := Vector.mk nod.bound_vars rfl
   let n := input_vars.size
