@@ -28,13 +28,11 @@ inductive VarRef (n m : Nat) where
   | old_bound_var (k : Fin m)
   deriving Repr, Inhabited
 
-  namespace VarRef
-def upcast {n m m' : Nat} (h : m ≤ m') : VarRef n m → VarRef n m'
+def VarRef.upcast {n m m' : Nat} (h : m ≤ m') : VarRef n m → VarRef n m'
   | .step => .step
   | .input_var k => .input_var k
   | .bound_var k => .bound_var <| k.castLE h
   | .old_bound_var k => .old_bound_var <| k.castLE h
-end VarRef
 
 def elabVr {n m : Nat} : Indicise.VarRef n m → VarRef n m
   | .input_var k => .input_var k
@@ -196,10 +194,8 @@ abbrev BVar (_n m : Nat) := Fin m
 
 def addVar {n m : Nat} (ref : Syntax) (e : Expr n m) (t : NodeN n m) : CounterM <| BVar n (m+1) × NodeN n (m+1) := do
   let ⟨t, ⟨tm_eq_m, tn_eq_n⟩⟩ := t
-  let e' : Expr t.n (t.m+1) := tn_eq_n ▸ e.upcast <| by
-    rewrite [tm_eq_m]
-    apply Nat.le_add_right
-  have : t.m ≤ t.m + 1 := by apply Nat.le_add_right
+  let e' : Expr t.n (t.m+1) := tm_eq_m ▸ tn_eq_n ▸ e.upcast (Nat.le_succ m)
+  have this : t.m ≤ t.m + 1 := Nat.le_succ _
   let nod : Node := {
     t with
     m := t.m + 1
