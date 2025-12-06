@@ -977,7 +977,6 @@ def widen (n : Nat) : Interval constants :=
         · apply extractMinGeCorrect constants h₂
       · assumption
 
-set_option linter.unreachableTactic false in
 theorem covering_left : ∀ (n : Nat),
   BoundedLattice.IsSubset x (x.widen y n) :=
 by

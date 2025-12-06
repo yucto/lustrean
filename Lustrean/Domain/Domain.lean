@@ -1,5 +1,5 @@
-import Aesop
 import Lustrean.Imp
+import Batteries.Tactic.SeqFocus
 
 namespace Lustrean
 class BoundedLattice (α : Type) where
