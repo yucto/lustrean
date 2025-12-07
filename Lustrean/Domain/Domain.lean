@@ -18,7 +18,7 @@ class BoundedLattice (α : Type) where
   meet_absorption : ∀ (x y : α), meet x (join x y) = x
   meet_top : ∀ (x : α), meet x top = x
   meet_bot : ∀ (x : α), meet x bot = bot
-  non_trivial : top ≠ bot
+  non_trivial : top ≠ bot := by decide
 export BoundedLattice (bot top join meet)
 
 notation " ⊤ " => top
@@ -218,7 +218,6 @@ class Domain (α : Type)
 extends BoundedLattice α, ToString α,
   WidenLawful α, NarrowLawful α
 where
-  new : α
   nb_var : Nat
   eq_dec : DecidableEq α
   -- keep only elements satisfying the boolean expression

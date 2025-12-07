@@ -5,7 +5,6 @@ class ValueDomain (α : Type)
 extends Add α, Neg α, Mul α, Sub α, Div α, BoundedLattice α,
   ToString α, WidenLawful α, NarrowLawful α
 where
-  new : α
   -- interval [a, b]
   rand : Option Int → Option Int → α
   nil : α

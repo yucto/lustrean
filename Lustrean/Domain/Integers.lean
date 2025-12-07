@@ -5,6 +5,7 @@ inductive Integers where
 | bot : Integers
 | top : Integers
 | int : Int → Integers
+deriving DecidableEq
 
 namespace Integers
 def join (x y : Integers) : Integers := match x, y with
@@ -86,7 +87,6 @@ instance : BoundedLattice Integers where
   meet_top := by
     intro x
     cases x <;> dsimp [meet]
-  non_trivial := by simp
 
 def mapInt (x y : Integers) (f : Int → Int →  Integers) : Integers :=
   match x, y with
@@ -190,7 +190,6 @@ def compare (op : CompareOp) (x y : Integers) : Integers × Integers :=
   | _, _, _ => (x, y)
 
 instance IntegersValueDomain : ValueDomain Integers where
-  new := .int 0
   nil := .bot
   rand a b := match a, b with
     | .some a, .some b => if a = b then .int a else .top

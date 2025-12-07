@@ -4,7 +4,7 @@ namespace Lustrean
 structure Undefined (α : Type) : Type where
   val : α
   may_be_nil : Bool
-  deriving Repr, Inhabited
+  deriving Repr, Inhabited, DecidableEq
 
 namespace Undefined
 variable {α : Type} [ι : ValueDomain α] (x y z : Undefined α)
@@ -162,7 +162,6 @@ def compare (op : CompareOp) (x y : Undefined α) :
   (.mk x' x.may_be_nil, .mk y' y.may_be_nil)
 
 instance : ValueDomain (Undefined α) where
-  new := .mk ι.new false
   rand a b := .mk (ι.rand a b) false
   nil := .mk ⊥ true
   eq_dec := inferInstance

@@ -8,6 +8,7 @@ namespace Lustrean
 inductive NonRelational (α : Type) [ValueDomain α] (n : Nat) where
 | non_rel (env : { env : Vector α n // ∀ i : Fin n, env.get i ≠ ⊥ }) : NonRelational α n
 | bot : NonRelational α n
+deriving DecidableEq
 
 namespace NonRelational
 variable {α : Type} {n : Nat}

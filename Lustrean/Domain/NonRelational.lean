@@ -78,7 +78,6 @@ def assign (i : Fin n) (e : IExpr n) : NonRelational α n :=
   | .and b₁ b₂ => guard b₁ ⊓ guard b₂
 
   instance : Domain (NonRelational α n) where
-    new := coalesce (Vector.replicate n ValueDomain.new)
     nb_var := n
     eq_dec := inferInstance
     assign := assign

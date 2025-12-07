@@ -6,6 +6,7 @@ namespace Lustrean
 inductive IntLow where
   | int (n : Int)
   | minf
+  deriving DecidableEq
 
 namespace IntLow
 instance : Repr IntLow where
@@ -206,6 +207,7 @@ end IntLow
 inductive IntHigh where
   | int (n : Int)
   | pinf
+  deriving DecidableEq
 
 namespace IntHigh
 instance : Repr IntHigh where
@@ -610,7 +612,7 @@ end HLe
 inductive Interval (constants : List Int) where
   | empty : Interval constants
   | interval (low : IntLow) (high : IntHigh) : low ≤∘ high → Interval constants
-  deriving Repr, Inhabited
+  deriving Repr, Inhabited, DecidableEq
 
 namespace Interval
 variable {constants : List Int}
@@ -1165,7 +1167,6 @@ def compare (op : CompareOp) (x y : Interval constants) :
   decreasing_by all_goals simp [measure]
 
 instance : ValueDomain (Interval constants) where
-  new := ⊤
   nil := ⊤                    -- we have no better approximation for nil in this domain than ⊤
   rand
     | .some x, .some y => if h : x ≤ y
