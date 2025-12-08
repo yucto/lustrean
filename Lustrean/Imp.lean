@@ -35,7 +35,8 @@ def const (x : Int) : IExpr n :=
 
 protected def toString : IExpr n → String
   | .nil => "nil"
-  | .var k => toString k
+  | .var ⟨0,_⟩ => s!"step"
+  | .var k => s!"x_{k}"
   | .rand left right =>
     let l := match left with
       | some n => toString n
@@ -45,7 +46,7 @@ protected def toString : IExpr n → String
       | none => "∞"
     s!"[{l}, {r}]"
   | .neg e => s!"(- {e.toString})"
-  | .binop left op right => s!"({op} {left.toString} {right.toString})"
+  | .binop left op right => s!"({left.toString} {op} {right.toString})"
 
 instance : ToString (IExpr n) where
   toString := IExpr.toString
@@ -103,9 +104,9 @@ def not : BExpr n → BExpr n
 protected def toString : BExpr n → String
   | .random => "?"
   | .const b => toString b
-  | .compare left op right => s!"({op} {left} {right})"
-  | .and left right => s!"(and {left.toString} {right.toString})"
-  | .or left right => s!"(or {left.toString} {right.toString})"
+  | .compare left op right => s!"({left} {op} {right})"
+  | .and left right => s!"({left.toString} && {right.toString})"
+  | .or left right => s!"({left.toString} || {right.toString})"
 
 instance : ToString (BExpr n) where
   toString := BExpr.toString
@@ -123,6 +124,7 @@ variable {n : Nat}
 
 protected def toString : Instruction n → String
   | .skip => "skip"
+  | .assign ⟨0,_⟩ e => s!"step := {e}"
   | .assign k e => s!"x_{k} := {e}"
   | .guard b => s!"guard {b}"
   | .assert b => s!"assert {b}"
@@ -147,7 +149,7 @@ open Std.Format
 open Std.ToFormat
 
 instance {n} : Std.ToFormat (OutNode n) where
-  format node := paren ("l_" ++ format node.out_node) ++ " " ++ format node.out_inst
+  format node :=  format node.out_inst ++ " ⇒ f_" ++ format node.out_node
 
 instance {n}: Std.ToFormat (PreNode n) where
   format p :=
