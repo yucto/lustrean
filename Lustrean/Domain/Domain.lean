@@ -1,6 +1,4 @@
 import Lustrean.Imp
-import Batteries.Tactic.SeqFocus
-import LeanSearchClient
 
 namespace Lustrean
 class BoundedLattice (α : Type) where
@@ -73,10 +71,9 @@ instance {α : Type} [ι : BoundedLattice α] : Std.Antisymm (@IsSubset α ι) w
 @[simp]
 theorem min_bot_is_bot : ∀ {x : α}, x ⊑ ⊥ → x = bot := by
   intros x H
-  apply antisymm <;> [
-    assumption ;
-    apply bot_min
-  ]
+  apply antisymm
+  · assumption
+  · apply bot_min
 
 theorem min_join_left : ∀ {x y : α}, x ⊑ x ⊔ y := by
   intros x y

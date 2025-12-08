@@ -991,50 +991,52 @@ by
     simp [hle']
   · rename_i l' h' hle' l h
     split <;> split <;> try simp
-    · assumption
+    · intro
+      contradiction
     · have hyph : h'.Le h := by
-        cases (IntHigh.Le_total h' h) <;> [ assumption ; contradiction ]
+        cases (IntHigh.Le_total h' h)
+        · assumption
+        · contradiction
       have hyph' : h'.min (extractMinGe constants h) = h' := by
         apply IntHigh.min_eq_left
-        apply IntHigh.Le_trans <;> [
-          assumption ;
-          apply extractMinGeCorrect ;
-          skip
-        ]
+        apply IntHigh.Le_trans
+        · assumption
+        · apply extractMinGeCorrect
       simp [hyph']
-      assumption
+      intro; contradiction
     · have hypl : l.Le l' := by
-        cases (IntLow.Le_total l l') <;> [ assumption ; contradiction ]
+        cases (IntLow.Le_total l l')
+        · assumption
+        · contradiction
       have hypl' : l'.max (extractMaxGt constants l) = l' := by
         apply IntLow.max_eq_left
-        apply IntLow.Le_trans <;> [
-          apply extractMaxGtCorrect ;
-          assumption ;
-          skip
-        ]
+        apply IntLow.Le_trans
+        · apply extractMaxGtCorrect
+        · assumption
       simp [hypl']
-      assumption
+      intro
+      contradiction
     · have hypl : l.Le l' := by
-        cases (IntLow.Le_total l l') <;> [ assumption ; contradiction ]
+        cases (IntLow.Le_total l l')
+        · assumption
+        · contradiction
       have hypl' : l'.max (extractMaxGt constants l) = l' := by
         apply IntLow.max_eq_left
-        apply IntLow.Le_trans <;> [
-          apply extractMaxGtCorrect ;
-          assumption ;
-          skip
-        ]
+        apply IntLow.Le_trans
+        · apply extractMaxGtCorrect
+        · assumption
       have hyph : h'.Le h := by
-        cases (IntHigh.Le_total h' h) <;> [ assumption ; contradiction ]
+        cases (IntHigh.Le_total h' h)
+        · assumption
+        · contradiction
       have hyph' : h'.min (extractMinGe constants h) = h' := by
         apply IntHigh.min_eq_left
-        apply IntHigh.Le_trans <;> [
-          assumption ;
-          apply extractMinGeCorrect ;
-          skip
-        ]
-
+        apply IntHigh.Le_trans
+        · assumption
+        · apply extractMinGeCorrect
       simp [hypl', hyph']
-      assumption
+      intro
+      contradiction
 
 theorem covering_right : ∀ (n : Nat),
   BoundedLattice.IsSubset y (x.widen y n) :=
@@ -1042,14 +1044,13 @@ by
   intros n
   cases x <;> simp [BoundedLattice.IsSubset, BoundedLattice.meet, meet, widen] <;>
   by_cases h : n ≤ 10 <;> cases y <;>
-  simp [h, join] <;> clear h <;>
+  simp [h, join, bot] <;> clear h <;>
   rename_i l h hle  <;> simp [max, min, hle] <;>
   rename_i l' h' hle'
   · rw [dif_pos] <;> (try simp) <;>
-    rw [IntLow.min_comm, IntHigh.max_comm, IntLow.max_min_absorb, IntHigh.min_max_absorb] <;> [
-      constructor <;> rfl ;
-      assumption
-    ]
+    rw [IntLow.min_comm, IntHigh.max_comm, IntLow.max_min_absorb, IntHigh.min_max_absorb]
+    · constructor <;> rfl
+    · assumption
   · have hypl : l = l.max (extractMaxGt constants l) := by
         rw [IntLow.max_eq_left]
         apply extractMaxGtCorrect

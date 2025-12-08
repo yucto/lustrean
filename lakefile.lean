@@ -1,7 +1,6 @@
 import Lake
 open Lake DSL
 
-require "leanprover-community" / "batteries" @ git "v4.25.0"
 require "leanprover-community" / "LeanSearchClient" @ git "3591c3f664ac3719c4c86e4483e21e228707bfa2"
 
 package "lustrean" where

@@ -1,7 +1,4 @@
-import Batteries.Data.Vector.Basic
 import Lustrean.Domain.NonRelational.Basic
-
-open Batteries
 
 namespace Lustrean.NonRelational
 variable {α : Type} {n : Nat}

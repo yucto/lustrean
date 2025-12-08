@@ -3,7 +3,6 @@ import Lustrean.Elaboration.Inline
 import Lustrean.Elaboration.Indicise
 import Misc
 
-open Batteries
 open Lean
 open Meta Elab
 open Std (HashMap)

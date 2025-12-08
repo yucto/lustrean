@@ -2,7 +2,6 @@ import Lustrean.Elaboration.Reify
 import Lustrean.Elaboration.Inline
 import Misc
 
-open Batteries
 open Lean
 open Meta Elab
 open Std (HashMap)

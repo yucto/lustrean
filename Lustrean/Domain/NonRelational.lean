@@ -1,5 +1,4 @@
 import Lustrean.Domain.Domain
-import Batteries.Data.Vector
 import Lustrean.Domain.NonRelational.ValueDomain
 import Lustrean.Domain.NonRelational.Basic
 import Lustrean.Domain.NonRelational.JoinLemmas
@@ -8,8 +7,6 @@ import Lustrean.Domain.NonRelational.Lattice
 import Lustrean.Domain.NonRelational.Narrow
 import Lustrean.Domain.NonRelational.Widen
 import Misc
-
-open Batteries
 
 namespace Lustrean
 

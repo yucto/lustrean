@@ -1,7 +1,6 @@
 import Lustrean.Elaboration.Reify
 import Misc
 
-open Batteries
 open Lean Meta Elab
 open Std (HashMap)
 -- Inline phase.  This is responsible for removing node calls from the AST.

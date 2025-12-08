@@ -1,8 +1,5 @@
 import Lustrean.Domain.NonRelational.ValueDomain
-import Batteries.Data.Vector
 import Misc
-
-open Batteries
 
 namespace Lustrean
 inductive NonRelational (α : Type) [ValueDomain α] (n : Nat) where
