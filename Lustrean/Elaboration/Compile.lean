@@ -195,22 +195,13 @@ def elabIntoCfg (nod : Normalize.Node) : CoreM (List (PreNode nod.totalVars) × 
     | .old_bound_var k => old_bound_var k)
   return (result.toList, output_vars)
 where
-  step : Fin nod.totalVars := .mk 0 <| by
-    unfold Normalize.Node.totalVars
-    omega
-  input_var (k : Fin nod.n) : Fin nod.totalVars := .mk (1+k) <| by
-    unfold Normalize.Node.totalVars
-    omega
-  bound_var (k : Fin nod.m) : Fin nod.totalVars := .mk (1+nod.n+k) <| by
-    unfold Normalize.Node.totalVars
-    omega
-  old_bound_var (k : Fin nod.m) : Fin nod.totalVars := .mk (1+nod.n+nod.m+k) <| by
-    unfold Normalize.Node.totalVars
-    omega
+  step : Fin nod.totalVars := .mk 0 (by grind [Normalize.Node.totalVars])
+  input_var (k : Fin nod.n) : Fin nod.totalVars := .mk (1+k) (by grind [Normalize.Node.totalVars])
+  bound_var (k : Fin nod.m) : Fin nod.totalVars := .mk (1+nod.n+k) (by grind [Normalize.Node.totalVars])
+  old_bound_var (k : Fin nod.m) : Fin nod.totalVars := .mk (1+nod.n+nod.m+k) (by grind [Normalize.Node.totalVars])
 
 def elabLustre (a : Array Normalize.Node) : CoreM (Array (Σ n, List (PreNode n) × Array &(Fin n))) :=
-  a.mapM fun nod => do
-    return ⟨nod.totalVars, ← elabIntoCfg nod⟩
+  a.mapM fun nod => do return ⟨nod.totalVars, ← elabIntoCfg nod⟩
 
 end Lustrean.Elaboration.Compile
 

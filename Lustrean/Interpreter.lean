@@ -134,11 +134,7 @@ def step.run (l : List (PreNode nb_var)) (i : Fin nb_nodes)
   let Hl : findNbArcs l + out_nodes.length ≤ nb_arcs := by
     dsimp at Harcs
     omega
-  let cfg := step.run l i out_nodes (by
-    intros p Hp
-    apply Hn
-    simp [Hp]
-  ) Hl cfg
+  let cfg := step.run l i out_nodes (by grind) Hl cfg
   step.aux nb_nodes nb_arcs l i out_node out_inst stx (Hn ⟨out_node, out_inst, stx⟩ List.mem_cons_self)
     out_nodes Harcs cfg
 
@@ -158,9 +154,8 @@ def aux (l : List (PreNode nb_var))
   (Hlength : List.length l ≤ nb_nodes)
   (Harcs : findNbArcs l ≤ nb_arcs)
   (Hsorted : ∀ i, (l.get i).id = (i + nb_nodes - List.length l) ∧
-    ∀ p ∈ (l.get i).out_nodes, p.out_node < nb_nodes
-  ) : NewAux nb_var nb_nodes nb_arcs l
-:= match l with
+    ∀ p ∈ (l.get i).out_nodes, p.out_node < nb_nodes)
+  : NewAux nb_var nb_nodes nb_arcs l := match l with
 | [] => init nb_nodes nb_arcs
 | pn :: l =>
   have Ha : findNbArcs l ≤ nb_arcs := by
@@ -170,9 +165,7 @@ def aux (l : List (PreNode nb_var))
         apply find_nb_arcs_incr
         apply Nat.zero_le
       _ ≤ _ := Harcs
-  have Hl : l.length ≤ nb_nodes := calc l.length
-    _ ≤ _ := by apply Nat.le_succ
-    _ ≤ _ := Hlength
+  have Hl : l.length ≤ nb_nodes := by grind
   let cfg := aux l Hl Ha (by
     intros i
     have : i + nb_nodes - l.length = i.succ + nb_nodes - (pn :: l).length := by
@@ -190,25 +183,19 @@ def aux (l : List (PreNode nb_var))
 end new
 
 def new (l : List (PreNode nb_var)) : Option (Cfg nb_var) :=
-  let lsorted := l.mergeSort (fun n₁ n₂ => if n₁.id ≤ n₂.id then true else false)
-  if Hsorted : ∀ i, (lsorted.get i).id = i ∧ (
-      ∀ p ∈ (lsorted.get i).out_nodes, p.out_node < lsorted.length
-    )
-  then
+  let lsorted := l.mergeSort (fun n₁ n₂ => n₁.id ≤ n₂.id)
+  if Hsorted : ∀ i, (lsorted.get i).id = i ∧ ∀ p ∈ (lsorted.get i).out_nodes, p.out_node < lsorted.length then
     let nb_arcs := new.findNbArcs lsorted
     let Hl : l.length = lsorted.length := by
       simp [lsorted]
-    let aux := new.aux l.length nb_arcs lsorted (by simp [Hl])
-      (by simp [nb_arcs]) <| by
+    let aux := new.aux l.length nb_arcs lsorted (Hl ▸ Nat.le_refl _) (Nat.le_refl _) <| by
       rw [Hl]
       intros i
       rw [Nat.add_sub_cancel]
       apply Hsorted
-    .some (.mk l.length nb_arcs aux.nodes aux.Hnodes aux.arcs <| by
-      simp [nb_arcs]
-      apply aux.Harcs
-    )
-  else .none
+    .some <| .mk l.length nb_arcs aux.nodes aux.Hnodes aux.arcs (by simp [nb_arcs]; apply aux.Harcs)
+  else
+    .none
 
 -- TODO: do better
 -- true : should widen, false : shouldn't
@@ -275,10 +262,9 @@ def iterArc (arc_idx : Fin cfg.nb_arcs) : StateM (State α cfg) Bool := do
 def iterNode (node_idx : Fin cfg.nb_nodes) : StateM (State α cfg) Unit := do
   let s ← get
   let node := cfg.nodes[cfg.Hnodes.symm ▸ node_idx]
-  let in_env := List.foldl (fun acc_env arc_idx =>
+  let in_env := node.in_nodes.foldl (init := ⊥) fun acc_env arc_idx =>
     let env := s.getArcEnv arc_idx
     acc_env ⊔ env
-  ) ⊥ node.in_nodes
   let s ← get
   if s.widening_points[s.Hwidening_points ▸ node_idx]
   then
@@ -305,16 +291,10 @@ def iter : StateM (State α cfg) Bool := do
   let mut iterate_again := false
   -- debug
   for h : i in [0:cfg.nb_arcs] do
-    let b ← iterArc <| .mk i <| by
-      apply Membership.get_elem_helper
-      · assumption
-      · rfl
+    let b ← iterArc (.mk i (Membership.get_elem_helper ‹_› rfl))
     iterate_again := iterate_again || b
   for h : i in [0:cfg.nb_nodes] do
-    iterNode <| .mk i <| by
-      apply Membership.get_elem_helper
-      · assumption
-      · rfl
+    iterNode (.mk i (Membership.get_elem_helper ‹_› rfl))
   incrHeartbeat
   return iterate_again
 
@@ -326,8 +306,7 @@ def init : State α cfg :=
     dsimp only [node_env]
     split <;> simp [pre_node_env]
   let arc_env := Array.replicate cfg.nb_arcs ⊥
-  let Harc_env : arc_env.size = cfg.nb_arcs := by
-    simp [arc_env]
+  let Harc_env : arc_env.size = cfg.nb_arcs := by simp [arc_env]
   let widening_points := cfg.getWideningPoints
   .mk node_env Hnode_env
     arc_env Harc_env
