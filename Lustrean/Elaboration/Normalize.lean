@@ -109,18 +109,18 @@ variable {n m : Nat} (input_vars : Vector Var n) (bound_vars : Vector (BoundVar 
 def SimpleExpr.toString : SimpleExpr n m → String
   | .interval lb up => s!"[{lb}, {up}]"
   | .var (.old_bound_var k) => s!"(pre {bound_vars[k].name})"
-  | .var (.input_var k) => input_vars[k].name.toString
-  | .var (.bound_var k) => bound_vars[k].name.toString
-  | .var .step => "@"
-  | .bin_op op l r => s!"({op} {l.toString} {r.toString})"
+  | .var (.input_var k) => s!"{input_vars[k].name.toString}"
+  | .var (.bound_var k) => s!"{bound_vars[k].name.toString}"
+  | .var .step => "step"
+  | .bin_op op l r => s!"({l.toString} {op} {r.toString})"
 
 def BoolExpr.toString : BoolExpr n m → String
   | .cmp_op op left right
-  | .bin_op op left right => s!"({op} {left.toString} {right.toString})"
+  | .bin_op op left right => s!"({left.toString} {op} {right.toString})"
 
 def Expr.toString : Expr n m → String
   | .simple e => e.toString
-  | .ite cond tb eb => s!"(if {cond.toString} {tb.toString} {eb.toString})"
+  | .ite cond tb eb => s!"(if {cond.toString} then {tb.toString} else {eb.toString})"
 end
 
 structure Node where
@@ -139,7 +139,7 @@ protected def getElem {n m} (nod : Node) (vr : VarRef n m) (p : n = nod.n ∧ m 
   match vr with
   | .input_var k => nod.input_vars[k]
   | .bound_var k | .old_bound_var k => nod.bound_vars[k].toVar
-  | .step => { name := ⟨.str .anonymous "@", default⟩ } -- TODO: default is a dummy value
+  | .step => { name := ⟨`step, default⟩ } -- TODO: default is a dummy value`
 
   instance (n m : Nat) : GetElem Node (VarRef n m) Var (fun nod _ => n = nod.n ∧ m = nod.m) where
     getElem := Node.getElem
