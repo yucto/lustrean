@@ -1,10 +1,39 @@
 namespace Lustrean
 
+/-!
+# Galois Connection
+
+See [wikipedia](https://en.wikipedia.org/wiki/Galois_connection).
+
+A Galois connection between two partially ordered sets A and C
+(called respectively _abstract domain_ and _concrete domain_)
+is a pair of functions α: C → A and γ: A → C such that
+
+                ∀ a c, α c ≤ a ↔ c ≤ γ a
+
+The function α gives an abstract representation to the concrete
+element c, while γ gives the concrete representation of the
+abstract element α. In practice, abstract domains act as a type
+of approximation of the elements in the concrete domain. The
+previous condition guarantees that α gives the best abstraction
+possible for any c, that is
+
+                  α c = ⊓ { a : A // c ≤ γ a }
+
+where ⊔ identifies the greatest lower bound (if it exists).
+
+Galois connections are relevant in abstract interpretation since
+they give a relation between the domain we want to reason about
+and the approximation we are able to do so with.
+-/
+
 variable {A C: Type}[instLEAbstract: LE A][Std.IsPartialOrder A]
                     [instLEConcrete: LE C][Std.IsPartialOrder C]
 local notation a "≤a" b => instLEAbstract.le a b
 local notation a "≤c" b => instLEConcrete.le a b
 
+/-- There exists concrete and abstract functions between
+partial orders A and C -/
 class GaloisConnection(A C: Type)[LE A][LE C] where
   concrete: A → C
   abstract: C → A
@@ -52,12 +81,22 @@ namespace GaloisConnection
   def IsBestAbstraction (f: C → C) (g: A → A) :=
    ∀ a, f (concrete a) = concrete (g a)
 
+  def IsBinAbstraction (f: C → C → C) (g: A → A → A) :=
+   ∀ a a', f (concrete a) (concrete a') ≤ concrete (g a a')
+
   def IsBestBinAbstraction (f: C → C → C) (g: A → A → A) :=
    ∀ a a', f (concrete a) (concrete a') = concrete (g a a')
 
 end GaloisConnection
 
 
+/-- A Galois embedding is a Galois connection for which
+concreticising and abstracting successively over an abstract
+element does not make us loose precision. As a useful corolary,
+if the concretization of two abstract elements are related in
+a concrete domain of a Galois embedding, they are related in
+the abstract domain. This can be useful in proofs, since it's
+easier to reason in the concrete domain.  -/
 class GaloisEmbedding(A C: Type)[LE A][LE C]
 extends GaloisConnection A C
 where

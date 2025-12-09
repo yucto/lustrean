@@ -3,6 +3,9 @@ import Lustrean.Domain.GaloisConnection
 
 namespace Lustrean.Domain
 
+/-- Abstraction over sets of integers. The only
+ information retained is the sign of the elements
+ of the set.  -/
 structure Sign where mk ::
  hasZero: Bool := false
  hasPos: Bool  := false
@@ -10,11 +13,14 @@ structure Sign where mk ::
  deriving DecidableEq, Repr, Inhabited
 
 namespace Sign
+/-- Seeing elements in `Sign` as a set, the opposite -/
   def opposite(s: Sign): Sign where
     hasZero := ! s.hasZero
     hasPos := ! s.hasPos
     hasNeg := ! s.hasNeg
 
+/-  We name all elements of the type.  -/
+section elements
   def None: Sign := {}
   def Zero: Sign := {hasZero := true}
   def Pos: Sign := {hasPos := true}
@@ -23,6 +29,7 @@ namespace Sign
   def ZeroPos: Sign := Neg.opposite
   def ZeroNeg: Sign := Pos.opposite
   def All: Sign := None.opposite
+end elements
 
   instance: ToString Sign where toString := fun
   |.mk false false false => "[⊥]"
@@ -92,12 +99,14 @@ instance: Widen Sign  where widen a b _ := a.join b
 instance: Narrow Sign where narrow a b _ := a.meet b
 
 section GaloisEmbedding
-  /-- We only consider computable sets -/
+  /-- The concrete domain of Sign is the set of (computable)
+      subsets of integers. -/
   abbrev Set α := α → Bool
 
-  instance: LE (Set Int) where
+  /-- We establish a partial order on sets through inclusion -/
+  protected instance: LE (Set Int) where
     le f g := ∀ x, f x -> g x
-  instance: Std.IsPartialOrder (Set Int) where
+  protected instance: Std.IsPartialOrder (Set Int) where
     le_refl := by intros f g a; assumption
     le_trans := by intros f g h fg gh a fa; apply (gh _ (fg a fa))
     le_antisymm := by
@@ -107,8 +116,10 @@ section GaloisEmbedding
       specialize gf x
       cases h: (f x) <;> grind
 
+  /-- Inclusion of Sign elements establishes a partial order -/
   instance: LE Sign where
     le x y := Sign.incl x y = true
+  /-- Inclusion of Sign elements establishes a partial order -/
   instance: Std.IsPartialOrder Sign where
     le_refl := by simp [LE.le, Sign.incl]
     le_trans := by
@@ -121,6 +132,17 @@ section GaloisEmbedding
   attribute [local simp] Int.compare_eq_gt Int.compare_eq_lt
 
   open Classical in
+  /--
+    There is a Galois embedding between the Sign domain and the
+    Integers subset domain.
+
+    To define the abstraction function, one needs to be able to
+    determine whether a positive (resp. negative) integer is in
+    the set or not. This is generally undecidable, so we need to
+    make use of the axiom of choice. This is acceptable, since
+    we don't use the abstraction nor concretization functions in
+    our computations, just to justify the laws of operators.
+  -/
   noncomputable instance instGESignIntSet: GaloisEmbedding (A := Sign) (C := Set Int) where
     concrete a z := (z = 0 -> a.hasZero) ∧ (z > 0 -> a.hasPos) ∧ (z < 0 -> a.hasNeg)
     abstract X := {
@@ -241,11 +263,16 @@ instance: BoundedLattice Sign where
   meet_absorption  := Sign.meet_absorption
 
 instance: WidenLawful Sign where
+  /- NOTE: These theorems are inlined since they depend on
+     definitions introduced by the `BoundedLattice` typeclass -/
   covering_left := by
     rintro x y -
     simp [BoundedLattice.IsSubset, Widen.widen]
     rewrite [Sign.meet_absorption]
     rfl
+
+  /- NOTE: These theorems are inlined since they depend on
+     definitions introduced by the `BoundedLattice` typeclass -/
   covering_right := by
     rintro x y -
     simp [BoundedLattice.IsSubset, Widen.widen]
@@ -253,18 +280,21 @@ instance: WidenLawful Sign where
     rfl
 
 instance: NarrowLawful Sign where
+  /- NOTE: These theorems are inlined since they depend on
+     definitions introduced by the `BoundedLattice` typeclass -/
   bounding_high := by
     rintro ⟨z,p,n⟩ ⟨z',p',n'⟩ -
     simp [BoundedLattice.IsSubset, Narrow.narrow]
     grind [Sign.meet]
+
+  /- NOTE: These theorems are inlined since they depend on
+     definitions introduced by the `BoundedLattice` typeclass -/
   bounding_low := by
     simp [BoundedLattice.IsSubset, Narrow.narrow]
     grind [Sign.meet]
 
 instance: ValueDomain Sign where
   eq_dec := inferInstance
-
-  /- NOTE: I removed `new` here. Maybe `nil` can be removed too -/
 
   /- TODO: What laws must `nil` obey? -/
   nil := .All

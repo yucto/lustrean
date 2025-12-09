@@ -52,6 +52,7 @@ instance : ToString (IExpr n) where
   toString := IExpr.toString
 end IExpr
 
+-- TODO: Consider normalizing to `Ord`
 inductive CompareOp : Type where
 | eq : CompareOp
 | neq : CompareOp
