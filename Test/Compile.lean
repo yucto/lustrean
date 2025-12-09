@@ -484,10 +484,10 @@ error: assert failed, got #[[1; +∞], [-∞; 1], [-∞; -1], [-∞; 1], [-∞; 
 trace: [Lustrean.Elab.Compile] ✅️ elabExpr
     node l() = o
       where ⏎
-        up = (if (step = [0, 0]) then [1, 1] else (pre 0))
-        o = (if (step = [0, 0]) then [0, 0] else (pre 1))
-        0 = (if (((up = [1, 1]) ∧ (o < [10, 10])) ∨ ((up = [0, 0]) ∧ (o = [0, 0]))) then [1, 1] else [0, 0])
-        1 = (if (up = [1, 1]) then (o + [1, 1]) else (o - [1, 1]))
+        up = (if (step = [0, 0]) then [1, 1] else (pre x_0))
+        o = (if (step = [0, 0]) then [0, 0] else (pre x_1))
+        x_0 = (if (((up = [1, 1]) ∧ (o < [10, 10])) ∨ ((up = [0, 0]) ∧ (o = [0, 0]))) then [1, 1] else [0, 0])
+        x_1 = (if (up = [1, 1]) then (o + [1, 1]) else (o - [1, 1]))
       assert
         ([0, 0] ≤ o)
     ⇒
@@ -680,9 +680,9 @@ trace: [Lustrean.Elab.Compile] ✅️ elabExpr
       guard
         ([0, 0] ≤ x)
       where ⏎
-        y = (if (step = [0, 0]) then x else (pre 0))
+        y = (if (step = [0, 0]) then x else (pre x_0))
         o = (if ([3, 3] < y) then [3, 3] else y)
-        0 = (y + [1, 1])
+        x_0 = (y + [1, 1])
       assert
         ([0, 0] ≤ o)
         (o ≤ [3, 3])
@@ -846,8 +846,8 @@ trace: [Lustrean.Elab.Compile] ✅️ elabExpr
 [Lustrean.Elab.Compile] ✅️ elabExpr
     node u(x) = o
       where ⏎
-        o = (if (step = [0, 0]) then [0, 0] else (pre 0))
-        0 = x
+        o = (if (step = [0, 0]) then [0, 0] else (pre x_0))
+        x_0 = x
     ⇒
     some (([node f_0 where
         step := [0, 0] ⇒ f_2,
@@ -1126,8 +1126,8 @@ lustre
 trace: [Lustrean.Elab.Compile] ✅️ elabExpr
     node a() = o
       where ⏎
-        o = (if (step = [0, 0]) then [0, 0] else (pre 0))
-        0 = ([1, 1] + o)
+        o = (if (step = [0, 0]) then [0, 0] else (pre x_0))
+        x_0 = ([1, 1] + o)
       assert
         ([0, 0] ≤ o)
     ⇒
@@ -1198,11 +1198,11 @@ lustre
 trace: [Lustrean.Elab.Compile] ✅️ elabExpr
     node h() = o,i
       where ⏎
-        o = (if (step = [0, 0]) then [0, 0] else (pre 1))
-        i = (if (o = [5, 5]) then 2 else [0, 0])
-        0 = (i + [1, 1])
-        1 = (if (step = [0, 0]) then [1, 1] else (pre 0))
-        2 = (if (([0, 0] < [0, 0]) ∨ ([0, 0] < [0, 0])) then [1, 1] else [2, 2])
+        o = (if (step = [0, 0]) then [0, 0] else (pre x_1))
+        i = (if (o = [5, 5]) then x_2 else [0, 0])
+        x_0 = (i + [1, 1])
+        x_1 = (if (step = [0, 0]) then [1, 1] else (pre x_0))
+        x_2 = (if (([0, 0] < [0, 0]) ∨ ([0, 0] < [0, 0])) then [1, 1] else [2, 2])
     ⇒
     some (([node f_0 where
         step := [0, 0] ⇒ f_2,
