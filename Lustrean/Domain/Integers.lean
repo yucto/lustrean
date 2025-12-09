@@ -194,7 +194,6 @@ instance IntegersValueDomain : ValueDomain Integers where
   rand a b := match a, b with
     | .some a, .some b => if a = b then .int a else .top
     | _, _ => .top
-  eq_dec := inferInstance
   compare := compare
 
 /-theorem widen_termination : ∀ (x : Nat -> Integers),

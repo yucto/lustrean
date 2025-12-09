@@ -1176,7 +1176,6 @@ instance : ValueDomain (Interval constants) where
     | .none, .some y => .interval .minf (.int y) <| by constructor
     | .some x, .none => .interval (.int x) .pinf <| by constructor
     | .none, .none => .interval .minf .pinf <| by constructor
-  eq_dec := inferInstance
   compare := compare
 
   -- TODO: pourquoi ça n'infère pas ??

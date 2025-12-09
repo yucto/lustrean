@@ -8,7 +8,7 @@ where
   -- interval [a, b]
   rand : Option Int → Option Int → α
   nil : α
-  eq_dec : DecidableEq α
+  eq_dec : DecidableEq α := by infer_instance
   -- compare op x y = (x', y') where
   -- x' = { v ∈ x | ∃ v' ∈ y, v op v' }
   -- y' = { v' ∈ y | ∃ v ∈ x, v op v' }

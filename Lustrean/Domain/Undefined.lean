@@ -164,7 +164,6 @@ def compare (op : CompareOp) (x y : Undefined α) :
 instance : ValueDomain (Undefined α) where
   rand a b := .mk (ι.rand a b) false
   nil := .mk ⊥ true
-  eq_dec := inferInstance
   compare := compare
   covering_left := WidenLawful.covering_left
   covering_right := WidenLawful.covering_right
