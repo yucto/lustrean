@@ -6,7 +6,7 @@ set_option trace.Lustrean.Elab.Normalize true
 trace: [Lustrean.Elab.Normalize] ✅️ elabExpr
     node inc(x) = o
       where ⏎
-        o = (+ x [1, 1])
+        o = (x + [1, 1])
     ⇒
     some (node inc(x) = o
       where ⏎
@@ -15,9 +15,9 @@ trace: [Lustrean.Elab.Normalize] ✅️ elabExpr
     node plus2(x) = o
       where ⏎
         o.0.x.1.x = x
-        o.0.x.1.o = (+ o.0.x.1.x [1, 1])
+        o.0.x.1.o = (o.0.x.1.x + [1, 1])
         o.0.x = o.0.x.1.o
-        o.0.o = (+ o.0.x [1, 1])
+        o.0.o = (o.0.x + [1, 1])
         o = o.0.o
     ⇒
     some (node plus2(x) = o
@@ -42,9 +42,9 @@ error: assert failed, got #[[1; +∞], [-∞; +∞], [2; +∞], [-∞; +∞]]
 trace: [Lustrean.Elab.Normalize] ✅️ elabExpr
     node u(x) = o
       where ⏎
-        o = (+ (* x x) [3, 3])
+        o = ((x * x) + [3, 3])
       assert
-        (≤ o [1, 1])
+        (o ≤ [1, 1])
     ⇒
     some (node u(x) = o
       where ⏎
@@ -65,9 +65,9 @@ error: assert failed, got #[[1; +∞], [-∞; +∞], [-∞; -1], [-∞; +∞]]
 trace: [Lustrean.Elab.Normalize] ✅️ elabExpr
     node u(x) = o
       where ⏎
-        o = (* x x)
+        o = (x * x)
       assert
-        (≤ [0, 0] o)
+        ([0, 0] ≤ o)
     ⇒
     some (node u(x) = o
       where ⏎
@@ -77,10 +77,10 @@ trace: [Lustrean.Elab.Normalize] ✅️ elabExpr
 [Lustrean.Elab.Normalize] ✅️ elabExpr
     node v(x)
       where ⏎
-        x2 = (if (≤ [0, 0] x) (* x x) (* x x))
-        o = (+ x2 [3, 3])
+        x2 = (if ([0, 0] ≤ x) then (x * x) else (x * x))
+        o = (x2 + [3, 3])
       assert
-        (≤ [3, 3] o)
+        ([3, 3] ≤ o)
     ⇒
     some (node v(x)
       where ⏎
@@ -131,8 +131,8 @@ error: variable y could be nil
 trace: [Lustrean.Elab.Normalize] ✅️ elabExpr
     node f(c,z) = x,y
       where ⏎
-        x = (if (= c [0, 0]) z y)
-        y = (if (= c [0, 0]) x z)
+        x = (if (c = [0, 0]) then z else y)
+        y = (if (c = [0, 0]) then x else z)
     ⇒
     some (node f(c,z) = x,y
       where ⏎
@@ -153,10 +153,10 @@ error: assert failed, got #[[1; +∞], [-∞; 1], [-∞; -1], [-∞; 1], [-∞; 
 trace: [Lustrean.Elab.Normalize] ✅️ elabExpr
     node l() = o
       where ⏎
-        up = (fby [1, 1] (if (∨ (∧ (= up [1, 1]) (< o [10, 10])) (∧ (= up [0, 0]) (= o [0, 0]))) [1, 1] [0, 0]))
-        o = (fby [0, 0] (if (= up [1, 1]) (+ o [1, 1]) (- o [1, 1])))
+        up = ([1, 1] fby (if (((up = [1, 1]) ∧ (o < [10, 10])) ∨ ((up = [0, 0]) ∧ (o = [0, 0]))) then [1, 1] else [0, 0]))
+        o = ([0, 0] fby (if (up = [1, 1]) then (o + [1, 1]) else (o - [1, 1])))
       assert
-        (≤ [0, 0] o)
+        ([0, 0] ≤ o)
     ⇒
     some (node l() = o
       where ⏎
@@ -179,12 +179,12 @@ lustre
 trace: [Lustrean.Elab.Normalize] ✅️ elabExpr
     node f(x) = o
       guard
-        (≤ [0, 0] x)
+        ([0, 0] ≤ x)
       where ⏎
-        o = (if (< [3, 3] x) [3, 3] x)
+        o = (if ([3, 3] < x) then [3, 3] else x)
       assert
-        (≤ [0, 0] o)
-        (≤ o [3, 3])
+        ([0, 0] ≤ o)
+        (o ≤ [3, 3])
     ⇒
     some (node f(x) = o
       guard
@@ -197,13 +197,13 @@ trace: [Lustrean.Elab.Normalize] ✅️ elabExpr
 [Lustrean.Elab.Normalize] ✅️ elabExpr
     node g(x) = o
       guard
-        (≤ [0, 0] x)
+        ([0, 0] ≤ x)
       where ⏎
-        y = (fby x (+ y [1, 1]))
-        o = (if (< [3, 3] y) [3, 3] y)
+        y = (x fby (y + [1, 1]))
+        o = (if ([3, 3] < y) then [3, 3] else y)
       assert
-        (≤ [0, 0] o)
-        (≤ o [3, 3])
+        ([0, 0] ≤ o)
+        (o ≤ [3, 3])
     ⇒
     some (node g(x) = o
       guard
@@ -259,7 +259,7 @@ trace: [Lustrean.Elab.Normalize] ✅️ elabExpr
 [Lustrean.Elab.Normalize] ✅️ elabExpr
     node u(x) = o
       where ⏎
-        o = (fby [0, 0] x)
+        o = ([0, 0] fby x)
     ⇒
     some (node u(x) = o
       where ⏎
@@ -268,12 +268,12 @@ trace: [Lustrean.Elab.Normalize] ✅️ elabExpr
 [Lustrean.Elab.Normalize] ✅️ elabExpr
     node f(x) = o
       guard
-        (≤ [0, 0] x)
+        ([0, 0] ≤ x)
       where ⏎
-        o = (if (< [3, 3] x) [3, 3] x)
+        o = (if ([3, 3] < x) then [3, 3] else x)
       assert
-        (≤ [0, 0] x)
-        (≤ x [4, 4])
+        ([0, 0] ≤ x)
+        (x ≤ [4, 4])
     ⇒
     some (node f(x) = o
       guard
@@ -287,17 +287,17 @@ trace: [Lustrean.Elab.Normalize] ✅️ elabExpr
     node g() = o
       where ⏎
         o.0.x = [5, 5]
-        o.0.o = (if (< [3, 3] o.0.x) [3, 3] o.0.x)
+        o.0.o = (if ([3, 3] < o.0.x) then [3, 3] else o.0.x)
         o.1.x = [5, 5]
-        o.1.o = (if (< [3, 3] o.1.x) [3, 3] o.1.x)
-        o = (+ o.0.o o.1.o)
+        o.1.o = (if ([3, 3] < o.1.x) then [3, 3] else o.1.x)
+        o = (o.0.o + o.1.o)
       assert
-        (≤ [0, 0] o.0.x)
-        (≤ [0, 0] o.0.x)
-        (≤ o.0.x [4, 4])
-        (≤ [0, 0] o.1.x)
-        (≤ [0, 0] o.1.x)
-        (≤ o.1.x [4, 4])
+        ([0, 0] ≤ o.0.x)
+        ([0, 0] ≤ o.0.x)
+        (o.0.x ≤ [4, 4])
+        ([0, 0] ≤ o.1.x)
+        ([0, 0] ≤ o.1.x)
+        (o.1.x ≤ [4, 4])
     ⇒
     some (node g() = o
       where ⏎
@@ -339,9 +339,9 @@ lustre
 trace: [Lustrean.Elab.Normalize] ✅️ elabExpr
     node a() = o
       where ⏎
-        o = (fby [0, 0] (+ [1, 1] o))
+        o = ([0, 0] fby ([1, 1] + o))
       assert
-        (≤ [0, 0] o)
+        ([0, 0] ≤ o)
     ⇒
     some (node a() = o
       where ⏎
@@ -361,8 +361,8 @@ lustre
 trace: [Lustrean.Elab.Normalize] ✅️ elabExpr
     node h() = o,i
       where ⏎
-        o = (fby [0, 0] (fby [1, 1] (+ i [1, 1])))
-        i = (if (= o [5, 5]) (if (∨ (< [0, 0] [0, 0]) (< [0, 0] [0, 0])) [1, 1] [2, 2]) [0, 0])
+        o = ([0, 0] fby ([1, 1] fby (i + [1, 1])))
+        i = (if (o = [5, 5]) then (if (([0, 0] < [0, 0]) ∨ ([0, 0] < [0, 0])) then [1, 1] else [2, 2]) else [0, 0])
     ⇒
     some (node h() = o,i
       where ⏎

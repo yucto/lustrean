@@ -70,12 +70,12 @@ def Expr.toString : Expr n m → String
   | .var ⟨.input_var k, _⟩ => input_vars[k].name.toString
   | .var ⟨.bound_var k, _⟩ => bound_vars[k].name.toString
   | .mon_op op ⟨e, _⟩ => s!"({op} {e.toString})"
-  | .bin_op op ⟨l, _⟩ ⟨r, _⟩ => s!"({op} {l.toString} {r.toString})"
-  | .ite ⟨cond, _⟩ ⟨tb, _⟩ ⟨eb, _⟩ => s!"(if {cond.toString} {tb.toString} {eb.toString})"
+  | .bin_op op ⟨l, _⟩ ⟨r, _⟩ => s!"({l.toString} {op} {r.toString})"
+  | .ite ⟨cond, _⟩ ⟨tb, _⟩ ⟨eb, _⟩ => s!"(if {cond.toString} then {tb.toString} else {eb.toString})"
 
 def BoolExpr.toString : BoolExpr n m → String
   | .cmp_op op ⟨left, _⟩ ⟨right, _⟩
-  | .bin_op op ⟨left, _⟩ ⟨right, _⟩ => s!"({op} {left.toString} {right.toString})"
+  | .bin_op op ⟨left, _⟩ ⟨right, _⟩ => s!"({left.toString} {op} {right.toString})"
 end
 
 structure Node where
