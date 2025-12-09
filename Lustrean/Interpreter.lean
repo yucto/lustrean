@@ -291,10 +291,10 @@ def iter : StateM (State α cfg) Bool := do
   let mut iterate_again := false
   -- debug
   for h : i in [0:cfg.nb_arcs] do
-    let b ← iterArc (.mk i (Membership.get_elem_helper ‹_› rfl))
+    let b ← iterArc (.mk' i)
     iterate_again := iterate_again || b
   for h : i in [0:cfg.nb_nodes] do
-    iterNode (.mk i (Membership.get_elem_helper ‹_› rfl))
+    iterNode (.mk' i)
   incrHeartbeat
   return iterate_again
 
@@ -307,10 +307,8 @@ def init : State α cfg :=
     split <;> simp [pre_node_env]
   let arc_env := Array.replicate cfg.nb_arcs ⊥
   let Harc_env : arc_env.size = cfg.nb_arcs := by simp [arc_env]
-  let widening_points := cfg.getWideningPoints
-  .mk node_env Hnode_env
-    arc_env Harc_env
-    widening_points.val widening_points.property 0
+  let ⟨widening_points, Hwidening_points⟩ := cfg.getWideningPoints
+  {node_env, Hnode_env, arc_env, Harc_env, widening_points, Hwidening_points, nb_step := 0}
 
 instance : Inhabited (State α cfg) where
   default := init
