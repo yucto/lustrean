@@ -261,7 +261,7 @@ def elabExpr (bounds : Array (&Name)) (e : &Reify.Expr) : InlineM Unit := do
   return ()
 
 def elabBoolexpr (guards : Bool) (i : Nat) (b : &Reify.BoolExpr) : InlineM Unit := do
-  let b ← elabBoolexprAux env ((if guards then `guards else `asserts) ++ (.num .anonymous i)) b
+  let b ← elabBoolexprAux env ((if guards then `guards else `asserts) ++ (.str .anonymous s!"x_{i}")) b
   if guards then
     addGuard b
   else

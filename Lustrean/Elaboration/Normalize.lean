@@ -206,69 +206,42 @@ end NodeN
 
 abbrev BVar (_n m : Nat) := Fin m
 
-def addVar {n m : Nat} (ref : Syntax) (e : Expr n m) (t : NodeN n m) : NormalizeM (BVar n (m+1) × NodeN n (m+1)) := do
-  let ⟨t, ⟨tm_eq_m, tn_eq_n⟩⟩ := t
-  let e' : Expr t.n (t.m+1) := tm_eq_m ▸ tn_eq_n ▸ e.upcast (Nat.le_succ m)
-  have this : t.m ≤ t.m + 1 := Nat.le_succ _
-  let nod : Node := {
-    t with
-    m := t.m + 1
-    bound_vars := t.bound_vars.map (·.upcast this) |>.push {
-      name := { value := .num .anonymous (← CounterT.incr), ref }
-      value := e'
+/-- If `e` is a not a bound variable, introduce a new bvar `new_var`, and adds `new_var = e` to the node. -/
+def addVarIfNotBvar {n m : Nat} (ref : Syntax) (e : Expr n m) (t : NodeN n m) : NormalizeM ((m' : Nat) ×' m ≤ m' ×' BVar n m' × NodeN n m') := do
+  if let .simple (.var (.bound_var x)) := e then
+    return ⟨m,Nat.le_refl _,x,t⟩
+  else
+    let ⟨t, ⟨tm_eq_m, tn_eq_n⟩⟩ := t
+    let e' : Expr t.n (t.m+1) := tm_eq_m ▸ tn_eq_n ▸ e.upcast (Nat.le_succ m)
+    have this : t.m ≤ t.m + 1 := Nat.le_succ _
+    let nod : Node := {
+      t with
+      m := t.m + 1
+      bound_vars := t.bound_vars.map (·.upcast this) |>.push {
+        name := { value := .str .anonymous s!"x_{← CounterT.incr}", ref }
+        value := e'
+      }
+      output_vars := t.output_vars.map (·.map (·.upcast this))
+      guards := t.guards.map (·.upcast this)
+      asserts := t.asserts.map (·.map (·.upcast this))
     }
-    output_vars := t.output_vars.map (·.map (·.upcast this))
-    guards := t.guards.map (·.upcast this)
-    asserts := t.asserts.map (·.map (·.upcast this))
-  }
-  let new_var : BVar n (m+1) := Fin.last m
-  have : nod.m = m + 1 ∧ nod.n = n := by
-    constructor
-    · show t.m + 1 = m + 1
-      rw [tm_eq_m]
-    · rw [tn_eq_n]
-  return (new_var, ⟨nod, this⟩)
-
-  -- def NodeAddT (T : Type _ → Type _) (α : Type _) :=
-  --   (n m : Nat) → { t : Node // t.n = n ∧ t.m = m } → T (α × Node)
-
-  -- namespace NodeAddT
-  --   variable {m : Type _ → Type _} [Monad m]
-  --   variable {α β}
-
-  --   protected def pure (x : α) : NodeAddT m α := fun _ _ t =>
-  --     pure (x, t.val)
-
-  --   instance : Pure (NodeAddT m) where
-  --     pure := NodeAddT.pure
-
-  --   protected def bind (o : NodeAddT m α) (f : α → NodeAddT m β) : NodeAddT m β := fun n m t => do
-  --     let (x, t') ← o n m t
-  --     f x t'.n t'.m <| .mk t' (by simp)
-
-  --   instance : Bind (NodeAddT m) where
-  --     bind := NodeAddT.bind
-
-  --   instance : Monad (NodeAddT m) where
-
-  --   protected def monadLift (o : m α) : NodeAddT m α := fun _ _ t => do
-  --     let x ← o
-  --     return (x, t.val)
-
-  --   instance : MonadLift m (NodeAddT m) where
-  --     monadLift := NodeAddT.monadLift
-  -- end NodeAddT
+    let new_var : BVar n (m+1) := Fin.last m
+    have : nod.m = m + 1 ∧ nod.n = n := by
+      constructor
+      · show t.m + 1 = m + 1
+        rw [tm_eq_m]
+      · rw [tn_eq_n]
+    return ⟨m+1, Nat.le_succ _, new_var, nod, this⟩
 
 private structure AuxHelper (α : Nat → Nat → Type) (n m : Nat) where
   m' : Nat
-  m_leq_m' : m ≤ m'
+  m_leq_m' : m ≤ m' := by omega
   e : α n m'
   nod : NodeN n m'
 
 instance {α : Nat → Nat → Type} (n m : Nat) [Inhabited (α n m)] : Inhabited (AuxHelper α n m) where
   default := {
     m' := m
-    m_leq_m' := by simp
     e := default
     nod := default
   }
@@ -284,12 +257,9 @@ partial def elabSimpleExprAux {n m : Nat} (nod : NodeN n m) (e : Indicise.Expr n
   match e with
   | .simple e => return { m', m_leq_m', e, nod }
   | .ite cond e₁ e₂ =>
-    let (x, nod) ← addVar default (.ite cond e₁ e₂) nod -- TODO: default is a dummy value
+    let ⟨m', _, x, nod⟩ ← addVarIfNotBvar default (.ite cond e₁ e₂) nod -- TODO: default is a dummy value
     return {
-      m' := m' + 1
-      m_leq_m' := calc
-        _ ≤ _ := m_leq_m'
-        _ ≤ _ := by apply Nat.le_add_right
+      m' := m'
       e := .var <| .bound_var x
       nod
     }
@@ -302,84 +272,69 @@ partial def elabExprAux {n m : Nat} (nod : NodeN n m) : Indicise.Expr n m → No
   | .var ⟨.bound_var v, _⟩ =>
     return ⟨m, by simp, .simple <| .var <| .bound_var v, nod⟩
   | .mon_op .neg ⟨e, _⟩ => do
-    let ⟨m', m_leq_m', e, nod⟩ ← elabSimpleExprAux nod e
+    let ⟨m', _, e, nod⟩ ← elabSimpleExprAux nod e
     return {
       m'
-      m_leq_m'
       e := .simple <| .bin_op .sub (.interval 0 0) e
       nod := nod
     }
   | .mon_op .pre ⟨e, _⟩ => do
-    let ⟨m', m_leq_m', e, nod⟩ ← elabExprAux nod e
-    let (x, nod) ← addVar default e nod -- TODO: default is a dummy value
-    -- the condition `n = 0`
+    let ⟨m', _, e, nod⟩ ← elabExprAux nod e
+    let ⟨m', _, x, nod⟩ ← addVarIfNotBvar default e nod -- TODO: default is a dummy value
     return {
-      m' := m' + 1
-      m_leq_m' := by omega
+      m' := m'
       e := .simple <| .var (.old_bound_var x)
       nod := nod
     }
   | .bin_op .add ⟨e₁, _⟩ ⟨e₂, _⟩ => do
-    let ⟨m₁, m_leq_m₁, e₁, nod⟩ ← elabSimpleExprAux nod e₁
+    let ⟨_, m_leq_m₁, e₁, nod⟩ ← elabSimpleExprAux nod e₁
     let ⟨m₂, m₁_leq_m₂, e₂, nod⟩ ← elabSimpleExprAux nod (e₂.upcast m_leq_m₁)
     return {
       m' := m₂
-      m_leq_m' := calc
-        _ ≤ _ := m_leq_m₁
-        _ ≤ _ := m₁_leq_m₂
       e := .simple <| .bin_op .add (e₁.upcast m₁_leq_m₂) e₂
       nod := nod
     }
   | .bin_op .sub ⟨e₁, _⟩ ⟨e₂, _⟩ => do
-    let ⟨m₁, m_leq_m₁, e₁, nod⟩ ← elabSimpleExprAux nod e₁
+    let ⟨_, m_leq_m₁, e₁, nod⟩ ← elabSimpleExprAux nod e₁
     let ⟨m₂, m₁_leq_m₂, e₂, nod⟩ ← elabSimpleExprAux nod (e₂.upcast m_leq_m₁)
     return {
       m' := m₂
-      m_leq_m' := calc
-        _ ≤ _ := m_leq_m₁
-        _ ≤ _ := m₁_leq_m₂
       e := .simple <| .bin_op .sub (e₁.upcast m₁_leq_m₂) e₂
       nod := nod }
   | .bin_op .mul ⟨e₁, _⟩ ⟨e₂, _⟩ => do
-    let ⟨m₁, m_leq_m₁, e₁, nod⟩ ← elabSimpleExprAux nod e₁
+    let ⟨_, m_leq_m₁, e₁, nod⟩ ← elabSimpleExprAux nod e₁
     let ⟨m₂, m₁_leq_m₂, e₂, nod⟩ ← elabSimpleExprAux nod (e₂.upcast m_leq_m₁)
     return {
       m' := m₂
-      m_leq_m' := calc
-        _ ≤ _ := m_leq_m₁
-        _ ≤ _ := m₁_leq_m₂
       e := .simple <| .bin_op .mul (e₁.upcast m₁_leq_m₂) e₂
       nod := nod
     }
   | .bin_op .fby ⟨e₁, _⟩ ⟨e₂, _⟩ => do
-    let ⟨m₁, m_leq_m₁, e₁, nod⟩ ← elabSimpleExprAux nod e₁
-    let ⟨m₂, m₁_leq_m₂, e₂, nod⟩ ← elabExprAux nod (e₂.upcast m_leq_m₁)
-    let (x, nod) ← addVar default e₂ nod -- TODO: default is a dummy value
+    let ⟨_, m_leq_m₁, e₁, nod⟩ ← elabSimpleExprAux nod e₁
+    let ⟨m₂, _, e₂, nod⟩ ← elabExprAux nod (e₂.upcast m_leq_m₁)
+    let ⟨m', _, x, nod⟩ ← addVarIfNotBvar default e₂ nod -- TODO: default is a dummy value
     -- the condition `n = 0`
     let cond := .cmp_op .eq (.var .step) (.interval 0 0)
     return {
-      m' := m₂ + 1
-      m_leq_m' := by omega
+      m' := m'
       e := .ite cond (e₁.upcast <| by omega) (.var <| .old_bound_var x)
       nod := nod
     }
   | .bin_op .arr ⟨e₁, _⟩ ⟨e₂, _⟩ => do
-    let ⟨m₁, m_leq_m₁, e₁, nod⟩ ← elabSimpleExprAux nod e₁
-    let ⟨m₂, m₁_leq_m₂, e₂, nod⟩ ← elabSimpleExprAux nod (e₂.upcast m_leq_m₁)
+    let ⟨_, m_leq_m₁, e₁, nod⟩ ← elabSimpleExprAux nod e₁
+    let ⟨m₂, _, e₂, nod⟩ ← elabSimpleExprAux nod (e₂.upcast m_leq_m₁)
     let cond := .cmp_op .eq (.var .step) (.interval 0 0)
     return {
       m' := m₂
-      m_leq_m' := by omega
       e := .ite cond (e₁.upcast <| by omega) (e₂.upcast <| by omega)
       nod := nod
     }
   | .ite ⟨cond, _⟩ ⟨e₁, _⟩ ⟨e₂, _⟩ => do
-    let ⟨m₁, m_leq_m₁, cond, nod⟩ ← elabBoolexprAux nod cond
-    let ⟨m₂, m₁_leq_m₂, e₁, nod⟩ ← elabSimpleExprAux nod (e₁.upcast <| by omega)
-    let ⟨m₃, m₂_leq_m₃, e₂, nod⟩ ← elabSimpleExprAux nod (e₂.upcast <| by omega)
+    let ⟨_, _, cond, nod⟩ ← elabBoolexprAux nod cond
+    let ⟨_, _, e₁, nod⟩ ← elabSimpleExprAux nod (e₁.upcast <| by omega)
+    let ⟨m₃, _, e₂, nod⟩ ← elabSimpleExprAux nod (e₂.upcast <| by omega)
     return {
       m' := m₃
-      m_leq_m' := by omega
       e := .ite (cond.upcast <| by omega) (e₁.upcast <| by omega) e₂
       nod := nod
     }
@@ -387,24 +342,18 @@ partial def elabExprAux {n m : Nat} (nod : NodeN n m) : Indicise.Expr n m → No
 partial def elabBoolexprAux {n m : Nat} (nod : NodeN n m)
                               : Indicise.BoolExpr n m → NormalizeM (AuxBoolExpr n m)
   | .bin_op op ⟨l, _⟩ ⟨r, _⟩ => do
-    let ⟨m₁, m_leq_m₁, l, nod⟩ ← elabBoolexprAux nod l
+    let ⟨_, m_leq_m₁, l, nod⟩ ← elabBoolexprAux nod l
     let ⟨m₂, m₁_leq_m₂, r, nod⟩ ← elabBoolexprAux nod (r.upcast m_leq_m₁)
     return {
       m' := m₂
-      m_leq_m' := calc
-        m ≤ m₁ := m_leq_m₁
-        m₁ ≤ m₂ := m₁_leq_m₂
       e := .bin_op op (l.upcast m₁_leq_m₂) r
       nod := nod
     }
   | .cmp_op op ⟨l, _⟩ ⟨r, _⟩ => do
-    let ⟨m₁, m_leq_m₁, l, nod⟩ ← elabSimpleExprAux nod l
+    let ⟨_, m_leq_m₁, l, nod⟩ ← elabSimpleExprAux nod l
     let ⟨m₂, m₁_leq_m₂, r, nod⟩ ← elabSimpleExprAux nod (r.upcast m_leq_m₁)
     return {
       m' := m₂
-      m_leq_m' := calc
-        m ≤ m₁ := m_leq_m₁
-        m₁ ≤ m₂ := m₁_leq_m₂
       e := .cmp_op op (l.upcast m₁_leq_m₂) r
       nod
     }
