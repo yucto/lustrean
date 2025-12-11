@@ -15,10 +15,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      # uses lean standard action with all default input values
       - name: "run `lean-action` with only `lean4checker: true`"
         id: lean-action
         uses: leanprover/lean-action@v1
         with:
           auto-config: true
+          use-github-cache: false
 
