@@ -359,7 +359,8 @@ partial def elabBoolexprAux {n m : Nat} (nod : NodeN n m)
     }
 end
 
-def elabNode (nod : &Indicise.Node) : CoreM Node :=
+def elabNode (nod : &Indicise.Node) : CoreM &Node :=
+  WithRef.withRef nod.ref do
   withTraceNode `Lustrean.Elab.Normalize (msg := fun e => return m!"{exceptEmoji e} elabExpr\n{nod}\n⇒\n{toMessageData e.toOption}") do
   CounterT.run do
   let ⟨nod, _⟩ := nod
@@ -442,7 +443,7 @@ def elabNode (nod : &Indicise.Node) : CoreM Node :=
         m' = hnod.m := by symm; assumption
   return new_nod
 
-def elabLustre (nodes : Array (&Indicise.Node)) : CoreM (Array Node) :=
+def elabLustre (nodes : Array (&Indicise.Node)) : CoreM (Array &Node) :=
   nodes.mapM elabNode
 
 end Normalize

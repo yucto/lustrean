@@ -43,9 +43,6 @@ def _root_.Lustrean.Elaboration.Normalize.BoolExpr.to_cfg_expr : BoolExpr n m �
     | .and => .and l r
 end
 
-/-- How many iterations of the main loop to unroll. -/
-def unrollLoop : Nat := 1
-
 def step {nod : Normalize.Node}: Fin nod.totalVars := .mk 0 (by grind [Normalize.Node.totalVars])
 def input_var {nod : Normalize.Node} (k : Fin nod.n) : Fin nod.totalVars := .mk (1+k) (by grind [Normalize.Node.totalVars])
 def bound_var {nod : Normalize.Node} (k : Fin nod.m) : Fin nod.totalVars := .mk (1+nod.n+k) (by grind [Normalize.Node.totalVars])
@@ -78,11 +75,14 @@ def addExitNode {nod} : ResultM nod Unit := do
   let r ← get
   set {r with arr[1] := {id := 1, out_nodes := [{ out_node := r.arr.size-1, out_inst := .skip}]}}
 
+/-- How many iterations of the main loop to unroll. -/
+def unrollLoop : Nat := 1
+
 def elabResult (nod : Normalize.Node) : ResultM nod Unit := do
   for h : i in [0:nod.m] do
     let k := Fin.mk' i
     addNewPreNodeOutNext (.assign (bound_var k) .nil)
-  for _ in [0:unrollLoop] do
+  let unrolled_loop := do
     for h : i in [0:nod.m] do
       let k := Fin.mk' i
       addNewPreNodeOutNext (.assign (old_bound_var k) (.var <| bound_var k))
@@ -117,6 +117,8 @@ def elabResult (nod : Normalize.Node) : ResultM nod Unit := do
         { out_node := next_id + 1, out_inst := .assign step (.binop (.var step) .iadd (IExpr.const 1))} -- next iteration
     ]
     addNewPreNode out_nodes
+  for _ in [0:unrollLoop] do
+    unrolled_loop
   let here_id ← getNextId
   for h : i in [0:nod.m] do
     let k := Fin.mk' i
@@ -126,9 +128,10 @@ def elabResult (nod : Normalize.Node) : ResultM nod Unit := do
     addNewPreNodeOutNext (.assign (input_var k) (.rand none none))
   for g in nod.guards do
     addNewPreNodeOutNext (.guard g.to_cfg_expr)
-  for h : i in [0:nod.m] do
-    let k := Fin.mk' i
-    addNewPreNodeOutNext (.assign (bound_var k) .nil)
+  -- Why were we reinitialising bvars each loop cycle ??
+  -- for h : i in [0:nod.m] do
+    -- let k := Fin.mk' i
+    -- addNewPreNodeOutNext (.assign (bound_var k) .nil)
   let there_id ← getNextId
   for h : i in [0:nod.m] do
     let k := Fin.mk' i
@@ -157,18 +160,25 @@ def elabResult (nod : Normalize.Node) : ResultM nod Unit := do
   addNewPreNode []
   addExitNode
 
-def elabIntoCfg (nod : Normalize.Node) : CoreM (List (PreNode nod.totalVars) × Array &(Fin nod.totalVars)) :=
-  withTraceNode `Lustrean.Elab.Compile (msg := fun e => return m!"{exceptEmoji e} elabExpr\n{nod}\n⇒\n{toMessageData e.toOption}") do
+structure Node where
+  totalVars : Nat
+  cfg : Array (PreNode totalVars)
+  outputVars : Array &(Fin totalVars)
+deriving Repr, Inhabited
+
+def elabIntoCfg (nod : &Normalize.Node) : CoreM &Node :=
+  WithRef.withRef nod.ref do
+  -- withTraceNode `Lustrean.Elab.Compile (msg := fun e => return m!"{exceptEmoji e} elabExpr\n{nod}\n⇒\n{toMessageData e.toOption}") do
   let ((),result) ← elabResult nod |>.run Result.init
-  let output_vars := nod.output_vars.map (·.map fun
+  let output_vars := nod.value.output_vars.map (·.map fun
     | .step => step
     | .input_var k => input_var k
     | .bound_var k => bound_var k
     | .old_bound_var k => old_bound_var k)
-  return (result.arr.toList, output_vars)
+  return ⟨nod.value.totalVars, result.arr, output_vars⟩
 
-def elabLustre (a : Array Normalize.Node) : CoreM (Array (Σ n, List (PreNode n) × Array &(Fin n))) :=
-  a.mapM fun nod => do return ⟨nod.totalVars, ← elabIntoCfg nod⟩
+def elabLustre (a : Array &Normalize.Node) : CoreM (Array &Node) :=
+  a.mapM elabIntoCfg
 
 end Lustrean.Elaboration.Compile
 

@@ -39,7 +39,7 @@ protected abbrev mapM {α β m} [Monad m] (self : &α) (f : α → m β) : m &β
   let value' ← f value
   return ⟨value', ref⟩
 
-def withRefM {α m} [Monad m] (ref : Syntax) (value : m α) : m &α := do
+def withRef {α m} [Monad m] (ref : Syntax) (value : m α) : m &α := do
   return {
     value := ← value
     ref
@@ -273,7 +273,7 @@ end
 
 mutual
 partial def elabExpr (s : TSyntax `lustre_expr ) : CoreM (&Expr) :=
-  WithRef.withRefM s do
+  WithRef.withRef s do
   withTraceNode `Lustrean.Elab.Reify (msg := fun e => return m!"{exceptEmoji e} elabExpr\n{s}\n⇒\n{e.toOption.map toString}") do
     match s with
     | `(lustre_expr| [$lbs, $ups]) =>
@@ -325,7 +325,7 @@ partial def elabExpr (s : TSyntax `lustre_expr ) : CoreM (&Expr) :=
       throwErrorAt s m!"{repr s}"
 
 partial def elabBoolExpr (s : TSyntax `lustre_assertion) : CoreM (&BoolExpr) :=
-  WithRef.withRefM s do
+  WithRef.withRef s do
   withTraceNode `Lustrean.Elab.Reify (msg := fun e => return m!"{exceptEmoji e} elabBoolExpr\n{s}\n⇒\n{e.toOption.map toString}") do
   match s with
     | `(lustre_assertion| $l:lustre_expr ≤ $r:lustre_expr) =>
@@ -377,6 +377,7 @@ def elabNode (s : TSyntax `lustre_node) : CoreM (&Node) :=
 
 def elabLustre (nodes : TSyntaxArray `lustre_node) : CoreM (Array (&Node)) :=
   nodes.mapM elabNode
+
 end Reify
 end Lustrean.Elaboration
 
