@@ -166,9 +166,12 @@ structure Node where
   outputVars : Array &(Fin totalVars)
 deriving Repr, Inhabited
 
+instance : ToFormat Node where
+  format nod := format (⟨nod.cfg,nod.outputVars⟩ : _ × _)
+
 def elabIntoCfg (nod : &Normalize.Node) : CoreM &Node :=
   WithRef.withRef nod.ref do
-  -- withTraceNode `Lustrean.Elab.Compile (msg := fun e => return m!"{exceptEmoji e} elabExpr\n{nod}\n⇒\n{toMessageData e.toOption}") do
+  withTraceNode `Lustrean.Elab.Compile (msg := fun e => return m!"{exceptEmoji e} elabExpr\n{nod}\n⇒\n{toMessageData e.toOption}") do
   let ((),result) ← elabResult nod |>.run Result.init
   let output_vars := nod.value.output_vars.map (·.map fun
     | .step => step
