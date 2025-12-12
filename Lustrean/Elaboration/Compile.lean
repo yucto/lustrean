@@ -166,12 +166,23 @@ structure Node where
   outputVars : Array &(Fin totalVars)
 deriving Repr, Inhabited
 
+def Std.Format.joinSepArray.{u} {α : Type u} [ToFormat α] (xs : Array α) (sep : Format) : Format :=
+  if _ : xs.size = 0 then
+    .nil
+  else  if _ : xs.size = 1 then
+    format xs[0]
+  else
+    xs[1:].foldl (· ++ sep ++ format ·) (format xs[0])
+
 instance : ToFormat Node where
-  format nod := format (⟨nod.cfg,nod.outputVars⟩ : _ × _)
+  format nod := Std.Format.joinSepArray nod.cfg .line
+
+def formatOptionNode {ε} (o : Except ε Node) : Format :=
+  if let .ok nod := o then format nod else .nil
 
 def elabIntoCfg (nod : &Normalize.Node) : CoreM &Node :=
   WithRef.withRef nod.ref do
-  withTraceNode `Lustrean.Elab.Compile (msg := fun e => return m!"{exceptEmoji e} elabExpr\n{nod}\n⇒\n{toMessageData e.toOption}") do
+  withTraceNode `Lustrean.Elab.Compile (msg := fun e => return m!"{exceptEmoji e} elabExpr\n{nod}\n⇒\n{formatOptionNode e}") do
   let ((),result) ← elabResult nod |>.run Result.init
   let output_vars := nod.value.output_vars.map (·.map fun
     | .step => step
