@@ -166,14 +166,6 @@ structure Node where
   outputVars : Array &(Fin totalVars)
 deriving Repr, Inhabited
 
-def Std.Format.joinSepArray.{u} {α : Type u} [ToFormat α] (xs : Array α) (sep : Format) : Format :=
-  if _ : xs.size = 0 then
-    .nil
-  else  if _ : xs.size = 1 then
-    format xs[0]
-  else
-    xs[1:].foldl (· ++ sep ++ format ·) (format xs[0])
-
 instance : ToFormat Node where
   format nod := Std.Format.joinSepArray nod.cfg .line
 
