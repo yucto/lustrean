@@ -1,5 +1,8 @@
 import Lustrean.Domain.NonRelational
 import Lustrean.Domain.GaloisConnection
+import Mathlib.Order.Defs.PartialOrder
+import Mathlib.Data.Set.Defs
+import Mathlib.Algebra.Group.Pointwise.Set.Basic
 
 namespace Lustrean.Domain
 
@@ -114,6 +117,7 @@ def div(a b: Sign): Sign :=
     hasNeg  := a.hasNeg && b.hasPos || b.hasNeg && b.hasPos
   }
 
+@[grind]
 def incl(a b: Sign): Bool :=
   !(a.hasZero && !b.hasZero) &&
   !(a.hasPos  && !b.hasPos ) &&
@@ -130,154 +134,118 @@ instance: Widen Sign  where widen a b _ := a.join b
 instance: Narrow Sign where narrow a b _ := a.meet b
 
 section GaloisEmbedding
-  /-- The concrete domain of Sign is the set of (computable)
-      subsets of integers. -/
-  abbrev Set α := α → Bool
+namespace Sign
 
-  /-- We establish a partial order on sets through inclusion -/
-  protected instance: LE (Set Int) where
-    le f g := ∀ x, f x -> g x
-  protected instance: Std.IsPartialOrder (Set Int) where
-    le_refl := by intros f g a; assumption
-    le_trans := by intros f g h fg gh a fa; apply (gh _ (fg a fa))
-    le_antisymm := by
-      intros f g fg gf
-      ext x
-      specialize fg x
-      specialize gf x
-      cases h: (f x) <;> grind
+/-! Inclusion of Sign elements establishes a partial order -/
 
-  /-- Inclusion of Sign elements establishes a partial order -/
-  instance: LE Sign where
-    le x y := Sign.incl x y = true
-  /-- Inclusion of Sign elements establishes a partial order -/
-  instance: Std.IsPartialOrder Sign where
-    le_refl := by simp [LE.le, Sign.incl]
-    le_trans := by
-      intros; simp [LE.le, Sign.incl] at *; grind
-    le_antisymm := by
-      rintro ⟨z1,p1,n1⟩ ⟨x2,p2,n2⟩ ab bc
-      simp [LE.le, Sign.incl] at *
-      grind
+@[grind =]
+instance instLE: LE Sign where
+  le x y := Sign.incl x y = true
 
-  open Classical in
-  /--
-    There is a Galois embedding between the Sign domain and the
-    Integers subset domain.
+@[grind]
+instance instPartialOrderSign: PartialOrder Sign where
+  le_refl := by simp [LE.le, Sign.incl]
+  le_trans := by
+    intros; simp only [LE.le] at *; grind [Sign.incl]
+  le_antisymm := by
+    rintro ⟨z1,p1,n1⟩ ⟨x2,p2,n2⟩ ab bc
+    simp only [LE.le, incl, Bool.not_and, Bool.not_not, Bool.and_eq_true, Bool.or_eq_true,
+      Bool.not_eq_eq_eq_not, Bool.not_true, mk.injEq] at *
+    grind
 
-    To define the abstraction function, one needs to be able to
-    determine whether a positive (resp. negative) integer is in
-    the set or not. This is generally undecidable, so we need to
-    make use of the axiom of choice. This is acceptable, since
-    we don't use the abstraction nor concretization functions in
-    our computations, just to justify the laws of operators.
-  -/
-  noncomputable instance instGESignIntSet: GaloisEmbedding (A := Sign) (C := Set Int) where
+open Classical in
+/--
+  Abstraction of a set of integers by `Sign` (which only captures
+  its element's signature (<0,=0,>0) information)
 
-    concrete a z := match compare z 0 with
-      | .lt => a.hasNeg
-      | .eq => a.hasZero
-      | .gt => a.hasPos
+  Since we make no assumption of whether our sets are decidable or
+  not, we must use the axiom of choice to decide the conditions
+  `∃ z ∈ X, z > 0` and `∃ z ∈ X, z > 0`. This makes our abstract
+  function noncomputable, but it is acceptable since we only make
+  use of it to prove theorems about our operators.
+-/
+@[grind =]
+noncomputable def abstract(X: Set Int): Sign := {
+      hasZero := 0 ∈ X
+      hasPos := ∃ z ∈ X, z > 0
+      hasNeg := ∃ z ∈ X, z < 0
+}
 
-    abstract X := {
-      hasZero := X 0
-      hasPos := ∃ z, z > 0 ∧ X z
-      hasNeg := ∃ z, z < 0 ∧ X z
-    }
+/-- The integer set represented by a particular `Sign` element -/
+@[grind =]
+def concrete(a: Sign): Set Int := setOf λ z ↦
+  match compare z 0 with
+  | .lt => a.hasNeg
+  | .eq => a.hasZero
+  | .gt => a.hasPos
 
-    connection:= by
-      rintro ⟨z,p,n⟩ X
-      constructor
-      · intros abs_lt x x_X
-        simp at *
-        simp [LE.le, Sign.incl] at abs_lt
-        cases h: compare x 0 <;> simp at h <;> grind
-      · intros conc_lt
-        simp [LE.le, Sign.incl] at ⊢
-        apply and_assoc.mpr
-        have h0 := conc_lt 0; simp at h0
-        apply And.intro
-        · grind
-        apply And.intro
-        ·
-          if h: ∃ x, 0 < x ∧ X x = true then
-            obtain ⟨x, x_lt, Xx⟩ := h
-            specialize conc_lt x Xx; simp only [Int.compare_eq_gt.mpr x_lt] at conc_lt
-            grind [Ordering]
-          else
-            apply Or.inl
-            simpa using h
-        ·
-          if h: ∃ x, x < 0 ∧ X x = true then
-            obtain ⟨x, x_lt, Xx⟩ := h
-            specialize conc_lt x Xx; simp only [Int.compare_eq_lt.mpr x_lt] at conc_lt
-            grind
-          else
-            apply Or.inl
-            simpa using h
+/--
+  There is a Galois embedding between the Sign domain and the
+  Integers subset domain.
+-/
+def gc: GaloisConnection Sign.abstract Sign.concrete := by
+    rintro X ⟨p,z,n⟩
+    constructor <;> grind [LE.le]
 
-    embedding := by
-      rintro ⟨z,p,n⟩
-      simp
-      apply And.intro
-      · cases p_def: p
-        · simp; grind
-        · simp; exists 1
-      · cases n_def: n
-        · simp; grind
-        · simp; exists -1
+-- TODO: It'd be nice if there was a simproc that propagated
+-- equalities down `match` statements.
 
+noncomputable
+instance ge: GaloisEmbedding abstract concrete := gc.toGaloisInsertion <| by
+  rintro ⟨hasPos, z, hasNeg⟩
+  simp [Sign.abstract, Sign.concrete, LE.le, Sign.incl]
+  apply And.intro
+  · if h: hasPos then apply Or.inr; exists 1  else grind
+  · if h: hasNeg then apply Or.inr; exists -1 else grind
+
+end Sign
 end GaloisEmbedding
 
-section theorems
+section Theorems
 namespace Sign
 
 theorem join_commutative(a b: Sign): a.join b = b.join a := by
   have h: ∀ (a b: Sign), a.join b ≤ b.join a := by
     intros a b
-    apply instGESignIntSet.lt_of_concrete_lt
+    apply Sign.ge.u_le_u_iff.mp
     intros x
-    simp [GaloisConnection.concrete, Sign.join]
-    grind
+    grind [Sign.join]
   grind [Std.IsPartialOrder.le_antisymm]
 
 theorem join_associative (a b c: Sign): (a.join b).join c = a.join (b.join c) := by
   apply Std.IsPartialOrder.le_antisymm
-  all_goals(
-    apply instGESignIntSet.lt_of_concrete_lt
+  all_goals (
+    apply Sign.ge.u_le_u_iff.mp
     intros p
-    simp [GaloisConnection.concrete, Sign.join]
-    grind
+    grind [Sign.join]
   )
 
 theorem meet_commutative(a b: Sign): a.meet b = b.meet a := by
   have h: ∀ (a b: Sign), a.meet b ≤ b.meet a := by
     intros a b
-    apply instGESignIntSet.lt_of_concrete_lt
+    apply Sign.ge.u_le_u_iff.mp
     intros x
-    simp [GaloisConnection.concrete, Sign.meet]
-    grind
+    grind [Sign.meet]
   grind [Std.IsPartialOrder.le_antisymm]
 
 theorem meet_associative(a b c: Sign): (a.meet b).meet c = a.meet (b.meet c) := by
   apply Std.IsPartialOrder.le_antisymm
   all_goals(
-    apply instGESignIntSet.lt_of_concrete_lt
+    apply Sign.ge.u_le_u_iff.mp
     intros p
-    simp [GaloisConnection.concrete, Sign.meet]
-    grind
+    grind [Sign.meet]
   )
+
 theorem join_absorption: ∀ (x y: Sign), x.join (x.meet y) = x:= by
   rintro ⟨z,p,n⟩ ⟨z',p',n'⟩
-  simp [Sign.meet, Sign.join]
-  grind
+  grind [join, meet, mk.injEq, Bool.or_eq_left_iff_imp]
+
 theorem meet_absorption: ∀ (x y: Sign), x.meet (x.join y) = x:= by
   rintro ⟨z,p,n⟩ ⟨z',p',n'⟩
-  simp [Sign.meet, Sign.join]
-  grind
+  grind [meet, join, mk.injEq, Bool.and_eq_left_iff_imp]
 
 end Sign
-end theorems
+end Theorems
 
 instance: BoundedLattice Sign where
   bot := .None
@@ -376,7 +344,7 @@ private noncomputable def Set.add(X Y: Set Int): Set Int
 := λ z ↦ ∃ x y, z = x + y ∧ X x = true ∧ Y y = true
 
 theorem add_correct
-: instGESignIntSet.IsBinAbstraction Set.add Sign.add
+: Sign.gc.IsBinAbstraction (· + ·) Sign.add
 := by
   rintro ⟨z,p,n⟩ ⟨z',p',n'⟩
   if h: ⟨z,p,n⟩ = Sign.None then

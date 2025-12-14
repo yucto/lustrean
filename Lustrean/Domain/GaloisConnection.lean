@@ -1,4 +1,4 @@
-namespace Lustrean
+import Mathlib.Order.GaloisConnection.Defs
 
 /-!
 # Galois Connection
@@ -25,67 +25,35 @@ where ⊔ identifies the greatest lower bound (if it exists).
 Galois connections are relevant in abstract interpretation since
 they give a relation between the domain we want to reason about
 and the approximation we are able to do so with.
+
+We take the Galois connection definition from Mathlib, and make
+new definitions here which are specific to its use in abstract
+interpretation.
 -/
-
-variable {A C: Type}[instLEAbstract: LE A][Std.IsPartialOrder A]
-                    [instLEConcrete: LE C][Std.IsPartialOrder C]
-local notation a "≤a" b => instLEAbstract.le a b
-local notation a "≤c" b => instLEConcrete.le a b
-
-/-- There exists concrete and abstract functions between
-partial orders A and C -/
-class GaloisConnection(A C: Type)[LE A][LE C] where
-  concrete: A → C
-  abstract: C → A
-
-  connection: ∀ {a c}, abstract c ≤ a ↔ c ≤ concrete a
-export GaloisConnection (concrete abstract)
-
+variable {A C: Type}[PartialOrder A][PartialOrder C]{γ: A → C}{α: C → A}
 
 namespace GaloisConnection
-  variable [connection: GaloisConnection A C]
 
-  theorem abstract_concrete_reductive (a: A)
-  : abstract (concrete a : C) ≤ a
-  := by
-    apply GaloisConnection.connection.mpr
-    apply Std.IsPreorder.le_refl
+/-- A function `g` is an abstraction of `f` if it the concretization
+of its outputs contain the result of concretizing its inputs. In short,
+if it is sound. -/
+abbrev IsAbstraction (gc: GaloisConnection α γ)(f: C → C) (g: A → A) :=
+  ∀ a, f (γ a) ≤ γ (g a)
 
-  theorem concrete_abstract_extensive (c: C)
-  : c ≤ concrete (abstract c : A)
-  := by
-    apply GaloisConnection.connection.mp
-    apply Std.IsPreorder.le_refl
+/-- A function `g` is an abstraction of `f` if it is a natural
+transformation (when seeing the concretization and abstraction
+functions as functors between preorders). In short, if it is
+sound and complete. -/
+abbrev IsBestAbstraction (gc: GaloisConnection α γ)(f: C → C) (g: A → A) :=
+  ∀ a, f (γ a) = γ (g a)
 
-  theorem abstract_monotone (c c': C)
-  : c ≤ c' → (abstract c) ≤a (abstract c')
-  := by
-    intros c_c'
-    apply GaloisConnection.connection.mpr
-    calc c
-      _ ≤ c' := c_c'
-      _ ≤ (concrete (abstract c')) := by apply concrete_abstract_extensive
+@[inherit_doc IsAbstraction]
+abbrev IsBinAbstraction (gc: GaloisConnection α γ)(f: C → C → C) (g: A → A → A) :=
+  ∀ a a', f (γ a) (γ a') ≤ γ (g a a')
 
-  theorem concrete_monotone (a a': A)
-  : a ≤ a' → (concrete a) ≤c (concrete a')
-  := by
-    intros a_a'
-    apply GaloisConnection.connection.mp
-    calc _
-      _ ≤ a := by apply abstract_concrete_reductive
-      _ ≤ a' := a_a'
-
-  def IsAbstraction (f: C → C) (g: A → A) :=
-   ∀ a, f (concrete a) ≤ concrete (g a)
-
-  def IsBestAbstraction (f: C → C) (g: A → A) :=
-   ∀ a, f (concrete a) = concrete (g a)
-
-  def IsBinAbstraction (f: C → C → C) (g: A → A → A) :=
-   ∀ a a', f (concrete a) (concrete a') ≤ concrete (g a a')
-
-  def IsBestBinAbstraction (f: C → C → C) (g: A → A → A) :=
-   ∀ a a', f (concrete a) (concrete a') = concrete (g a a')
+@[inherit_doc IsBestAbstraction]
+abbrev IsBestBinAbstraction(gc: GaloisConnection α γ) (f: C → C → C) (g: A → A → A) :=
+  ∀ a a', f (γ a) (γ a') = γ (g a a')
 
 end GaloisConnection
 
@@ -97,19 +65,4 @@ if the concretization of two abstract elements are related in
 a concrete domain of a Galois embedding, they are related in
 the abstract domain. This can be useful in proofs, since it's
 easier to reason in the concrete domain.  -/
-class GaloisEmbedding(A C: Type)[LE A][LE C]
-extends GaloisConnection A C
-where
-  embedding: ∀ a, abstract (concrete a) = a
-
-attribute [simp] GaloisEmbedding.embedding
-
-namespace GaloisEmbedding
-  variable [emb: GaloisEmbedding A C]
-  theorem lt_of_concrete_lt (a a': A): (concrete a ≤c concrete a') → a ≤a a'
-  := by
-    intros concr_lt
-    rewrite [←emb.embedding a, ←emb.embedding a']
-    apply emb.toGaloisConnection.abstract_monotone
-    exact concr_lt
-end GaloisEmbedding
+abbrev GaloisEmbedding(γ: A → C)(α: C → A) := GaloisInsertion γ α
