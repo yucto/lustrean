@@ -421,6 +421,7 @@ instance: ValueDomain Sign where
 
   compare op x y := Sign.refine op x y
 
+  -- We interpret `None` as if it were ±∞
   rand := fun
   | .some l, .some r =>
     if l ≤ r then
@@ -433,14 +434,14 @@ instance: ValueDomain Sign where
   | .none, .none => .All
   | .none, .some r =>
     {
-      hasZero := true,
+      hasZero := 0 ≤ r,
       hasPos := 0 < r,
-      hasNeg := false
+      hasNeg := true
     }
   | .some l, .none =>
     {
-      hasZero := true,
-      hasPos := false,
+      hasZero := l ≤ 0,
+      hasPos := true,
       hasNeg := l < 0
     }
 
@@ -669,6 +670,12 @@ theorem refine_correct (ord: CompareOp)(x y: Sign)
           obtain ⟨h₁, e', h₂⟩ := h
           exists (-e')
           grind
+
+theorem rand_correctness (l? r?: Option Int)
+: { e | (∀ l ∈ l?, l ≤ e) ∧ (∀ r ∈ r?, e ≤ r)} ⊆ (ValueDomain.rand l? r? : Sign).concrete
+:= by
+  simp only [ValueDomain.rand, Option.mem_def]
+  grind
 
 end Sign
 end Correctness
