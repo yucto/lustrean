@@ -86,21 +86,22 @@ structure Sign where mk ::
 
 namespace Sign
 /-- Seeing elements in `Sign` as a set, the opposite -/
+@[grind]
 def opposite(s: Sign): Sign where
   hasZero := ! s.hasZero
-  hasPos := ! s.hasPos
-  hasNeg := ! s.hasNeg
+  hasPos  := ! s.hasPos
+  hasNeg  := ! s.hasNeg
 
 /-  We name all elements of the type.  -/
 section elements
-def None: Sign := {}
-def Zero: Sign := {hasZero := true}
-def Pos: Sign := {hasPos := true}
-def Neg: Sign := {hasNeg := true}
-def NonZero: Sign := Zero.opposite
-def ZeroPos: Sign := Neg.opposite
-def ZeroNeg: Sign := Pos.opposite
-def All: Sign := None.opposite
+@[grind] def None: Sign := {}
+@[grind] def Zero: Sign := {hasZero := true}
+@[grind] def Pos: Sign := {hasPos := true}
+@[grind] def Neg: Sign := {hasNeg := true}
+@[grind] def NonZero: Sign := Zero.opposite
+@[grind] def ZeroPos: Sign := Neg.opposite
+@[grind] def ZeroNeg: Sign := Pos.opposite
+@[grind] def All: Sign := None.opposite
 end elements
 
 instance: Std.ToFormat Sign where format := fun
