@@ -6,21 +6,81 @@ import Mathlib.Algebra.Group.Pointwise.Set.Basic
 
 namespace Lustrean.Domain
 
-attribute [local simp] Int.compare_eq_gt Int.compare_eq_lt
-private def Int.compare_eq_of_lt a b := @Int.compare_eq_lt a b  |>.mpr
-local grind_pattern Int.compare_eq_of_lt => compare a b
-private def Int.compare_eq_of_eq a b := @Int.compare_eq_eq a b  |>.mpr
-local grind_pattern Int.compare_eq_of_eq => compare a b
-private def Int.compare_eq_of_gt a b := @Int.compare_eq_gt a b  |>.mpr
-local grind_pattern Int.compare_eq_of_gt => compare a b
+section Auxiliary -- TODO: Move to some other file? Find replacements?
+
+attribute [grind =] Std.compare_self
+
+@[grind =] theorem ex_lt (a b: Int )
+: a < b → compare a b = .lt := @Int.compare_eq_lt a b |>.mpr
+
+@[grind =] theorem ex_gt (a b: Int )
+: a > b → compare a b = .gt := @Int.compare_eq_gt a b |>.mpr
+
+open Pointwise in
+@[grind =] theorem ex_Set_lt: ∀ (X Y: Set Int), (X ≤ Y) = (X ⊆ Y) := by simp
+
+theorem aux {x y: Int}
+: x * y < 0 → x > 0 ∧ y < 0 ∨ x < 0 ∧ y > 0
+:= by
+  intros h
+  if c: x > 0 then
+    have := Int.neg_of_mul_neg_right h c
+    grind
+  else
+    have c: x < 0 := by grind
+    have := Int.pos_of_mul_neg_right h c
+    grind
+
+theorem aux2 {x y: Int}
+: x * y > 0 → x > 0 ∧ y > 0 ∨ x < 0 ∧ y < 0
+:= by
+  intros h
+  if c: x > 0 then
+    have := Int.pos_of_mul_pos_right h c
+    grind
+  else
+    have c: x < 0 := by grind
+    have := Int.neg_of_mul_pos_right h c
+    grind
+
+theorem Int.mul_neg_of_div_neg {x y: Int}
+: x / y < 0 → x * y < 0
+:= by
+  intros h
+  rw [←Int.sign_neg_iff, Int.sign_ediv] at h
+  split at h
+  · simp only [lt_self_iff_false] at h
+  rw [←Int.sign_neg_iff, Int.sign_mul]
+  assumption
+
+theorem aux3{x y: Int}(h: x / y < 0)
+: x > 0 ∧ y < 0 ∨ x < 0 ∧ y > 0
+:= (aux ∘ Int.mul_neg_of_div_neg) h
+
+theorem Int.mul_pos_of_div_pos {x y: Int}
+: x / y > 0 → x * y > 0
+:= by
+  intros h
+  simp only [gt_iff_lt] at *
+  rw [←Int.sign_pos_iff, Int.sign_ediv] at h
+  split at h
+  · simp only [lt_self_iff_false] at h
+  rw [←Int.sign_pos_iff, Int.sign_mul]
+  assumption
+
+theorem aux4{x y: Int}(h: x / y > 0)
+: x > 0 ∧ y > 0 ∨ x < 0 ∧ y < 0
+:= (aux2 ∘ Int.mul_pos_of_div_pos) h
+
+end Auxiliary
 
 
 /-- Abstraction over sets of integers. The only
  information retained is the sign of the elements
  of the set.  -/
 structure Sign where mk ::
- hasZero: Bool := false
  hasPos: Bool  := false
+ hasZero: Bool := false
  hasNeg: Bool  := false
  deriving DecidableEq, Repr, Inhabited
 
@@ -44,14 +104,14 @@ def All: Sign := None.opposite
 end elements
 
 instance: Std.ToFormat Sign where format := fun
-|.mk false false false => "[⊥]"
-|.mk true  false false => "[=0]"
-|.mk false true  false => "[>0]"
-|.mk false false true  => "[<0]"
-|.mk true  true  false => "[≥0]"
-|.mk true  false true  => "[≤0]"
-|.mk false true  true  => "[≠0]"
-|.mk true  true  true  => "[⊤]"
+|.mk false false  false => "[⊥]"
+|.mk false false  true  => "[<0]"
+|.mk false true   false => "[=0]"
+|.mk true  false  false => "[>0]"
+|.mk false true   true  => "[≤0]"
+|.mk true  false  true  => "[≠0]"
+|.mk true  true   false => "[≥0]"
+|.mk true  true   true  => "[⊤]"
 instance: ToString Sign := ⟨toString ∘ Std.format⟩
 instance: Repr Sign := ⟨fun a _ => Std.format a⟩
 
@@ -89,16 +149,6 @@ def add(a b : Sign): Sign :=
       hasNeg  := a.hasNeg  || b.hasNeg
     }
 
-def mul(a b : Sign): Sign :=
-  if a = .Zero ∨ b = .Zero then
-    .Zero
-  else
-    {
-      hasZero := a.hasZero || b.hasZero,
-      hasPos  := a.hasPos && b.hasPos || a.hasNeg && b.hasNeg
-      hasNeg  := a.hasNeg && b.hasPos || b.hasNeg && b.hasPos
-    }
-
 def neg(a: Sign): Sign := {
   a with
   hasNeg := a.hasPos
@@ -108,13 +158,27 @@ def neg(a: Sign): Sign := {
 def sub(a b: Sign): Sign :=
   a.add b.neg
 
+def mul (a b: Sign): Sign :=
+    {
+      hasPos  := a.hasPos && b.hasPos ||
+                 a.hasNeg && b.hasNeg
+      hasZero := a.hasZero || b.hasZero,
+      hasNeg  := a.hasNeg && b.hasPos ||
+                 a.hasPos && b.hasNeg
+    }
+
 def div(a b: Sign): Sign :=
   if b = .Zero then
     .None
   else {
-    hasZero := a.hasZero,
-    hasPos  := a.hasPos && b.hasPos || a.hasNeg && b.hasNeg
-    hasNeg  := a.hasNeg && b.hasPos || b.hasNeg && b.hasPos
+    -- NOTE: Since we're working with integers, the sign of a division
+    -- may be zero even if both of its components are not. It suffices
+    -- that the denominator is big enough.
+    hasZero := a ≠ .None && b ≠ .None,
+    hasPos  := a.hasPos && b.hasPos ||
+               a.hasNeg && b.hasNeg
+    hasNeg  := a.hasNeg && b.hasPos ||
+               a.hasPos && b.hasNeg
   }
 
 @[grind]
@@ -122,6 +186,62 @@ def incl(a b: Sign): Bool :=
   !(a.hasZero && !b.hasZero) &&
   !(a.hasPos  && !b.hasPos ) &&
   !(a.hasNeg  && !b.hasNeg )
+
+/-- Given x and y, return x' such that ∀ e ∈ x', e ∈ x ∧ ∃ e' ∈ y, e ≤ e' -/
+def refineLE: Sign → Sign → Sign
+| ⟨p,z,n⟩, ⟨true, _, _⟩          => ⟨p,z,n⟩
+| ⟨_,z,n⟩, ⟨false, true, _⟩      => ⟨false, z, n⟩
+| ⟨_,_,n⟩, ⟨false, false, true⟩  => ⟨false,false,n⟩
+| ⟨_,_,_⟩, ⟨false, false, false⟩ => ⟨false,false,false⟩
+
+/--
+  Given x and y, return x' such that ∀ e ∈ x', e ∈ x ∧ ∃ e' ∈ y, e ≥ e'
+
+  The operation is defined in terms of `refineLE` to reduce the burden
+  of proofs. Intuitively, this works well because `neg` is a perfect
+  abstraction.
+-/
+abbrev refineGE(x y: Sign): Sign := x.neg.refineLE y.neg |>.neg
+
+/-- Given x and y, return x' such that ∀ e ∈ x', e ∈ x ∧ ∃ e' ∈ y, e < e' -/
+def refineLT: Sign → Sign → Sign
+| ⟨p,z,n⟩, ⟨true, _, _⟩          => ⟨p,z,n⟩
+| ⟨_,_,n⟩, ⟨false, true, _⟩      => ⟨false, false, n⟩
+-- Again, one cannot be perfect for LT here, since we could have e ∈ x' st e < 0
+-- but this doesn't imply there is some e' ∈ y such that e < e'.  We need to
+-- make an overapproximation
+| ⟨_,_,_⟩, ⟨false, false, _⟩  => ⟨false,false,false⟩
+
+/--
+  Given x and y, return x' such that ∀ e ∈ x', e ∈ x ∧ ∃ e' ∈ y, e ≥ e'
+
+  The operation is defined in terms of `refineLT` to reduce the burden
+  of proofs. Intuitively, this works well because `neg` is a perfect
+  abstraction.
+-/
+abbrev refineGT(x y: Sign): Sign := x.neg.refineLT y.neg |>.neg
+
+/-- Given x and y, return x' such that ∀ e ∈ x', e ∈ x ∧ ∃ e' ∈ y, e = e' -/
+def refineEQ(x y: Sign): Sign := x.meet y
+
+/-- Given x and y, return x' such that ∀ e ∈ x', e ∈ x ∧ ∃ e' ∈ y, e ≠ e' -/
+def refineNE(x y: Sign): Sign := {
+  hasPos  := x.hasPos && y ≠ .None -- Pick of different sign or higher
+  hasZero := x.hasZero && (y.hasPos || y.hasNeg)
+  hasNeg  := x.hasNeg && y ≠ .None -- Pick of different sign or lower
+}
+
+/--
+  Given x and y and some binary comparison op, returns the restrictions
+  x' and y' of x and y of elements for which the comparison may hold.
+-/
+def refine (op: Lustrean.CompareOp) (x y: Sign): Sign × Sign := match op with
+  | .eq  => (x.refineEQ y, y.refineEQ x)
+  | .lt  => (x.refineLT y, y.refineLT x)
+  | .neq => (x.refineNE y, y.refineNE x)
+  | .le  => (x.refineLE y, y.refineLE x)
+  | .ge  => (x.refineGE y, y.refineGE x)
+  | .gt  => (x.refineGT y, y.refineGT x)
 
 end Sign
 
@@ -296,23 +416,9 @@ instance: NarrowLawful Sign where
     grind [Sign.meet]
 
 instance: ValueDomain Sign where
-  eq_dec := inferInstance
-
-  /- TODO: What laws must `nil` obey? -/
   nil := .All
 
-  /- TODO: What laws must `compare` obey?
-    (x', y') st x' = {e  ∈ x : ∃e' ∈ y, e op e'}
-                y' = {e' ∈ y : ∃e  ∈ x, e op e'}
-  -/
-  /- TODO: Improve -/
-  compare op x y := match op with
-  | .eq  => (x.meet y, x.meet y)
-  | .neq => (x.join (x.meet y).opposite, y.join (x.meet y).opposite)
-  | .le  => (x, y)
-  | .lt  => (x, y)
-  | .ge  => (x, y)
-  | .gt  => (x, y)
+  compare op x y := Sign.refine op x y
 
   rand := fun
   | .some l, .some r =>
@@ -338,10 +444,20 @@ instance: ValueDomain Sign where
     }
 
 section Correctness
+namespace Sign
+open Pointwise -- For operations on Sets
 
-open Classical in
-private noncomputable def Set.add(X Y: Set Int): Set Int
-:= λ z ↦ ∃ x y, z = x + y ∧ X x = true ∧ Y y = true
+/-!
+  Note that most operators are not complete. For instance, consider the
+  add function. We have `[<0] + [<0] = [<0]`.
+-/
+#eval open Sign.Notation in [<0] + [<0]
+/-!
+  However, in our concrete domain we can deduce something stronger. Consider
+  when `-1 ∈ γ ([<0] + [<0])`, however `-1 ∉ (γ[<0] + γ[<0])`. This is because
+  -1 cannot be obtained from the sum of two negative integers. Therefore,
+  `γ ([<0] + [<0]) ⊄ (γ[<0] + γ[<0])`
+-/
 
 theorem add_correct
 : Sign.gc.IsBinAbstraction (· + ·) Sign.add
@@ -350,27 +466,208 @@ theorem add_correct
   if h: ⟨z,p,n⟩ = Sign.None then
     obtain ⟨rfl, rfl, rfl⟩ := h
     intros e
-    simp [Sign.add, Sign.None, concrete, Set.add]
+    simp only [Sign.add, Sign.None, Sign.concrete, HAdd.hAdd, Set.add]
     grind
   else if h: ⟨z',p',n'⟩ = Sign.None then
     obtain ⟨rfl, rfl, rfl⟩ := h
     intros e
-    simp [Sign.add, Sign.None, concrete, Set.add]
+    simp only [HAdd.hAdd, Set.add, concrete, Set.mem_image2, Set.mem_setOf_eq,
+      add, None, mk.injEq]
     grind
   else
   intros e
-  simp only [Set.add, Sign.add, decide_eq_true_eq]
-  rintro ⟨e1,e2, e1_e2, x_e1, y_e2⟩
-  cases com_e: compare e 0 <;> simp only [Int.compare_eq_eq, Int.compare_eq_lt, Int.compare_eq_gt] at com_e
-  all_goals (
-    simp only [ concrete ] at x_e1 y_e2 ⊢
+  simp only [Set.add, Sign.add]
+  rintro ⟨e1,x_e1, e2, y_e2, e1_e2⟩
+  cases com_e: compare e 0 <;>
+  simp only [Int.compare_eq_eq, Int.compare_eq_lt, Int.compare_eq_gt] at com_e <;>
+  simp [ Sign.concrete, * ] at x_e1 y_e2 ⊢ <;> grind
+
+def neg_complete
+: Sign.gc.IsBestAbstraction (-·) Sign.neg
+:= by
+  intros x
+  simp only [Neg.neg, Sign.concrete, Set.preimage_setOf_eq, Sign.neg]
+  grind [Sign.neg, Sign.concrete]
+
+@[grind =] -- The grind attribute does not go through `abbrev`s?
+theorem concrete_neg (a: Sign): a.neg.concrete = -a.concrete := neg_complete a |>.symm
+
+-- TODO: Consider how one can define theorems about
+-- composing abstractions (probably should live in GaloisConnection)
+theorem sub_correct
+: Sign.gc.IsBinAbstraction (· - ·) Sign.sub
+:= by
+  intros x y
+  simp only [Sign.sub, LE.le]
+  calc
+    _ ⊆ (x.concrete + y.neg.concrete) := by
+      -- TODO: Make grind reason over these
+      simp [←neg_complete]
+      simp only [HSub.hSub, Sub.sub, Set.image2, Int.sub]
+      simp only [HAdd.hAdd, Add.add, Set.image2]
+      intros e; simp only [Int.add_def, Set.mem_setOf_eq, Set.mem_neg, forall_exists_index, and_imp]
+      intros e1 e1_x e2 e2_y e1_e2
+      refine ⟨e1, e1_x, (-e2), ?_⟩
+      simp [*]
+    _ ⊆ _ := by
+      apply add_correct
+
+theorem mul_correct
+: Sign.gc.IsBinAbstraction (· * ·) Sign.mul
+:= by
+  intros x y e h
+  simp only [Sign.concrete, Set.mem_mul, Set.mem_setOf_eq] at h
+  obtain ⟨e1, e1_x, e2, e2_y, e1_e2⟩ := h --
+  unfold Sign.mul
+  simp only [Sign.concrete, Bool.or_eq_true, Bool.and_eq_true,
+  Set.mem_setOf_eq] at *
+  split
+  · have disj: e1 > 0 ∧ e2 < 0 ∨ e2 > 0 ∧ e1 < 0 := by grind [
+      aux,
+      Int.neg_of_mul_neg_right,
+      Int.pos_of_mul_neg_right
+    ]
+    cases disj <;> grind
+  · have disj: e1 = 0 ∨ e2 = 0 := by grind [Int.eq_zero_or_eq_zero_of_mul_eq_zero]
+    cases disj <;> grind
+  · have disj: e1 > 0 ∧ e2 > 0 ∨ e1 < 0 ∧ e2 < 0 := by grind [aux2]
+    cases disj <;> grind
+
+-- Since in Lean we have x / 0 = 0, we need to state the correctness
+-- of Sign.div under the assumption that `¬ y.hasZero`, since in this
+-- case, our operation differs from that of Lean.
+theorem div_correct(x y: Sign)
+: ¬ y.hasZero → x.concrete / y.concrete ≤ (x.div y).concrete
+:= by
+  intros y_ne0 e h
+  simp only [Sign.concrete, Set.mem_div, Set.mem_setOf_eq] at h
+  obtain ⟨e1, e1_x, e2, e2_x, e1_e2⟩ := h
+  fun_cases (x.div y)
+  · grind [Sign.None, Sign.Zero]
+  · simp only [Sign.Zero, Sign.concrete, Bool.or_eq_true, Bool.and_eq_true,
+    Set.mem_setOf_eq] at *
+    split
+    · have disj: e1 > 0 ∧ e2 < 0 ∨ e2 > 0 ∧ e1 < 0 := by grind [aux3]
+      cases disj <;> grind
+    · grind [Sign.None]
+    · have disj: e1 > 0 ∧ e2 > 0 ∨ e1 < 0 ∧ e2 < 0 := by grind [aux4]
+      cases disj <;> grind
+
+theorem refineLT_correct (x y: Sign)
+: (x.refineLT y).concrete ⊆ { e |
+   e ∈ x.concrete ∧
+   (∃ e' ∈ y.concrete, e < e') }
+:= by
+  fun_cases (x.refineLT y)
+  · intros e h; refine ⟨h, ?_⟩
+    exists (if e <= 0 then 1 else e+1)
     grind
-  )
-  -- ADD IS NOT COMPLETE!
-  -- We have [<0] + [<0] = [<0]
-  #eval open Sign.Notation in
-    [<0] + [<0]
-  -- but if -1 ∈ γ ([<0] + [<0]) then it doesn't mean -1 ∈ (γ[<0] + γ[<0])).
-  -- In particular, -1 ∈ γ(a) + γ(b) → ∃ c ≥ 0 ∈ γ(a) ∪ γ(b), since -1 cannot
-  -- be obtained from the sum of two negative integers.
+  · intros e h; constructor
+    · grind
+    · exists 0; grind
+  · grind
+
+theorem refineLE_correct (x y: Sign)
+: (x.refineLE y).concrete ⊆ { e |
+   e ∈ x.concrete ∧
+   (∃ e' ∈ y.concrete, e ≤ e') }
+:= by
+  fun_cases (x.refineLE y)
+  · intros e h; refine ⟨h, ?_⟩
+    exists (if e <= 0 then 1 else e+1)
+    grind
+  · intros e h; constructor
+    · grind
+    · exists 0; grind
+  all_goals grind
+
+theorem refineEQ_correct (x y: Sign)
+: (x.refineEQ y).concrete ⊆ { e |
+   e ∈ x.concrete ∧
+   (∃ e' ∈ y.concrete, e = e') }
+:= by grind [Sign.refineEQ, Sign.meet]
+
+-- attribute [grind =] Set.mem_setOf_eq
+
+-- TODO: Golf
+theorem refineNE_correct (x y: Sign)
+: (x.refineNE y).concrete ⊆ { e |
+   e ∈ x.concrete ∧
+   (∃ e' ∈ y.concrete, e ≠ e') }
+:= by
+  obtain ⟨p,z,n⟩ := x
+  obtain ⟨p',z',n'⟩ := y
+  simp only [Sign.None, Sign.refineNE]
+  intros e
+  cases comp_e: compare e 0
+  · intros h
+    constructor
+    · grind
+    · exists (if p' then 1 else if z' then 0 else e - 1)
+      grind
+  · intros h; constructor
+    · grind
+    · exists (if p' then 1 else -1)
+      grind
+  · intros h
+    constructor
+    · grind
+    · exists (if p' then e+1 else if z' then 0 else -1)
+      simp only [Sign.concrete, Set.mem_setOf_eq] at *
+      grind
+
+theorem refine_correct (ord: CompareOp)(x y: Sign)
+: (x.refine ord y).1.concrete ⊆ { e |
+  e ∈ x.concrete ∧
+  (∃ e' ∈ y.concrete, ord.toProp e e') }
+:= by
+  fun_cases (x.refine ord y) <;> simp only [CompareOp.toProp]
+  · grind [refineEQ_correct]
+  · grind [refineLT_correct]
+  · grind [refineNE_correct]
+  · grind [refineLE_correct]
+  · unfold Sign.refineGE
+    calc (x.neg.refineLE y.neg).neg.concrete
+      _ = -(x.neg.refineLE y.neg).concrete := by
+        simp [←neg_complete]
+      _ ⊆ -{e | e ∈ x.neg.concrete ∧ ∃ e' ∈ y.neg.concrete, e ≤ e'} := by
+        simp only [Neg.neg]
+        apply Set.preimage_mono
+        apply refineLE_correct
+      _ = -{e | e ∈ -x.concrete ∧ ∃ e' ∈ -y.concrete, e ≤ e'} := by
+        simp only [←neg_complete]
+      _ = {e | e ∈ x.concrete ∧ ∃ e' ∈ y.concrete, e ≥ e'} := by
+        simp only [Set.mem_neg, Set.neg_setOf, Int.neg_neg]
+        ext e
+        constructor
+        · grind
+        · intros h
+          simp only [Set.mem_setOf_eq] at h
+          simp only [Set.mem_setOf_eq, h, true_and]
+          obtain ⟨h₁, e', h₂⟩ := h
+          exists (-e')
+          grind
+  · unfold Sign.refineGT
+    calc (x.neg.refineLT y.neg).neg.concrete
+      _ = -(x.neg.refineLT y.neg).concrete := by
+        simp [←neg_complete]
+      _ ⊆ -{e | e ∈ x.neg.concrete ∧ ∃ e' ∈ y.neg.concrete, e < e'} := by
+        simp only [Neg.neg]
+        apply Set.preimage_mono
+        apply refineLT_correct
+      _ = -{e | e ∈ -x.concrete ∧ ∃ e' ∈ -y.concrete, e < e'} := by
+        simp only [←neg_complete]
+      _ = {e | e ∈ x.concrete ∧ ∃ e' ∈ y.concrete, e > e'} := by
+        simp only [Set.mem_neg, Set.neg_setOf, Int.neg_neg]
+        ext e
+        constructor
+        · grind
+        · intros h
+          simp only [Set.mem_setOf_eq] at h
+          simp only [Set.mem_setOf_eq, h, true_and]
+          obtain ⟨h₁, e', h₂⟩ := h
+          exists (-e')
+          grind
+
+end Sign
 end Correctness

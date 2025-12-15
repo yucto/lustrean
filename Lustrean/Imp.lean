@@ -62,6 +62,15 @@ inductive CompareOp : Type where
 | gt : CompareOp
 deriving Repr, Inhabited
 
+def CompareOp.toProp{α: Type}[LT α][LE α](ord: CompareOp)(x y: α): Prop :=
+  match ord with
+  | eq  => x = y
+  | neq => x ≠ y
+  | le  => x ≤ y
+  | lt  => x < y
+  | ge  => x ≥ y
+  | gt  => x > y
+
 namespace CompareOp
 def not : CompareOp → CompareOp
 | eq => neq
