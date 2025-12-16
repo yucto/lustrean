@@ -257,6 +257,10 @@ def iterArc (arc_idx : Fin cfg.nb_arcs) : StateM (State α cfg) Bool := do
   --   ¬ (new_env ⊑ old_env)
   -- although, because we always have `old_env ⊑ new_env`, the two
   -- are equivalent
+  --
+  -- We use BEq to test for inequality, and at the time this was
+  -- an important detail. For more information, see
+  --     https://github.com/arthur-adjedj/lustrean/pull/5
   return old_env != new_env
 
 def iterNode (node_idx : Fin cfg.nb_nodes) : StateM (State α cfg) Unit := do
