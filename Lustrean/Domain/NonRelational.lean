@@ -11,7 +11,7 @@ import Misc
 namespace Lustrean
 
 namespace NonRelational
-variable {α : Type} {n : Nat}
+variable {α : Type} {n : Nat} [BEq α]
 variable [ι : ValueDomain α]
 variable (x : NonRelational α n)
 
@@ -40,7 +40,7 @@ def assign (i : Fin n) (e : IExpr n) : NonRelational α n :=
   update x i <| eval x e
 
   def backwardEval (e : IExpr n) (r : α) : NonRelational α n :=
-    have : DecidableEq α := ι.eq_dec -- help class inference
+    have : DecidablePred BoundedLattice.IsBot := ι.dec_bot -- help class inference
     match e with
     | .nil => if ι.IsBot (r ⊓ nil)
       then ⊥
@@ -76,7 +76,10 @@ def assign (i : Fin n) (e : IExpr n) : NonRelational α n :=
 
   instance : Domain (NonRelational α n) where
     nb_var := n
-    eq_dec := inferInstance
+    dec_bot x := match h: x with
+    | .non_rel _ => isFalse (by simp)
+    | .bot       => isTrue  (by simp)
+
     assign := assign
     guard := guard
     -- TODO: pourquoi ça n'infère pas ??

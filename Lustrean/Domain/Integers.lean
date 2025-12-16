@@ -5,7 +5,7 @@ inductive Integers where
 | bot : Integers
 | top : Integers
 | int : Int → Integers
-deriving DecidableEq
+deriving DecidableEq, BEq
 
 namespace Integers
 def join (x y : Integers) : Integers := match x, y with

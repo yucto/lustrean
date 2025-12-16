@@ -207,7 +207,7 @@ def getWideningPoints {nb_var : Nat} (cfg : Cfg nb_var) : { arr : Array Bool // 
   ⟨arr, Harr⟩
 end Cfg
 
-structure State (α : Type) [ι : Domain α] (cfg : Cfg ι.nb_var) where
+structure State (α : Type) [BEq α][ι : Domain α] (cfg : Cfg ι.nb_var) where
   node_env : Array α -- holds an environment at each node
   Hnode_env : node_env.size = cfg.nb_nodes
   arc_env : Array α -- holds [[arc.inst]](env) for each arc where env is the environment at arc.src
@@ -217,7 +217,7 @@ structure State (α : Type) [ι : Domain α] (cfg : Cfg ι.nb_var) where
   nb_step : Nat
 
 namespace State
-variable {α : Type} [ι : Domain α] {cfg : Cfg ι.nb_var}
+variable {α : Type} [BEq α][ι : Domain α] {cfg : Cfg ι.nb_var}
 
 def getNodeEnv (s : State α cfg) (i : Fin cfg.nb_nodes) : α :=
   s.node_env[s.Hnode_env ▸ i]
@@ -257,7 +257,7 @@ def iterArc (arc_idx : Fin cfg.nb_arcs) : StateM (State α cfg) Bool := do
   --   ¬ (new_env ⊑ old_env)
   -- although, because we always have `old_env ⊑ new_env`, the two
   -- are equivalent
-  return decide <| old_env ≠ new_env
+  return old_env != new_env
 
 def iterNode (node_idx : Fin cfg.nb_nodes) : StateM (State α cfg) Unit := do
   let s ← get

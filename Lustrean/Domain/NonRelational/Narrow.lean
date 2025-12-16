@@ -2,7 +2,7 @@ import Lustrean.Domain.NonRelational.Lattice
 import Lustrean.Domain.NonRelational.Widen
 
 namespace Lustrean.NonRelational
-variable {α : Type} {n : Nat}
+variable {α : Type} {n : Nat} [BEq α]
 variable [ι : ValueDomain α]
 
 protected def narrow (x y : NonRelational α n) (m : Nat) := map2Nil x y fun x y => Vector.ofFn fun i =>
@@ -30,7 +30,6 @@ instance : NarrowLawful (NonRelational α n) where
         conv =>
           rhs
           rw [← Hc]
-        simp
         apply NarrowLawful.bounding_low
       rw [non_rel_subset]
       intros i

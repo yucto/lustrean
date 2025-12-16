@@ -1,7 +1,7 @@
 import Lustrean.Domain.NonRelational.Basic
 
 namespace Lustrean.NonRelational
-variable {α : Type} {n : Nat}
+variable {α : Type} {n : Nat} [BEq α]
 variable [ι : ValueDomain α]
 variable (x y z : NonRelational α n)
 

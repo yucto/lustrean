@@ -2,21 +2,22 @@ import Lustrean.Domain.NonRelational.ValueDomain
 import Misc
 
 namespace Lustrean
-inductive NonRelational (α : Type) [ValueDomain α] (n : Nat) where
+inductive NonRelational (α : Type) [BEq α][ValueDomain α] (n : Nat) where
 | non_rel (env : { env : Vector α n // ∀ i : Fin n, env.get i ≠ ⊥ }) : NonRelational α n
 | bot : NonRelational α n
-deriving DecidableEq
 
 namespace NonRelational
-variable {α : Type} {n : Nat}
+
+variable {α : Type} {n : Nat} [BEq α]
 variable [ι : ValueDomain α]
 variable (x y : NonRelational α n)
 
-instance : DecidableEq (NonRelational α n) := by
-  intros x y
-  cases x <;> cases y <;> simp
-  have : DecidableEq α := ι.eq_dec
-  all_goals exact inferInstance
+instance : BEq (NonRelational α n) where
+  beq
+  | .non_rel env, .non_rel env' => env == env'
+  | .bot,         .bot          => true
+  | _,            _             => false
+
 
 protected def toString : NonRelational α n → String
   | .bot => "⊥"
@@ -26,7 +27,7 @@ instance : ToString (NonRelational α n) where
   toString := NonRelational.toString
 
 def coalesce (env : Vector α n) : NonRelational α n :=
-  have := fun i : Fin n => ι.eq_dec (env.get i) ⊥
+  have := fun i : Fin n => ι.dec_bot (env.get i)
   if H : ∀ i, env.get i ≠ ⊥
   then
     .non_rel <| .mk env H
