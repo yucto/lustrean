@@ -18,7 +18,7 @@ lean_lib Misc where
   ]
 
 @[test_driver]
-lean_lib Test where
+lean_lib LustreanTest where
   leanOptions := #[
     ⟨`autoImplicit, false⟩
   ]
