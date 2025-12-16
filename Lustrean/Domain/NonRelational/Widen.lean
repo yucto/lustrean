@@ -1,7 +1,7 @@
 import Lustrean.Domain.NonRelational.Lattice
 
 namespace Lustrean.NonRelational
-variable {α : Type} {n : Nat}
+variable {α : Type} {n : Nat} [BEq α]
 variable [ι : ValueDomain α]
 
 theorem non_rel_subset : ∀ (x y : {env : Vector α n // ∀ i, env.get i ≠ ⊥}),
@@ -24,12 +24,7 @@ theorem non_rel_subset : ∀ (x y : {env : Vector α n // ∀ i, env.get i ≠ �
     simp [coalesce]
     simp [BoundedLattice.IsSubset] at H
     rw [dif_pos]
-    case hc =>
-      intros i
-      specialize H i
-      simp
-      rw [← H]
-      apply x.property
+    case hc => grind
     cases x
     rename_i x Hx
     simp at *

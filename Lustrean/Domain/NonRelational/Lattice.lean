@@ -2,7 +2,7 @@ import Lustrean.Domain.NonRelational.JoinLemmas
 import Lustrean.Domain.NonRelational.MeetLemmas
 
 namespace Lustrean.NonRelational
-variable {α : Type} {n : Nat}
+variable {α : Type} {n : Nat} [BEq α]
 variable [ι : ValueDomain α]
 
 theorem non_trivial : (.top : NonRelational α n) ≠ .bot := by

@@ -211,16 +211,17 @@ where
   bounding_high : ∀  (x y : α) (n : Nat), (narrow x y n) ⊑ x
   -- trust Adrien for termination
 
-class Domain (α : Type)
+class Domain (α : Type)[BEq α]
 extends BoundedLattice α, ToString α,
   WidenLawful α, NarrowLawful α
 where
   nb_var : Nat
-  eq_dec : DecidableEq α
+  dec_bot: DecidablePred (· = bot)
   -- keep only elements satisfying the boolean expression
   guard : α → BExpr nb_var → α
   assign : α → Fin nb_var → IExpr nb_var → α
 export Domain (guard assign)
 
-instance (α : Type) [Domain α] : DecidableEq α := Domain.eq_dec
+instance (α : Type) [BEq α][ι: Domain α] : DecidablePred (· = (bot: α)) := ι.dec_bot
+
 end Lustrean

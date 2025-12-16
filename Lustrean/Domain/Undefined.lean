@@ -4,10 +4,10 @@ namespace Lustrean
 structure Undefined (α : Type) : Type where
   val : α
   may_be_nil : Bool
-  deriving Repr, Inhabited, DecidableEq
+  deriving Repr, Inhabited, DecidableEq, BEq
 
 namespace Undefined
-variable {α : Type} [ι : ValueDomain α] (x y z : Undefined α)
+variable {α : Type} [BEq α][ι : ValueDomain α] (x y z : Undefined α)
 
 protected def add : Undefined α := .mk (x.val + y.val) (x.may_be_nil || y.may_be_nil)
 protected def neg : Undefined α := .mk (-x.val) (x.may_be_nil)
@@ -145,16 +145,6 @@ instance : NarrowLawful (Undefined α) where
     · apply NarrowLawful.bounding_high
     · intros ; assumption
 
-instance : DecidableEq (Undefined α) := fun x y =>
-  let _ := ι.eq_dec
-  if h : (x.val = y.val) ∧ (x.may_be_nil = y.may_be_nil)
-  then .isTrue <| by
-    cases x ; cases y ; simp at * ; assumption
-  else .isFalse <| by
-    intro Hc
-    apply h
-    rw [Hc]
-    simp
 
 def compare (op : CompareOp) (x y : Undefined α) :
   Undefined α × Undefined α :=
@@ -167,6 +157,11 @@ instance : ValueDomain (Undefined α) where
   compare := compare
   covering_left := WidenLawful.covering_left
   covering_right := WidenLawful.covering_right
+  dec_bot := by
+    have := ι.dec_bot
+    rintro ⟨x,nil?⟩
+    simp [Undefined.bot, Lustrean.bot]
+    infer_instance
 
   bounding_low := NarrowLawful.bounding_low
   bounding_high := NarrowLawful.bounding_high
