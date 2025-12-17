@@ -16,7 +16,8 @@ declare_syntax_cat lustre_upper_bound
 --   non-terminal → fragments
 -- Declarations preceded by a "sugar" comment indicate syntactic sugar.  They are folded to
 -- non-sugar construction at the end of this file.
-syntax (name := lustre_command) "lustre " lustre_node* : command
+syntax lustre_ops := (ident ":=" ident),*
+syntax (name := lustre_command) "lustre " ("(" lustre_ops ")")? lustre_node* : command
 syntax "node " ident "(" ident,* ")" (" = " (ident),+)?
   (" guard" lustre_assertion*)? " where" lustre_node_decl*
   (" assert" lustre_assertion*)? : lustre_node
