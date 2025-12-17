@@ -9,7 +9,6 @@ import Lustrean.Domain.Interval
 open Lean
 open Elab (liftMacroM)
 open Elab.Command (liftTermElabM)
-open Core (CoreM)
 
 namespace Lustrean.Elaboration
 def elabLustre (nodes : TSyntaxArray `lustre_node) : CoreM Unit := do
