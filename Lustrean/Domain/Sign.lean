@@ -4,7 +4,7 @@ import Mathlib.Order.Defs.PartialOrder
 import Mathlib.Data.Set.Defs
 import Mathlib.Algebra.Group.Pointwise.Set.Basic
 
-namespace Lustrean.Domain
+namespace Lustrean
 
 section Auxiliary -- TODO: Move to some other file? Find replacements?
 
@@ -73,7 +73,6 @@ theorem aux4{x y: Int}(h: x / y > 0)
 := (aux2 ∘ Int.mul_pos_of_div_pos) h
 
 end Auxiliary
-
 
 /-- Abstraction over sets of integers. The only
  information retained is the sign of the elements
@@ -671,3 +670,27 @@ theorem rand_correctness (l? r?: Option Int)
 
 end Sign
 end Correctness
+
+section SimpleTests
+
+open Lustrean.Sign.Notation
+
+/-- info: [>0]-/
+#guard_msgs in #eval [>0] + [≥0]
+
+/-- info: [<0]-/
+#guard_msgs in #eval [<0] + [≤0]
+
+/-- info: [=0]-/
+#guard_msgs in #eval [<0] * [=0]
+
+/-- info: [⊥]-/
+#guard_msgs in #eval [<0] / [=0]
+
+-- We keep 0 because if we take e ∈ γ[<0] and e' ∈ γ[≥0]
+-- where e' > e.natAbs then e / e' = 0, since we are
+-- performing division on integers
+/-- info: [≤0]-/
+#guard_msgs in #eval [<0] / [≥0]
+
+end SimpleTests

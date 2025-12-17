@@ -331,7 +331,7 @@ def checkAssert (s : State α cfg) : m (State α cfg)
       let new_env := ι.guard old_env b.not
       if new_env ≠ ⊥
       then
-        Lean.logErrorAt? arc.ref? m!"assert failed, got {new_env}"
+        Lean.logErrorAt? arc.ref? m!"assert failed under {new_env}"
         -- let _ ← Lean.AddErrorMessageContext.add
           -- arc.stx
           -- m!"assert failed, got {old_env}"
