@@ -26,20 +26,27 @@ def Std.Format.joinSepArray.{u} {α : Type u} [ToFormat α] (xs : Array α) (sep
 
 namespace Std
 
-unsafe def ExtDHashMap.unquot {α β} [BEq α] [Hashable α] (h : Std.ExtDHashMap α β) : Std.DHashMap α β :=
+unsafe def ExtDHashMap.unquot {α β} [BEq α] [Hashable α] (h : ExtDHashMap α β) : DHashMap α β :=
   Quot.unquot h.inner
 
 /-- Transforms the hash map into a list of mappings in some order.
     /!\ This function uses the unsafe `Quot.unquot`, and thus cannot be unfolded/reasoned upon-/
-def ExtDHashMap.toList {α β} [BEq α] [Hashable α] (h : Std.ExtDHashMap α β) : List ((a: α) × β a) :=
+def ExtDHashMap.toList {α β} [BEq α] [Hashable α] (h : ExtDHashMap α β) : List ((a: α) × β a) :=
   unsafe h.unquot.toList
 
-unsafe def ExtHashMap.unquot {α β} [BEq α] [Hashable α] (h : Std.ExtHashMap α β) : Std.HashMap α β :=
+instance {α β} [BEq α] [Hashable α] [Repr α] [∀ a, Repr (β a)] : Repr (ExtDHashMap α β) where
+  reprPrec m prec := Repr.addAppParen ("Std.ExtDHashMap.ofList " ++ reprArg m.toList) prec
+
+
+unsafe def ExtHashMap.unquot {α β} [BEq α] [Hashable α] (h : ExtHashMap α β) : HashMap α β :=
   .mk (h.inner.unquot)
 
 /-- Transforms the hash map into a list of mappings in some order.
     /!\ This function uses the unsafe `Quot.unquot`, and thus cannot be unfolded/reasoned upon-/
-def ExtHashMap.toList {α β} [BEq α] [Hashable α] (h : Std.ExtHashMap α β) : List (α × β) :=
+def ExtHashMap.toList {α β} [BEq α] [Hashable α] (h : ExtHashMap α β) : List (α × β) :=
   unsafe h.unquot.toList
+
+instance {α β} [BEq α] [Hashable α] [Repr α] [Repr β] : Repr (ExtHashMap α β) where
+  reprPrec m prec := Repr.addAppParen ("Std.ExtHashMap.ofList " ++ reprArg m.toList) prec
 
 end Std
