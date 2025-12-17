@@ -305,7 +305,7 @@ def concrete(a: Sign): Set Int := setOf λ z ↦
 -/
 def gc: GaloisConnection Sign.abstract Sign.concrete := by
     rintro X ⟨p,z,n⟩
-    constructor <;> grind [LE.le]
+    constructor <;> grind (splits := 10) [LE.le]
 
 -- TODO: It'd be nice if there was a simproc that propagated
 -- equalities down `match` statements.
