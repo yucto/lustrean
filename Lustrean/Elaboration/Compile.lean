@@ -166,6 +166,19 @@ structure Node where
   outputVars : Array &(Fin totalVars)
 deriving Repr, Inhabited
 
+def Node.toDot(nod: Node): Std.Format :=
+  let outVars := nod.outputVars.toList
+    |>.map (λ i ↦ Std.format i ++ " [peripheries=2]")
+  let edges := nod.cfg.toList
+    |>.flatMap PreNode.toDot
+  let content := (outVars ++ edges)
+    |> Std.Format.line.joinSep
+    |> (.line ++ ·)
+    |> .nest 2
+    |> Std.Format.group
+    |>.append .line
+  "digraph Cfg {" ++ content ++ "}"
+
 instance : ToFormat Node where
   format nod := Std.Format.joinSepArray nod.cfg .line
 
