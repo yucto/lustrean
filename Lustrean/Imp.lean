@@ -36,7 +36,8 @@ def const (x : Int) : IExpr n :=
 protected def toString : IExpr n → String
   | .nil => "nil"
   | .var ⟨0,_⟩ => s!"step"
-  | .var k => s!"x_{k}"
+  | .var k =>
+    s!"x{k.val.toSubscriptString}"
   | .rand left right =>
     let l := match left with
       | some n => toString n
@@ -44,7 +45,7 @@ protected def toString : IExpr n → String
     let r := match right with
       | some n => toString n
       | none => "∞"
-    s!"[{l}, {r}]"
+    if l == r then s!"{l}" else s!"[{l}, {r}]"
   | .neg e => s!"(- {e.toString})"
   | .binop left op right => s!"({left.toString} {op} {right.toString})"
 
@@ -135,7 +136,7 @@ variable {n : Nat}
 protected def toString : Instruction n → String
   | .skip => "skip"
   | .assign ⟨0,_⟩ e => s!"step := {e}"
-  | .assign k e => s!"x_{k} := {e}"
+  | .assign k e => s!"x{k.val.toSubscriptString} := {e}"
   | .guard b => s!"guard {b}"
   | .assert b => s!"assert {b}"
 
@@ -153,6 +154,12 @@ structure PreNode (nb_var : Nat) : Type where
   id : Nat
   out_nodes : List (OutNode nb_var)
   deriving Repr, Inhabited
+
+def PreNode.toDot{nb_var: Nat}(curr: PreNode nb_var): List Std.Format :=
+  curr.out_nodes
+    |>.map (fun neigh =>
+      Std.format curr.id ++ " -> " ++ Std.format neigh.out_node ++ " " ++ "[label=\"" ++ Std.format neigh.out_inst ++ "\"]"
+    )
 
 section
 open Std.Format

@@ -22,7 +22,8 @@ def elabLustre (nodes : TSyntaxArray `lustre_node) : ReaderT Options CoreM Unit 
     ← Inline.elabLustre <|
     ← Reify.elabLustre <|
     nodes
-  for ⟨⟨n, vertices, output_vars⟩,ref⟩ in nodes do
+  for ⟨out@⟨n, vertices, output_vars⟩,ref⟩ in nodes do
+      dbg_trace out.toDot
       let some cfg := Cfg.new vertices.toList | continue
       -- println! s!"{cfg.arcs}"
       let opts ← read
