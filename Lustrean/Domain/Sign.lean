@@ -238,11 +238,11 @@ def refineNE(x y: Sign): Sign := {
 -/
 def refine (op: Lustrean.CompareOp) (x y: Sign): Sign × Sign := match op with
   | .eq  => (x.refineEQ y, y.refineEQ x)
-  | .lt  => (x.refineLT y, y.refineLT x)
+  | .lt  => (x.refineLT y, y.refineGT x)
   | .neq => (x.refineNE y, y.refineNE x)
-  | .le  => (x.refineLE y, y.refineLE x)
-  | .ge  => (x.refineGE y, y.refineGE x)
-  | .gt  => (x.refineGT y, y.refineGT x)
+  | .le  => (x.refineLE y, y.refineGE x)
+  | .ge  => (x.refineGE y, y.refineLE x)
+  | .gt  => (x.refineGT y, y.refineLT x)
 
 end Sign
 
@@ -490,6 +490,7 @@ def neg_complete
   intros x
   simp only [Neg.neg, Sign.concrete, Set.preimage_setOf_eq, Sign.neg]
   grind [Sign.neg, Sign.concrete]
+-- grind_pattern neg_complete => a.neg.concrete
 
 @[grind =] -- The grind attribute does not go through `abbrev`s?
 theorem concrete_neg (a: Sign): a.neg.concrete = -a.concrete := neg_complete a |>.symm
@@ -569,6 +570,16 @@ theorem refineLT_correct (x y: Sign)
     · exists 0; grind
   · grind
 
+theorem refineGT_correct (x y: Sign)
+: (x.refineGT y).concrete ⊆ { e |
+   e ∈ x.concrete ∧
+   (∃ e' ∈ y.concrete, e > e') }
+:= by
+  have := refineLT_correct x.neg y.neg
+  intro e
+  specialize @this (-e)
+  grind [Set.mem_neg]
+
 theorem refineLE_correct (x y: Sign)
 : (x.refineLE y).concrete ⊆ { e |
    e ∈ x.concrete ∧
@@ -583,13 +594,21 @@ theorem refineLE_correct (x y: Sign)
     · exists 0; grind
   all_goals grind
 
+theorem refineGE_correct (x y: Sign)
+: (x.refineGE y).concrete ⊆ { e |
+   e ∈ x.concrete ∧
+   (∃ e' ∈ y.concrete, e ≥ e') }
+:= by
+  have := refineLE_correct x.neg y.neg
+  intro e
+  specialize @this (-e)
+  grind [Set.mem_neg]
+
 theorem refineEQ_correct (x y: Sign)
 : (x.refineEQ y).concrete ⊆ { e |
    e ∈ x.concrete ∧
    (∃ e' ∈ y.concrete, e = e') }
 := by grind [Sign.refineEQ, Sign.meet]
-
--- attribute [grind =] Set.mem_setOf_eq
 
 -- TODO: Golf
 theorem refineNE_correct (x y: Sign)
@@ -618,7 +637,7 @@ theorem refineNE_correct (x y: Sign)
       simp only [Sign.concrete, Set.mem_setOf_eq] at *
       grind
 
-theorem refine_correct (ord: CompareOp)(x y: Sign)
+theorem refine_1_correct (ord: CompareOp)(x y: Sign)
 : (x.refine ord y).1.concrete ⊆ { e |
   e ∈ x.concrete ∧
   (∃ e' ∈ y.concrete, ord.toProp e e') }
@@ -628,48 +647,21 @@ theorem refine_correct (ord: CompareOp)(x y: Sign)
   · grind [refineLT_correct]
   · grind [refineNE_correct]
   · grind [refineLE_correct]
-  · unfold Sign.refineGE
-    calc (x.neg.refineLE y.neg).neg.concrete
-      _ = -(x.neg.refineLE y.neg).concrete := by
-        simp [←neg_complete]
-      _ ⊆ -{e | e ∈ x.neg.concrete ∧ ∃ e' ∈ y.neg.concrete, e ≤ e'} := by
-        simp only [Neg.neg]
-        apply Set.preimage_mono
-        apply refineLE_correct
-      _ = -{e | e ∈ -x.concrete ∧ ∃ e' ∈ -y.concrete, e ≤ e'} := by
-        simp only [←neg_complete]
-      _ = {e | e ∈ x.concrete ∧ ∃ e' ∈ y.concrete, e ≥ e'} := by
-        simp only [Set.mem_neg, Set.neg_setOf, Int.neg_neg]
-        ext e
-        constructor
-        · grind
-        · intros h
-          simp only [Set.mem_setOf_eq] at h
-          simp only [Set.mem_setOf_eq, h, true_and]
-          obtain ⟨h₁, e', h₂⟩ := h
-          exists (-e')
-          grind
-  · unfold Sign.refineGT
-    calc (x.neg.refineLT y.neg).neg.concrete
-      _ = -(x.neg.refineLT y.neg).concrete := by
-        simp [←neg_complete]
-      _ ⊆ -{e | e ∈ x.neg.concrete ∧ ∃ e' ∈ y.neg.concrete, e < e'} := by
-        simp only [Neg.neg]
-        apply Set.preimage_mono
-        apply refineLT_correct
-      _ = -{e | e ∈ -x.concrete ∧ ∃ e' ∈ -y.concrete, e < e'} := by
-        simp only [←neg_complete]
-      _ = {e | e ∈ x.concrete ∧ ∃ e' ∈ y.concrete, e > e'} := by
-        simp only [Set.mem_neg, Set.neg_setOf, Int.neg_neg]
-        ext e
-        constructor
-        · grind
-        · intros h
-          simp only [Set.mem_setOf_eq] at h
-          simp only [Set.mem_setOf_eq, h, true_and]
-          obtain ⟨h₁, e', h₂⟩ := h
-          exists (-e')
-          grind
+  · grind [refineGE_correct]
+  · grind [refineGT_correct]
+
+theorem refine_2_correct (ord: CompareOp)(x y: Sign)
+: (x.refine ord y).2.concrete ⊆ { e' |
+  e' ∈ y.concrete ∧
+  (∃ e ∈ x.concrete, ord.toProp e e') }
+:= by
+  fun_cases (x.refine ord y) <;> simp only [CompareOp.toProp] <;> intros e h
+  · grind [refineEQ_correct]
+  · grind [refineGT_correct]
+  · grind [refineNE_correct]
+  · grind [refineGE_correct]
+  · grind [refineLE_correct]
+  · grind [refineLT_correct]
 
 theorem rand_correctness (l? r?: Option Int)
 : { e | (∀ l ∈ l?, l ≤ e) ∧ (∀ r ∈ r?, e ≤ r)} ⊆ (ValueDomain.rand l? r? : Sign).concrete
