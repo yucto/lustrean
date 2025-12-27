@@ -23,7 +23,7 @@ def elabLustre (nodes : TSyntaxArray `lustre_node) : ReaderT Options CoreM Unit 
     ← Reify.elabLustre <|
     nodes
   for ⟨out@⟨n, vertices, output_vars⟩,ref⟩ in nodes do
-      dbg_trace out.toDot
+      trace[Lustrean.Elab] s!"{out.toDot}\n# To visualize DOT diagrams, use https://magjac.com/graphviz-visual-editor/"
       let some cfg := Cfg.new vertices.toList | continue
       -- println! s!"{cfg.arcs}"
       let opts ← read
@@ -31,8 +31,8 @@ def elabLustre (nodes : TSyntaxArray `lustre_node) : ReaderT Options CoreM Unit 
       | .UndefinedInterval =>
         let state ← withRef ref do State.run (m := CoreM) (α := NonRelational (Undefined (Interval [])) n) cfg
         -- println! "Step ∞"
-        -- for (env, i) in state.node_env.zipWithIndex do
-        --   println! s!" {i}) {env}"
+        -- for (env, i) in state.node_env.zipIdx do
+        --   dbg_trace s!" {i}) {env}"
         let some env := state.node_env.back? | continue
         for ⟨var, ref⟩ in output_vars do
           let val := env.get var
@@ -41,7 +41,7 @@ def elabLustre (nodes : TSyntaxArray `lustre_node) : ReaderT Options CoreM Unit 
             logErrorAt ref s!"variable {ref.getId} could be nil"
             -- println! s!"  The {i}-th output variable can be nil."
       | .Sign =>
-        let state ← withRef ref do State.run (m := CoreM) (α := NonRelational (Lustrean.Sign) n) cfg
+        let state ← withRef ref do State.run (α := NonRelational (Lustrean.Sign) n) cfg
         let some env := state.node_env.back? | continue
         logWarning s!"final environment: {env}"
 
