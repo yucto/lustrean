@@ -9,31 +9,31 @@ trace: [Lustrean.Elab.Compile] ✅️ elabExpr
         o = (x + [1, 1])
     ⇒
     node f_0 where
-      step := [0, 0] ⇒ f_2
+      step := 0 ⇒ f_2
     node f_1 where
       skip ⇒ f_12
     node f_2 where
-      x_2 := nil ⇒ f_3
+      x₂ := nil ⇒ f_3
     node f_3 where
-      x_3 := x_2 ⇒ f_4
+      x₃ := x₂ ⇒ f_4
     node f_4 where
-      x_1 := [-∞, ∞] ⇒ f_5
+      x₁ := [-∞, ∞] ⇒ f_5
     node f_5 where
-      x_2 := nil ⇒ f_6
+      x₂ := nil ⇒ f_6
     node f_6 where
-      x_2 := (x_1 + [1, 1]) ⇒ f_7
+      x₂ := (x₁ + 1) ⇒ f_7
     node f_7 where
       skip ⇒ f_6
       skip ⇒ f_1
-      step := (step + [1, 1]) ⇒ f_8
+      step := (step + 1) ⇒ f_8
     node f_8 where
-      x_3 := x_2 ⇒ f_9
+      x₃ := x₂ ⇒ f_9
     node f_9 where
-      x_1 := [-∞, ∞] ⇒ f_10
+      x₁ := [-∞, ∞] ⇒ f_10
     node f_10 where
-      x_2 := (x_1 + [1, 1]) ⇒ f_11
+      x₂ := (x₁ + 1) ⇒ f_11
     node f_11 where
-      step := (step + [1, 1]) ⇒ f_8
+      step := (step + 1) ⇒ f_8
       skip ⇒ f_10
       skip ⇒ f_12
     node f_12 where
@@ -48,79 +48,79 @@ trace: [Lustrean.Elab.Compile] ✅️ elabExpr
         o = o.0.o
     ⇒
     node f_0 where
-      step := [0, 0] ⇒ f_2
+      step := 0 ⇒ f_2
     node f_1 where
       skip ⇒ f_36
     node f_2 where
-      x_2 := nil ⇒ f_3
+      x₂ := nil ⇒ f_3
     node f_3 where
-      x_3 := nil ⇒ f_4
+      x₃ := nil ⇒ f_4
     node f_4 where
-      x_4 := nil ⇒ f_5
+      x₄ := nil ⇒ f_5
     node f_5 where
-      x_5 := nil ⇒ f_6
+      x₅ := nil ⇒ f_6
     node f_6 where
-      x_6 := nil ⇒ f_7
+      x₆ := nil ⇒ f_7
     node f_7 where
-      x_7 := x_2 ⇒ f_8
+      x₇ := x₂ ⇒ f_8
     node f_8 where
-      x_8 := x_3 ⇒ f_9
+      x₈ := x₃ ⇒ f_9
     node f_9 where
-      x_9 := x_4 ⇒ f_10
+      x₉ := x₄ ⇒ f_10
     node f_10 where
-      x_10 := x_5 ⇒ f_11
+      x₁₀ := x₅ ⇒ f_11
     node f_11 where
-      x_11 := x_6 ⇒ f_12
+      x₁₁ := x₆ ⇒ f_12
     node f_12 where
-      x_1 := [-∞, ∞] ⇒ f_13
+      x₁ := [-∞, ∞] ⇒ f_13
     node f_13 where
-      x_2 := nil ⇒ f_14
+      x₂ := nil ⇒ f_14
     node f_14 where
-      x_3 := nil ⇒ f_15
+      x₃ := nil ⇒ f_15
     node f_15 where
-      x_4 := nil ⇒ f_16
+      x₄ := nil ⇒ f_16
     node f_16 where
-      x_5 := nil ⇒ f_17
+      x₅ := nil ⇒ f_17
     node f_17 where
-      x_6 := nil ⇒ f_18
+      x₆ := nil ⇒ f_18
     node f_18 where
-      x_2 := x_1 ⇒ f_19
+      x₂ := x₁ ⇒ f_19
     node f_19 where
-      x_3 := (x_2 + [1, 1]) ⇒ f_20
+      x₃ := (x₂ + 1) ⇒ f_20
     node f_20 where
-      x_4 := x_3 ⇒ f_21
+      x₄ := x₃ ⇒ f_21
     node f_21 where
-      x_5 := (x_4 + [1, 1]) ⇒ f_22
+      x₅ := (x₄ + 1) ⇒ f_22
     node f_22 where
-      x_6 := x_5 ⇒ f_23
+      x₆ := x₅ ⇒ f_23
     node f_23 where
       skip ⇒ f_18
       skip ⇒ f_1
-      step := (step + [1, 1]) ⇒ f_24
+      step := (step + 1) ⇒ f_24
     node f_24 where
-      x_7 := x_2 ⇒ f_25
+      x₇ := x₂ ⇒ f_25
     node f_25 where
-      x_8 := x_3 ⇒ f_26
+      x₈ := x₃ ⇒ f_26
     node f_26 where
-      x_9 := x_4 ⇒ f_27
+      x₉ := x₄ ⇒ f_27
     node f_27 where
-      x_10 := x_5 ⇒ f_28
+      x₁₀ := x₅ ⇒ f_28
     node f_28 where
-      x_11 := x_6 ⇒ f_29
+      x₁₁ := x₆ ⇒ f_29
     node f_29 where
-      x_1 := [-∞, ∞] ⇒ f_30
+      x₁ := [-∞, ∞] ⇒ f_30
     node f_30 where
-      x_2 := x_1 ⇒ f_31
+      x₂ := x₁ ⇒ f_31
     node f_31 where
-      x_3 := (x_2 + [1, 1]) ⇒ f_32
+      x₃ := (x₂ + 1) ⇒ f_32
     node f_32 where
-      x_4 := x_3 ⇒ f_33
+      x₄ := x₃ ⇒ f_33
     node f_33 where
-      x_5 := (x_4 + [1, 1]) ⇒ f_34
+      x₅ := (x₄ + 1) ⇒ f_34
     node f_34 where
-      x_6 := x_5 ⇒ f_35
+      x₆ := x₅ ⇒ f_35
     node f_35 where
-      step := (step + [1, 1]) ⇒ f_24
+      step := (step + 1) ⇒ f_24
       skip ⇒ f_30
       skip ⇒ f_36
     node f_36 where
@@ -134,7 +134,7 @@ lustre
     o = inc(inc(x))
 
 /--
-error: assert failed, got #[[1; +∞], [-∞; +∞], [2; +∞], [-∞; +∞]]
+error: assert failed under #[[1; +∞], [-∞; +∞], [2; +∞], [-∞; +∞]]
 ---
 trace: [Lustrean.Elab.Compile] ✅️ elabExpr
     node u(x) = o
@@ -144,35 +144,35 @@ trace: [Lustrean.Elab.Compile] ✅️ elabExpr
         (o ≤ [1, 1])
     ⇒
     node f_0 where
-      step := [0, 0] ⇒ f_2
+      step := 0 ⇒ f_2
     node f_1 where
       skip ⇒ f_13
     node f_2 where
-      x_2 := nil ⇒ f_3
+      x₂ := nil ⇒ f_3
     node f_3 where
-      x_3 := x_2 ⇒ f_4
+      x₃ := x₂ ⇒ f_4
     node f_4 where
-      x_1 := [-∞, ∞] ⇒ f_5
+      x₁ := [-∞, ∞] ⇒ f_5
     node f_5 where
-      x_2 := nil ⇒ f_6
+      x₂ := nil ⇒ f_6
     node f_6 where
-      x_2 := ((x_1 * x_1) + [3, 3]) ⇒ f_7
+      x₂ := ((x₁ * x₁) + 3) ⇒ f_7
     node f_7 where
       skip ⇒ f_6
       skip ⇒ f_1
-      step := (step + [1, 1]) ⇒ f_8
+      step := (step + 1) ⇒ f_8
     node f_8 where
-      x_3 := x_2 ⇒ f_9
+      x₃ := x₂ ⇒ f_9
     node f_9 where
-      x_1 := [-∞, ∞] ⇒ f_10
+      x₁ := [-∞, ∞] ⇒ f_10
     node f_10 where
-      x_2 := ((x_1 * x_1) + [3, 3]) ⇒ f_11
+      x₂ := ((x₁ * x₁) + 3) ⇒ f_11
     node f_11 where
-      step := (step + [1, 1]) ⇒ f_8
+      step := (step + 1) ⇒ f_8
       skip ⇒ f_10
       skip ⇒ f_12
     node f_12 where
-      assert (x_2 ≤ [1, 1]) ⇒ f_13
+      assert (x₂ ≤ 1) ⇒ f_13
     node f_13 where
 -/
 #guard_msgs in
@@ -183,7 +183,7 @@ lustre
     o ≤ 1
 
 /--
-error: assert failed, got #[[1; +∞], [-∞; +∞], [-∞; -1], [-∞; +∞]]
+error: assert failed under #[[1; +∞], [-∞; +∞], [-∞; -1], [-∞; +∞]]
 ---
 trace: [Lustrean.Elab.Compile] ✅️ elabExpr
     node u(x) = o
@@ -193,35 +193,35 @@ trace: [Lustrean.Elab.Compile] ✅️ elabExpr
         ([0, 0] ≤ o)
     ⇒
     node f_0 where
-      step := [0, 0] ⇒ f_2
+      step := 0 ⇒ f_2
     node f_1 where
       skip ⇒ f_13
     node f_2 where
-      x_2 := nil ⇒ f_3
+      x₂ := nil ⇒ f_3
     node f_3 where
-      x_3 := x_2 ⇒ f_4
+      x₃ := x₂ ⇒ f_4
     node f_4 where
-      x_1 := [-∞, ∞] ⇒ f_5
+      x₁ := [-∞, ∞] ⇒ f_5
     node f_5 where
-      x_2 := nil ⇒ f_6
+      x₂ := nil ⇒ f_6
     node f_6 where
-      x_2 := (x_1 * x_1) ⇒ f_7
+      x₂ := (x₁ * x₁) ⇒ f_7
     node f_7 where
       skip ⇒ f_6
       skip ⇒ f_1
-      step := (step + [1, 1]) ⇒ f_8
+      step := (step + 1) ⇒ f_8
     node f_8 where
-      x_3 := x_2 ⇒ f_9
+      x₃ := x₂ ⇒ f_9
     node f_9 where
-      x_1 := [-∞, ∞] ⇒ f_10
+      x₁ := [-∞, ∞] ⇒ f_10
     node f_10 where
-      x_2 := (x_1 * x_1) ⇒ f_11
+      x₂ := (x₁ * x₁) ⇒ f_11
     node f_11 where
-      step := (step + [1, 1]) ⇒ f_8
+      step := (step + 1) ⇒ f_8
       skip ⇒ f_10
       skip ⇒ f_12
     node f_12 where
-      assert ([0, 0] ≤ x_2) ⇒ f_13
+      assert (0 ≤ x₂) ⇒ f_13
     node f_13 where
       ⏎
 [Lustrean.Elab.Compile] ✅️ elabExpr
@@ -233,57 +233,57 @@ trace: [Lustrean.Elab.Compile] ✅️ elabExpr
         ([3, 3] ≤ o)
     ⇒
     node f_0 where
-      step := [0, 0] ⇒ f_2
+      step := 0 ⇒ f_2
     node f_1 where
       skip ⇒ f_23
     node f_2 where
-      x_2 := nil ⇒ f_3
+      x₂ := nil ⇒ f_3
     node f_3 where
-      x_3 := nil ⇒ f_4
+      x₃ := nil ⇒ f_4
     node f_4 where
-      x_4 := x_2 ⇒ f_5
+      x₄ := x₂ ⇒ f_5
     node f_5 where
-      x_5 := x_3 ⇒ f_6
+      x₅ := x₃ ⇒ f_6
     node f_6 where
-      x_1 := [-∞, ∞] ⇒ f_7
+      x₁ := [-∞, ∞] ⇒ f_7
     node f_7 where
-      x_2 := nil ⇒ f_8
+      x₂ := nil ⇒ f_8
     node f_8 where
-      x_3 := nil ⇒ f_9
+      x₃ := nil ⇒ f_9
     node f_9 where
-      guard ([0, 0] ≤ x_1) ⇒ f_10
-      guard ([0, 0] > x_1) ⇒ f_11
+      guard (0 ≤ x₁) ⇒ f_10
+      guard (0 > x₁) ⇒ f_11
     node f_10 where
-      x_2 := (x_1 * x_1) ⇒ f_12
+      x₂ := (x₁ * x₁) ⇒ f_12
     node f_11 where
-      x_2 := (x_1 * x_1) ⇒ f_12
+      x₂ := (x₁ * x₁) ⇒ f_12
     node f_12 where
-      x_3 := (x_2 + [3, 3]) ⇒ f_13
+      x₃ := (x₂ + 3) ⇒ f_13
     node f_13 where
       skip ⇒ f_9
       skip ⇒ f_1
-      step := (step + [1, 1]) ⇒ f_14
+      step := (step + 1) ⇒ f_14
     node f_14 where
-      x_4 := x_2 ⇒ f_15
+      x₄ := x₂ ⇒ f_15
     node f_15 where
-      x_5 := x_3 ⇒ f_16
+      x₅ := x₃ ⇒ f_16
     node f_16 where
-      x_1 := [-∞, ∞] ⇒ f_17
+      x₁ := [-∞, ∞] ⇒ f_17
     node f_17 where
-      guard ([0, 0] ≤ x_1) ⇒ f_18
-      guard ([0, 0] > x_1) ⇒ f_19
+      guard (0 ≤ x₁) ⇒ f_18
+      guard (0 > x₁) ⇒ f_19
     node f_18 where
-      x_2 := (x_1 * x_1) ⇒ f_20
+      x₂ := (x₁ * x₁) ⇒ f_20
     node f_19 where
-      x_2 := (x_1 * x_1) ⇒ f_20
+      x₂ := (x₁ * x₁) ⇒ f_20
     node f_20 where
-      x_3 := (x_2 + [3, 3]) ⇒ f_21
+      x₃ := (x₂ + 3) ⇒ f_21
     node f_21 where
-      step := (step + [1, 1]) ⇒ f_14
+      step := (step + 1) ⇒ f_14
       skip ⇒ f_17
       skip ⇒ f_22
     node f_22 where
-      assert ([3, 3] ≤ x_3) ⇒ f_23
+      assert (3 ≤ x₃) ⇒ f_23
     node f_23 where
 -/
 #guard_msgs in
@@ -310,39 +310,39 @@ trace: [Lustrean.Elab.Compile] ✅️ elabExpr
         y = x
     ⇒
     node f_0 where
-      step := [0, 0] ⇒ f_2
+      step := 0 ⇒ f_2
     node f_1 where
       skip ⇒ f_16
     node f_2 where
-      x_1 := nil ⇒ f_3
+      x₁ := nil ⇒ f_3
     node f_3 where
-      x_2 := nil ⇒ f_4
+      x₂ := nil ⇒ f_4
     node f_4 where
-      x_3 := x_1 ⇒ f_5
+      x₃ := x₁ ⇒ f_5
     node f_5 where
-      x_4 := x_2 ⇒ f_6
+      x₄ := x₂ ⇒ f_6
     node f_6 where
-      x_1 := nil ⇒ f_7
+      x₁ := nil ⇒ f_7
     node f_7 where
-      x_2 := nil ⇒ f_8
+      x₂ := nil ⇒ f_8
     node f_8 where
-      x_1 := x_2 ⇒ f_9
+      x₁ := x₂ ⇒ f_9
     node f_9 where
-      x_2 := x_1 ⇒ f_10
+      x₂ := x₁ ⇒ f_10
     node f_10 where
       skip ⇒ f_8
       skip ⇒ f_1
-      step := (step + [1, 1]) ⇒ f_11
+      step := (step + 1) ⇒ f_11
     node f_11 where
-      x_3 := x_1 ⇒ f_12
+      x₃ := x₁ ⇒ f_12
     node f_12 where
-      x_4 := x_2 ⇒ f_13
+      x₄ := x₂ ⇒ f_13
     node f_13 where
-      x_1 := x_2 ⇒ f_14
+      x₁ := x₂ ⇒ f_14
     node f_14 where
-      x_2 := x_1 ⇒ f_15
+      x₂ := x₁ ⇒ f_15
     node f_15 where
-      step := (step + [1, 1]) ⇒ f_11
+      step := (step + 1) ⇒ f_11
       skip ⇒ f_13
       skip ⇒ f_16
     node f_16 where
@@ -365,67 +365,67 @@ trace: [Lustrean.Elab.Compile] ✅️ elabExpr
         y = (if (c = [0, 0]) then x else z)
     ⇒
     node f_0 where
-      step := [0, 0] ⇒ f_2
+      step := 0 ⇒ f_2
     node f_1 where
       skip ⇒ f_28
     node f_2 where
-      x_3 := nil ⇒ f_3
+      x₃ := nil ⇒ f_3
     node f_3 where
-      x_4 := nil ⇒ f_4
+      x₄ := nil ⇒ f_4
     node f_4 where
-      x_5 := x_3 ⇒ f_5
+      x₅ := x₃ ⇒ f_5
     node f_5 where
-      x_6 := x_4 ⇒ f_6
+      x₆ := x₄ ⇒ f_6
     node f_6 where
-      x_1 := [-∞, ∞] ⇒ f_7
+      x₁ := [-∞, ∞] ⇒ f_7
     node f_7 where
-      x_2 := [-∞, ∞] ⇒ f_8
+      x₂ := [-∞, ∞] ⇒ f_8
     node f_8 where
-      x_3 := nil ⇒ f_9
+      x₃ := nil ⇒ f_9
     node f_9 where
-      x_4 := nil ⇒ f_10
+      x₄ := nil ⇒ f_10
     node f_10 where
-      guard (x_1 = [0, 0]) ⇒ f_11
-      guard (x_1 ≠ [0, 0]) ⇒ f_12
+      guard (x₁ = 0) ⇒ f_11
+      guard (x₁ ≠ 0) ⇒ f_12
     node f_11 where
-      x_3 := x_2 ⇒ f_13
+      x₃ := x₂ ⇒ f_13
     node f_12 where
-      x_3 := x_4 ⇒ f_13
+      x₃ := x₄ ⇒ f_13
     node f_13 where
-      guard (x_1 = [0, 0]) ⇒ f_14
-      guard (x_1 ≠ [0, 0]) ⇒ f_15
+      guard (x₁ = 0) ⇒ f_14
+      guard (x₁ ≠ 0) ⇒ f_15
     node f_14 where
-      x_4 := x_3 ⇒ f_16
+      x₄ := x₃ ⇒ f_16
     node f_15 where
-      x_4 := x_2 ⇒ f_16
+      x₄ := x₂ ⇒ f_16
     node f_16 where
       skip ⇒ f_10
       skip ⇒ f_1
-      step := (step + [1, 1]) ⇒ f_17
+      step := (step + 1) ⇒ f_17
     node f_17 where
-      x_5 := x_3 ⇒ f_18
+      x₅ := x₃ ⇒ f_18
     node f_18 where
-      x_6 := x_4 ⇒ f_19
+      x₆ := x₄ ⇒ f_19
     node f_19 where
-      x_1 := [-∞, ∞] ⇒ f_20
+      x₁ := [-∞, ∞] ⇒ f_20
     node f_20 where
-      x_2 := [-∞, ∞] ⇒ f_21
+      x₂ := [-∞, ∞] ⇒ f_21
     node f_21 where
-      guard (x_1 = [0, 0]) ⇒ f_22
-      guard (x_1 ≠ [0, 0]) ⇒ f_23
+      guard (x₁ = 0) ⇒ f_22
+      guard (x₁ ≠ 0) ⇒ f_23
     node f_22 where
-      x_3 := x_2 ⇒ f_24
+      x₃ := x₂ ⇒ f_24
     node f_23 where
-      x_3 := x_4 ⇒ f_24
+      x₃ := x₄ ⇒ f_24
     node f_24 where
-      guard (x_1 = [0, 0]) ⇒ f_25
-      guard (x_1 ≠ [0, 0]) ⇒ f_26
+      guard (x₁ = 0) ⇒ f_25
+      guard (x₁ ≠ 0) ⇒ f_26
     node f_25 where
-      x_4 := x_3 ⇒ f_27
+      x₄ := x₃ ⇒ f_27
     node f_26 where
-      x_4 := x_2 ⇒ f_27
+      x₄ := x₂ ⇒ f_27
     node f_27 where
-      step := (step + [1, 1]) ⇒ f_17
+      step := (step + 1) ⇒ f_17
       skip ⇒ f_21
       skip ⇒ f_28
     node f_28 where
@@ -439,7 +439,7 @@ lustre
 
 
 /--
-error: assert failed, got #[[1; +∞], [-∞; 1], [-∞; -1], [-∞; 1], [-∞; +∞], [-∞; 1], [-∞; +∞], [-∞; 1], [-∞; +∞]]
+error: assert failed under #[[1; +∞], [-∞; 1], [-∞; -1], [-∞; 1], [-∞; +∞], [-∞; 1], [-∞; +∞], [-∞; 1], [-∞; +∞]]
 ---
 trace: [Lustrean.Elab.Compile] ✅️ elabExpr
     node l() = o
@@ -452,107 +452,107 @@ trace: [Lustrean.Elab.Compile] ✅️ elabExpr
         ([0, 0] ≤ o)
     ⇒
     node f_0 where
-      step := [0, 0] ⇒ f_2
+      step := 0 ⇒ f_2
     node f_1 where
       skip ⇒ f_45
     node f_2 where
-      x_1 := nil ⇒ f_3
+      x₁ := nil ⇒ f_3
     node f_3 where
-      x_2 := nil ⇒ f_4
+      x₂ := nil ⇒ f_4
     node f_4 where
-      x_3 := nil ⇒ f_5
+      x₃ := nil ⇒ f_5
     node f_5 where
-      x_4 := nil ⇒ f_6
+      x₄ := nil ⇒ f_6
     node f_6 where
-      x_5 := x_1 ⇒ f_7
+      x₅ := x₁ ⇒ f_7
     node f_7 where
-      x_6 := x_2 ⇒ f_8
+      x₆ := x₂ ⇒ f_8
     node f_8 where
-      x_7 := x_3 ⇒ f_9
+      x₇ := x₃ ⇒ f_9
     node f_9 where
-      x_8 := x_4 ⇒ f_10
+      x₈ := x₄ ⇒ f_10
     node f_10 where
-      x_1 := nil ⇒ f_11
+      x₁ := nil ⇒ f_11
     node f_11 where
-      x_2 := nil ⇒ f_12
+      x₂ := nil ⇒ f_12
     node f_12 where
-      x_3 := nil ⇒ f_13
+      x₃ := nil ⇒ f_13
     node f_13 where
-      x_4 := nil ⇒ f_14
+      x₄ := nil ⇒ f_14
     node f_14 where
-      guard (step = [0, 0]) ⇒ f_15
-      guard (step ≠ [0, 0]) ⇒ f_16
+      guard (step = 0) ⇒ f_15
+      guard (step ≠ 0) ⇒ f_16
     node f_15 where
-      x_1 := [1, 1] ⇒ f_17
+      x₁ := 1 ⇒ f_17
     node f_16 where
-      x_1 := x_7 ⇒ f_17
+      x₁ := x₇ ⇒ f_17
     node f_17 where
-      guard (step = [0, 0]) ⇒ f_18
-      guard (step ≠ [0, 0]) ⇒ f_19
+      guard (step = 0) ⇒ f_18
+      guard (step ≠ 0) ⇒ f_19
     node f_18 where
-      x_2 := [0, 0] ⇒ f_20
+      x₂ := 0 ⇒ f_20
     node f_19 where
-      x_2 := x_8 ⇒ f_20
+      x₂ := x₈ ⇒ f_20
     node f_20 where
-      guard (((x_1 = [1, 1]) && (x_2 < [10, 10])) || ((x_1 = [0, 0]) && (x_2 = [0, 0]))) ⇒ f_21
-      guard (((x_1 ≠ [1, 1]) || (x_2 ≥ [10, 10])) && ((x_1 ≠ [0, 0]) || (x_2 ≠ [0, 0]))) ⇒ f_22
+      guard (((x₁ = 1) && (x₂ < 10)) || ((x₁ = 0) && (x₂ = 0))) ⇒ f_21
+      guard (((x₁ ≠ 1) || (x₂ ≥ 10)) && ((x₁ ≠ 0) || (x₂ ≠ 0))) ⇒ f_22
     node f_21 where
-      x_3 := [1, 1] ⇒ f_23
+      x₃ := 1 ⇒ f_23
     node f_22 where
-      x_3 := [0, 0] ⇒ f_23
+      x₃ := 0 ⇒ f_23
     node f_23 where
-      guard (x_1 = [1, 1]) ⇒ f_24
-      guard (x_1 ≠ [1, 1]) ⇒ f_25
+      guard (x₁ = 1) ⇒ f_24
+      guard (x₁ ≠ 1) ⇒ f_25
     node f_24 where
-      x_4 := (x_2 + [1, 1]) ⇒ f_26
+      x₄ := (x₂ + 1) ⇒ f_26
     node f_25 where
-      x_4 := (x_2 - [1, 1]) ⇒ f_26
+      x₄ := (x₂ - 1) ⇒ f_26
     node f_26 where
       skip ⇒ f_14
       skip ⇒ f_1
-      step := (step + [1, 1]) ⇒ f_27
+      step := (step + 1) ⇒ f_27
     node f_27 where
-      x_5 := x_1 ⇒ f_28
+      x₅ := x₁ ⇒ f_28
     node f_28 where
-      x_6 := x_2 ⇒ f_29
+      x₆ := x₂ ⇒ f_29
     node f_29 where
-      x_7 := x_3 ⇒ f_30
+      x₇ := x₃ ⇒ f_30
     node f_30 where
-      x_8 := x_4 ⇒ f_31
+      x₈ := x₄ ⇒ f_31
     node f_31 where
-      guard (step = [0, 0]) ⇒ f_32
-      guard (step ≠ [0, 0]) ⇒ f_33
+      guard (step = 0) ⇒ f_32
+      guard (step ≠ 0) ⇒ f_33
     node f_32 where
-      x_1 := [1, 1] ⇒ f_34
+      x₁ := 1 ⇒ f_34
     node f_33 where
-      x_1 := x_7 ⇒ f_34
+      x₁ := x₇ ⇒ f_34
     node f_34 where
-      guard (step = [0, 0]) ⇒ f_35
-      guard (step ≠ [0, 0]) ⇒ f_36
+      guard (step = 0) ⇒ f_35
+      guard (step ≠ 0) ⇒ f_36
     node f_35 where
-      x_2 := [0, 0] ⇒ f_37
+      x₂ := 0 ⇒ f_37
     node f_36 where
-      x_2 := x_8 ⇒ f_37
+      x₂ := x₈ ⇒ f_37
     node f_37 where
-      guard (((x_1 = [1, 1]) && (x_2 < [10, 10])) || ((x_1 = [0, 0]) && (x_2 = [0, 0]))) ⇒ f_38
-      guard (((x_1 ≠ [1, 1]) || (x_2 ≥ [10, 10])) && ((x_1 ≠ [0, 0]) || (x_2 ≠ [0, 0]))) ⇒ f_39
+      guard (((x₁ = 1) && (x₂ < 10)) || ((x₁ = 0) && (x₂ = 0))) ⇒ f_38
+      guard (((x₁ ≠ 1) || (x₂ ≥ 10)) && ((x₁ ≠ 0) || (x₂ ≠ 0))) ⇒ f_39
     node f_38 where
-      x_3 := [1, 1] ⇒ f_40
+      x₃ := 1 ⇒ f_40
     node f_39 where
-      x_3 := [0, 0] ⇒ f_40
+      x₃ := 0 ⇒ f_40
     node f_40 where
-      guard (x_1 = [1, 1]) ⇒ f_41
-      guard (x_1 ≠ [1, 1]) ⇒ f_42
+      guard (x₁ = 1) ⇒ f_41
+      guard (x₁ ≠ 1) ⇒ f_42
     node f_41 where
-      x_4 := (x_2 + [1, 1]) ⇒ f_43
+      x₄ := (x₂ + 1) ⇒ f_43
     node f_42 where
-      x_4 := (x_2 - [1, 1]) ⇒ f_43
+      x₄ := (x₂ - 1) ⇒ f_43
     node f_43 where
-      step := (step + [1, 1]) ⇒ f_27
+      step := (step + 1) ⇒ f_27
       skip ⇒ f_31
       skip ⇒ f_44
     node f_44 where
-      assert ([0, 0] ≤ x_2) ⇒ f_45
+      assert (0 ≤ x₂) ⇒ f_45
     node f_45 where
 -/
 #guard_msgs in
@@ -575,51 +575,51 @@ trace: [Lustrean.Elab.Compile] ✅️ elabExpr
         (o ≤ [3, 3])
     ⇒
     node f_0 where
-      step := [0, 0] ⇒ f_2
+      step := 0 ⇒ f_2
     node f_1 where
       skip ⇒ f_20
     node f_2 where
-      x_2 := nil ⇒ f_3
+      x₂ := nil ⇒ f_3
     node f_3 where
-      x_3 := x_2 ⇒ f_4
+      x₃ := x₂ ⇒ f_4
     node f_4 where
-      x_1 := [-∞, ∞] ⇒ f_5
+      x₁ := [-∞, ∞] ⇒ f_5
     node f_5 where
-      guard ([0, 0] ≤ x_1) ⇒ f_6
+      guard (0 ≤ x₁) ⇒ f_6
     node f_6 where
-      x_2 := nil ⇒ f_7
+      x₂ := nil ⇒ f_7
     node f_7 where
-      guard ([3, 3] < x_1) ⇒ f_8
-      guard ([3, 3] ≥ x_1) ⇒ f_9
+      guard (3 < x₁) ⇒ f_8
+      guard (3 ≥ x₁) ⇒ f_9
     node f_8 where
-      x_2 := [3, 3] ⇒ f_10
+      x₂ := 3 ⇒ f_10
     node f_9 where
-      x_2 := x_1 ⇒ f_10
+      x₂ := x₁ ⇒ f_10
     node f_10 where
       skip ⇒ f_7
       skip ⇒ f_1
-      step := (step + [1, 1]) ⇒ f_11
+      step := (step + 1) ⇒ f_11
     node f_11 where
-      x_3 := x_2 ⇒ f_12
+      x₃ := x₂ ⇒ f_12
     node f_12 where
-      x_1 := [-∞, ∞] ⇒ f_13
+      x₁ := [-∞, ∞] ⇒ f_13
     node f_13 where
-      guard ([0, 0] ≤ x_1) ⇒ f_14
+      guard (0 ≤ x₁) ⇒ f_14
     node f_14 where
-      guard ([3, 3] < x_1) ⇒ f_15
-      guard ([3, 3] ≥ x_1) ⇒ f_16
+      guard (3 < x₁) ⇒ f_15
+      guard (3 ≥ x₁) ⇒ f_16
     node f_15 where
-      x_2 := [3, 3] ⇒ f_17
+      x₂ := 3 ⇒ f_17
     node f_16 where
-      x_2 := x_1 ⇒ f_17
+      x₂ := x₁ ⇒ f_17
     node f_17 where
-      step := (step + [1, 1]) ⇒ f_11
+      step := (step + 1) ⇒ f_11
       skip ⇒ f_14
       skip ⇒ f_18
     node f_18 where
-      assert ([0, 0] ≤ x_2) ⇒ f_19
+      assert (0 ≤ x₂) ⇒ f_19
     node f_19 where
-      assert (x_2 ≤ [3, 3]) ⇒ f_20
+      assert (x₂ ≤ 3) ⇒ f_20
     node f_20 where
       ⏎
 [Lustrean.Elab.Compile] ✅️ elabExpr
@@ -635,85 +635,85 @@ trace: [Lustrean.Elab.Compile] ✅️ elabExpr
         (o ≤ [3, 3])
     ⇒
     node f_0 where
-      step := [0, 0] ⇒ f_2
+      step := 0 ⇒ f_2
     node f_1 where
       skip ⇒ f_36
     node f_2 where
-      x_2 := nil ⇒ f_3
+      x₂ := nil ⇒ f_3
     node f_3 where
-      x_3 := nil ⇒ f_4
+      x₃ := nil ⇒ f_4
     node f_4 where
-      x_4 := nil ⇒ f_5
+      x₄ := nil ⇒ f_5
     node f_5 where
-      x_5 := x_2 ⇒ f_6
+      x₅ := x₂ ⇒ f_6
     node f_6 where
-      x_6 := x_3 ⇒ f_7
+      x₆ := x₃ ⇒ f_7
     node f_7 where
-      x_7 := x_4 ⇒ f_8
+      x₇ := x₄ ⇒ f_8
     node f_8 where
-      x_1 := [-∞, ∞] ⇒ f_9
+      x₁ := [-∞, ∞] ⇒ f_9
     node f_9 where
-      guard ([0, 0] ≤ x_1) ⇒ f_10
+      guard (0 ≤ x₁) ⇒ f_10
     node f_10 where
-      x_2 := nil ⇒ f_11
+      x₂ := nil ⇒ f_11
     node f_11 where
-      x_3 := nil ⇒ f_12
+      x₃ := nil ⇒ f_12
     node f_12 where
-      x_4 := nil ⇒ f_13
+      x₄ := nil ⇒ f_13
     node f_13 where
-      guard (step = [0, 0]) ⇒ f_14
-      guard (step ≠ [0, 0]) ⇒ f_15
+      guard (step = 0) ⇒ f_14
+      guard (step ≠ 0) ⇒ f_15
     node f_14 where
-      x_2 := x_1 ⇒ f_16
+      x₂ := x₁ ⇒ f_16
     node f_15 where
-      x_2 := x_7 ⇒ f_16
+      x₂ := x₇ ⇒ f_16
     node f_16 where
-      guard ([3, 3] < x_2) ⇒ f_17
-      guard ([3, 3] ≥ x_2) ⇒ f_18
+      guard (3 < x₂) ⇒ f_17
+      guard (3 ≥ x₂) ⇒ f_18
     node f_17 where
-      x_3 := [3, 3] ⇒ f_19
+      x₃ := 3 ⇒ f_19
     node f_18 where
-      x_3 := x_2 ⇒ f_19
+      x₃ := x₂ ⇒ f_19
     node f_19 where
-      x_4 := (x_2 + [1, 1]) ⇒ f_20
+      x₄ := (x₂ + 1) ⇒ f_20
     node f_20 where
       skip ⇒ f_13
       skip ⇒ f_1
-      step := (step + [1, 1]) ⇒ f_21
+      step := (step + 1) ⇒ f_21
     node f_21 where
-      x_5 := x_2 ⇒ f_22
+      x₅ := x₂ ⇒ f_22
     node f_22 where
-      x_6 := x_3 ⇒ f_23
+      x₆ := x₃ ⇒ f_23
     node f_23 where
-      x_7 := x_4 ⇒ f_24
+      x₇ := x₄ ⇒ f_24
     node f_24 where
-      x_1 := [-∞, ∞] ⇒ f_25
+      x₁ := [-∞, ∞] ⇒ f_25
     node f_25 where
-      guard ([0, 0] ≤ x_1) ⇒ f_26
+      guard (0 ≤ x₁) ⇒ f_26
     node f_26 where
-      guard (step = [0, 0]) ⇒ f_27
-      guard (step ≠ [0, 0]) ⇒ f_28
+      guard (step = 0) ⇒ f_27
+      guard (step ≠ 0) ⇒ f_28
     node f_27 where
-      x_2 := x_1 ⇒ f_29
+      x₂ := x₁ ⇒ f_29
     node f_28 where
-      x_2 := x_7 ⇒ f_29
+      x₂ := x₇ ⇒ f_29
     node f_29 where
-      guard ([3, 3] < x_2) ⇒ f_30
-      guard ([3, 3] ≥ x_2) ⇒ f_31
+      guard (3 < x₂) ⇒ f_30
+      guard (3 ≥ x₂) ⇒ f_31
     node f_30 where
-      x_3 := [3, 3] ⇒ f_32
+      x₃ := 3 ⇒ f_32
     node f_31 where
-      x_3 := x_2 ⇒ f_32
+      x₃ := x₂ ⇒ f_32
     node f_32 where
-      x_4 := (x_2 + [1, 1]) ⇒ f_33
+      x₄ := (x₂ + 1) ⇒ f_33
     node f_33 where
-      step := (step + [1, 1]) ⇒ f_21
+      step := (step + 1) ⇒ f_21
       skip ⇒ f_26
       skip ⇒ f_34
     node f_34 where
-      assert ([0, 0] ≤ x_3) ⇒ f_35
+      assert (0 ≤ x₃) ⇒ f_35
     node f_35 where
-      assert (x_3 ≤ [3, 3]) ⇒ f_36
+      assert (x₃ ≤ 3) ⇒ f_36
     node f_36 where
 -/
 #guard_msgs in
@@ -742,11 +742,11 @@ error: variable o could be nil
 ---
 error: variable o could be nil
 ---
-error: assert failed, got #[[1; +∞], [5; +∞], [0; 3], [0; 3]]
+error: assert failed under #[[1; +∞], [5; +∞], [0; 3], [0; 3]]
 ---
-error: assert failed, got #[[1; +∞], [5; 5], [3; 3], [5; 5], [3; 3], [6; 6], [5; 5], [3; 3], [5; 5], [3; 3], [6; 6]]
+error: assert failed under #[[1; +∞], [5; 5], [3; 3], [5; 5], [3; 3], [6; 6], [5; 5], [3; 3], [5; 5], [3; 3], [6; 6]]
 ---
-error: assert failed, got #[[1; +∞], [5; 5], [3; 3], [5; 5], [3; 3], [6; 6], [5; 5], [3; 3], [5; 5], [3; 3], [6; 6]]
+error: assert failed under #[[1; +∞], [5; 5], [3; 3], [5; 5], [3; 3], [6; 6], [5; 5], [3; 3], [5; 5], [3; 3], [6; 6]]
 ---
 trace: [Lustrean.Elab.Compile] ✅️ elabExpr
     node f() = o,o
@@ -754,27 +754,27 @@ trace: [Lustrean.Elab.Compile] ✅️ elabExpr
         o = o
     ⇒
     node f_0 where
-      step := [0, 0] ⇒ f_2
+      step := 0 ⇒ f_2
     node f_1 where
       skip ⇒ f_10
     node f_2 where
-      x_1 := nil ⇒ f_3
+      x₁ := nil ⇒ f_3
     node f_3 where
-      x_2 := x_1 ⇒ f_4
+      x₂ := x₁ ⇒ f_4
     node f_4 where
-      x_1 := nil ⇒ f_5
+      x₁ := nil ⇒ f_5
     node f_5 where
-      x_1 := x_1 ⇒ f_6
+      x₁ := x₁ ⇒ f_6
     node f_6 where
       skip ⇒ f_5
       skip ⇒ f_1
-      step := (step + [1, 1]) ⇒ f_7
+      step := (step + 1) ⇒ f_7
     node f_7 where
-      x_2 := x_1 ⇒ f_8
+      x₂ := x₁ ⇒ f_8
     node f_8 where
-      x_1 := x_1 ⇒ f_9
+      x₁ := x₁ ⇒ f_9
     node f_9 where
-      step := (step + [1, 1]) ⇒ f_7
+      step := (step + 1) ⇒ f_7
       skip ⇒ f_8
       skip ⇒ f_10
     node f_10 where
@@ -786,53 +786,53 @@ trace: [Lustrean.Elab.Compile] ✅️ elabExpr
         x_0 = x
     ⇒
     node f_0 where
-      step := [0, 0] ⇒ f_2
+      step := 0 ⇒ f_2
     node f_1 where
       skip ⇒ f_22
     node f_2 where
-      x_2 := nil ⇒ f_3
+      x₂ := nil ⇒ f_3
     node f_3 where
-      x_3 := nil ⇒ f_4
+      x₃ := nil ⇒ f_4
     node f_4 where
-      x_4 := x_2 ⇒ f_5
+      x₄ := x₂ ⇒ f_5
     node f_5 where
-      x_5 := x_3 ⇒ f_6
+      x₅ := x₃ ⇒ f_6
     node f_6 where
-      x_1 := [-∞, ∞] ⇒ f_7
+      x₁ := [-∞, ∞] ⇒ f_7
     node f_7 where
-      x_2 := nil ⇒ f_8
+      x₂ := nil ⇒ f_8
     node f_8 where
-      x_3 := nil ⇒ f_9
+      x₃ := nil ⇒ f_9
     node f_9 where
-      guard (step = [0, 0]) ⇒ f_10
-      guard (step ≠ [0, 0]) ⇒ f_11
+      guard (step = 0) ⇒ f_10
+      guard (step ≠ 0) ⇒ f_11
     node f_10 where
-      x_2 := [0, 0] ⇒ f_12
+      x₂ := 0 ⇒ f_12
     node f_11 where
-      x_2 := x_5 ⇒ f_12
+      x₂ := x₅ ⇒ f_12
     node f_12 where
-      x_3 := x_1 ⇒ f_13
+      x₃ := x₁ ⇒ f_13
     node f_13 where
       skip ⇒ f_9
       skip ⇒ f_1
-      step := (step + [1, 1]) ⇒ f_14
+      step := (step + 1) ⇒ f_14
     node f_14 where
-      x_4 := x_2 ⇒ f_15
+      x₄ := x₂ ⇒ f_15
     node f_15 where
-      x_5 := x_3 ⇒ f_16
+      x₅ := x₃ ⇒ f_16
     node f_16 where
-      x_1 := [-∞, ∞] ⇒ f_17
+      x₁ := [-∞, ∞] ⇒ f_17
     node f_17 where
-      guard (step = [0, 0]) ⇒ f_18
-      guard (step ≠ [0, 0]) ⇒ f_19
+      guard (step = 0) ⇒ f_18
+      guard (step ≠ 0) ⇒ f_19
     node f_18 where
-      x_2 := [0, 0] ⇒ f_20
+      x₂ := 0 ⇒ f_20
     node f_19 where
-      x_2 := x_5 ⇒ f_20
+      x₂ := x₅ ⇒ f_20
     node f_20 where
-      x_3 := x_1 ⇒ f_21
+      x₃ := x₁ ⇒ f_21
     node f_21 where
-      step := (step + [1, 1]) ⇒ f_14
+      step := (step + 1) ⇒ f_14
       skip ⇒ f_17
       skip ⇒ f_22
     node f_22 where
@@ -848,51 +848,51 @@ trace: [Lustrean.Elab.Compile] ✅️ elabExpr
         (x ≤ [4, 4])
     ⇒
     node f_0 where
-      step := [0, 0] ⇒ f_2
+      step := 0 ⇒ f_2
     node f_1 where
       skip ⇒ f_20
     node f_2 where
-      x_2 := nil ⇒ f_3
+      x₂ := nil ⇒ f_3
     node f_3 where
-      x_3 := x_2 ⇒ f_4
+      x₃ := x₂ ⇒ f_4
     node f_4 where
-      x_1 := [-∞, ∞] ⇒ f_5
+      x₁ := [-∞, ∞] ⇒ f_5
     node f_5 where
-      guard ([0, 0] ≤ x_1) ⇒ f_6
+      guard (0 ≤ x₁) ⇒ f_6
     node f_6 where
-      x_2 := nil ⇒ f_7
+      x₂ := nil ⇒ f_7
     node f_7 where
-      guard ([3, 3] < x_1) ⇒ f_8
-      guard ([3, 3] ≥ x_1) ⇒ f_9
+      guard (3 < x₁) ⇒ f_8
+      guard (3 ≥ x₁) ⇒ f_9
     node f_8 where
-      x_2 := [3, 3] ⇒ f_10
+      x₂ := 3 ⇒ f_10
     node f_9 where
-      x_2 := x_1 ⇒ f_10
+      x₂ := x₁ ⇒ f_10
     node f_10 where
       skip ⇒ f_7
       skip ⇒ f_1
-      step := (step + [1, 1]) ⇒ f_11
+      step := (step + 1) ⇒ f_11
     node f_11 where
-      x_3 := x_2 ⇒ f_12
+      x₃ := x₂ ⇒ f_12
     node f_12 where
-      x_1 := [-∞, ∞] ⇒ f_13
+      x₁ := [-∞, ∞] ⇒ f_13
     node f_13 where
-      guard ([0, 0] ≤ x_1) ⇒ f_14
+      guard (0 ≤ x₁) ⇒ f_14
     node f_14 where
-      guard ([3, 3] < x_1) ⇒ f_15
-      guard ([3, 3] ≥ x_1) ⇒ f_16
+      guard (3 < x₁) ⇒ f_15
+      guard (3 ≥ x₁) ⇒ f_16
     node f_15 where
-      x_2 := [3, 3] ⇒ f_17
+      x₂ := 3 ⇒ f_17
     node f_16 where
-      x_2 := x_1 ⇒ f_17
+      x₂ := x₁ ⇒ f_17
     node f_17 where
-      step := (step + [1, 1]) ⇒ f_11
+      step := (step + 1) ⇒ f_11
       skip ⇒ f_14
       skip ⇒ f_18
     node f_18 where
-      assert ([0, 0] ≤ x_1) ⇒ f_19
+      assert (0 ≤ x₁) ⇒ f_19
     node f_19 where
-      assert (x_1 ≤ [4, 4]) ⇒ f_20
+      assert (x₁ ≤ 4) ⇒ f_20
     node f_20 where
       ⏎
 [Lustrean.Elab.Compile] ✅️ elabExpr
@@ -912,109 +912,109 @@ trace: [Lustrean.Elab.Compile] ✅️ elabExpr
         (o.1.x ≤ [4, 4])
     ⇒
     node f_0 where
-      step := [0, 0] ⇒ f_2
+      step := 0 ⇒ f_2
     node f_1 where
       skip ⇒ f_48
     node f_2 where
-      x_1 := nil ⇒ f_3
+      x₁ := nil ⇒ f_3
     node f_3 where
-      x_2 := nil ⇒ f_4
+      x₂ := nil ⇒ f_4
     node f_4 where
-      x_3 := nil ⇒ f_5
+      x₃ := nil ⇒ f_5
     node f_5 where
-      x_4 := nil ⇒ f_6
+      x₄ := nil ⇒ f_6
     node f_6 where
-      x_5 := nil ⇒ f_7
+      x₅ := nil ⇒ f_7
     node f_7 where
-      x_6 := x_1 ⇒ f_8
+      x₆ := x₁ ⇒ f_8
     node f_8 where
-      x_7 := x_2 ⇒ f_9
+      x₇ := x₂ ⇒ f_9
     node f_9 where
-      x_8 := x_3 ⇒ f_10
+      x₈ := x₃ ⇒ f_10
     node f_10 where
-      x_9 := x_4 ⇒ f_11
+      x₉ := x₄ ⇒ f_11
     node f_11 where
-      x_10 := x_5 ⇒ f_12
+      x₁₀ := x₅ ⇒ f_12
     node f_12 where
-      x_1 := nil ⇒ f_13
+      x₁ := nil ⇒ f_13
     node f_13 where
-      x_2 := nil ⇒ f_14
+      x₂ := nil ⇒ f_14
     node f_14 where
-      x_3 := nil ⇒ f_15
+      x₃ := nil ⇒ f_15
     node f_15 where
-      x_4 := nil ⇒ f_16
+      x₄ := nil ⇒ f_16
     node f_16 where
-      x_5 := nil ⇒ f_17
+      x₅ := nil ⇒ f_17
     node f_17 where
-      x_1 := [5, 5] ⇒ f_18
+      x₁ := 5 ⇒ f_18
     node f_18 where
-      guard ([3, 3] < x_1) ⇒ f_19
-      guard ([3, 3] ≥ x_1) ⇒ f_20
+      guard (3 < x₁) ⇒ f_19
+      guard (3 ≥ x₁) ⇒ f_20
     node f_19 where
-      x_2 := [3, 3] ⇒ f_21
+      x₂ := 3 ⇒ f_21
     node f_20 where
-      x_2 := x_1 ⇒ f_21
+      x₂ := x₁ ⇒ f_21
     node f_21 where
-      x_3 := [5, 5] ⇒ f_22
+      x₃ := 5 ⇒ f_22
     node f_22 where
-      guard ([3, 3] < x_3) ⇒ f_23
-      guard ([3, 3] ≥ x_3) ⇒ f_24
+      guard (3 < x₃) ⇒ f_23
+      guard (3 ≥ x₃) ⇒ f_24
     node f_23 where
-      x_4 := [3, 3] ⇒ f_25
+      x₄ := 3 ⇒ f_25
     node f_24 where
-      x_4 := x_3 ⇒ f_25
+      x₄ := x₃ ⇒ f_25
     node f_25 where
-      x_5 := (x_2 + x_4) ⇒ f_26
+      x₅ := (x₂ + x₄) ⇒ f_26
     node f_26 where
       skip ⇒ f_17
       skip ⇒ f_1
-      step := (step + [1, 1]) ⇒ f_27
+      step := (step + 1) ⇒ f_27
     node f_27 where
-      x_6 := x_1 ⇒ f_28
+      x₆ := x₁ ⇒ f_28
     node f_28 where
-      x_7 := x_2 ⇒ f_29
+      x₇ := x₂ ⇒ f_29
     node f_29 where
-      x_8 := x_3 ⇒ f_30
+      x₈ := x₃ ⇒ f_30
     node f_30 where
-      x_9 := x_4 ⇒ f_31
+      x₉ := x₄ ⇒ f_31
     node f_31 where
-      x_10 := x_5 ⇒ f_32
+      x₁₀ := x₅ ⇒ f_32
     node f_32 where
-      x_1 := [5, 5] ⇒ f_33
+      x₁ := 5 ⇒ f_33
     node f_33 where
-      guard ([3, 3] < x_1) ⇒ f_34
-      guard ([3, 3] ≥ x_1) ⇒ f_35
+      guard (3 < x₁) ⇒ f_34
+      guard (3 ≥ x₁) ⇒ f_35
     node f_34 where
-      x_2 := [3, 3] ⇒ f_36
+      x₂ := 3 ⇒ f_36
     node f_35 where
-      x_2 := x_1 ⇒ f_36
+      x₂ := x₁ ⇒ f_36
     node f_36 where
-      x_3 := [5, 5] ⇒ f_37
+      x₃ := 5 ⇒ f_37
     node f_37 where
-      guard ([3, 3] < x_3) ⇒ f_38
-      guard ([3, 3] ≥ x_3) ⇒ f_39
+      guard (3 < x₃) ⇒ f_38
+      guard (3 ≥ x₃) ⇒ f_39
     node f_38 where
-      x_4 := [3, 3] ⇒ f_40
+      x₄ := 3 ⇒ f_40
     node f_39 where
-      x_4 := x_3 ⇒ f_40
+      x₄ := x₃ ⇒ f_40
     node f_40 where
-      x_5 := (x_2 + x_4) ⇒ f_41
+      x₅ := (x₂ + x₄) ⇒ f_41
     node f_41 where
-      step := (step + [1, 1]) ⇒ f_27
+      step := (step + 1) ⇒ f_27
       skip ⇒ f_32
       skip ⇒ f_42
     node f_42 where
-      assert ([0, 0] ≤ x_1) ⇒ f_43
+      assert (0 ≤ x₁) ⇒ f_43
     node f_43 where
-      assert ([0, 0] ≤ x_1) ⇒ f_44
+      assert (0 ≤ x₁) ⇒ f_44
     node f_44 where
-      assert (x_1 ≤ [4, 4]) ⇒ f_45
+      assert (x₁ ≤ 4) ⇒ f_45
     node f_45 where
-      assert ([0, 0] ≤ x_3) ⇒ f_46
+      assert (0 ≤ x₃) ⇒ f_46
     node f_46 where
-      assert ([0, 0] ≤ x_3) ⇒ f_47
+      assert (0 ≤ x₃) ⇒ f_47
     node f_47 where
-      assert (x_3 ≤ [4, 4]) ⇒ f_48
+      assert (x₃ ≤ 4) ⇒ f_48
     node f_48 where
 -/
 #guard_msgs in
@@ -1048,53 +1048,53 @@ trace: [Lustrean.Elab.Compile] ✅️ elabExpr
         ([0, 0] ≤ o)
     ⇒
     node f_0 where
-      step := [0, 0] ⇒ f_2
+      step := 0 ⇒ f_2
     node f_1 where
       skip ⇒ f_21
     node f_2 where
-      x_1 := nil ⇒ f_3
+      x₁ := nil ⇒ f_3
     node f_3 where
-      x_2 := nil ⇒ f_4
+      x₂ := nil ⇒ f_4
     node f_4 where
-      x_3 := x_1 ⇒ f_5
+      x₃ := x₁ ⇒ f_5
     node f_5 where
-      x_4 := x_2 ⇒ f_6
+      x₄ := x₂ ⇒ f_6
     node f_6 where
-      x_1 := nil ⇒ f_7
+      x₁ := nil ⇒ f_7
     node f_7 where
-      x_2 := nil ⇒ f_8
+      x₂ := nil ⇒ f_8
     node f_8 where
-      guard (step = [0, 0]) ⇒ f_9
-      guard (step ≠ [0, 0]) ⇒ f_10
+      guard (step = 0) ⇒ f_9
+      guard (step ≠ 0) ⇒ f_10
     node f_9 where
-      x_1 := [0, 0] ⇒ f_11
+      x₁ := 0 ⇒ f_11
     node f_10 where
-      x_1 := x_4 ⇒ f_11
+      x₁ := x₄ ⇒ f_11
     node f_11 where
-      x_2 := ([1, 1] + x_1) ⇒ f_12
+      x₂ := (1 + x₁) ⇒ f_12
     node f_12 where
       skip ⇒ f_8
       skip ⇒ f_1
-      step := (step + [1, 1]) ⇒ f_13
+      step := (step + 1) ⇒ f_13
     node f_13 where
-      x_3 := x_1 ⇒ f_14
+      x₃ := x₁ ⇒ f_14
     node f_14 where
-      x_4 := x_2 ⇒ f_15
+      x₄ := x₂ ⇒ f_15
     node f_15 where
-      guard (step = [0, 0]) ⇒ f_16
-      guard (step ≠ [0, 0]) ⇒ f_17
+      guard (step = 0) ⇒ f_16
+      guard (step ≠ 0) ⇒ f_17
     node f_16 where
-      x_1 := [0, 0] ⇒ f_18
+      x₁ := 0 ⇒ f_18
     node f_17 where
-      x_1 := x_4 ⇒ f_18
+      x₁ := x₄ ⇒ f_18
     node f_18 where
-      x_2 := ([1, 1] + x_1) ⇒ f_19
+      x₂ := (1 + x₁) ⇒ f_19
     node f_19 where
-      step := (step + [1, 1]) ⇒ f_13
+      step := (step + 1) ⇒ f_13
       skip ⇒ f_15
       skip ⇒ f_20
     node f_20 where
-      assert ([0, 0] ≤ x_1) ⇒ f_21
+      assert (0 ≤ x₁) ⇒ f_21
     node f_21 where
 -/
 #guard_msgs in
@@ -1106,153 +1106,20 @@ lustre
 
 /--
 trace: [Lustrean.Elab.Compile] ✅️ elabExpr
-    node h() = o,i
-      where ⏎
-        o = (if (step = [0, 0]) then [0, 0] else (pre x_1))
-        i = (if (o = [5, 5]) then x_2 else [0, 0])
-        x_0 = (i + [1, 1])
-        x_1 = (if (step = [0, 0]) then [1, 1] else (pre x_0))
-        x_2 = (if (([0, 0] < [0, 0]) ∨ ([0, 0] < [0, 0])) then [1, 1] else [2, 2])
-    ⇒
-    node f_0 where
-      step := [0, 0] ⇒ f_2
-    node f_1 where
-      skip ⇒ f_50
-    node f_2 where
-      x_1 := nil ⇒ f_3
-    node f_3 where
-      x_2 := nil ⇒ f_4
-    node f_4 where
-      x_3 := nil ⇒ f_5
-    node f_5 where
-      x_4 := nil ⇒ f_6
-    node f_6 where
-      x_5 := nil ⇒ f_7
-    node f_7 where
-      x_6 := x_1 ⇒ f_8
-    node f_8 where
-      x_7 := x_2 ⇒ f_9
-    node f_9 where
-      x_8 := x_3 ⇒ f_10
-    node f_10 where
-      x_9 := x_4 ⇒ f_11
-    node f_11 where
-      x_10 := x_5 ⇒ f_12
-    node f_12 where
-      x_1 := nil ⇒ f_13
-    node f_13 where
-      x_2 := nil ⇒ f_14
-    node f_14 where
-      x_3 := nil ⇒ f_15
-    node f_15 where
-      x_4 := nil ⇒ f_16
-    node f_16 where
-      x_5 := nil ⇒ f_17
-    node f_17 where
-      guard (step = [0, 0]) ⇒ f_18
-      guard (step ≠ [0, 0]) ⇒ f_19
-    node f_18 where
-      x_1 := [0, 0] ⇒ f_20
-    node f_19 where
-      x_1 := x_9 ⇒ f_20
-    node f_20 where
-      guard (x_1 = [5, 5]) ⇒ f_21
-      guard (x_1 ≠ [5, 5]) ⇒ f_22
-    node f_21 where
-      x_2 := x_5 ⇒ f_23
-    node f_22 where
-      x_2 := [0, 0] ⇒ f_23
-    node f_23 where
-      x_3 := (x_2 + [1, 1]) ⇒ f_24
-    node f_24 where
-      guard (step = [0, 0]) ⇒ f_25
-      guard (step ≠ [0, 0]) ⇒ f_26
-    node f_25 where
-      x_4 := [1, 1] ⇒ f_27
-    node f_26 where
-      x_4 := x_8 ⇒ f_27
-    node f_27 where
-      guard (([0, 0] < [0, 0]) || ([0, 0] < [0, 0])) ⇒ f_28
-      guard (([0, 0] ≥ [0, 0]) && ([0, 0] ≥ [0, 0])) ⇒ f_29
-    node f_28 where
-      x_5 := [1, 1] ⇒ f_30
-    node f_29 where
-      x_5 := [2, 2] ⇒ f_30
-    node f_30 where
-      skip ⇒ f_17
-      skip ⇒ f_1
-      step := (step + [1, 1]) ⇒ f_31
-    node f_31 where
-      x_6 := x_1 ⇒ f_32
-    node f_32 where
-      x_7 := x_2 ⇒ f_33
-    node f_33 where
-      x_8 := x_3 ⇒ f_34
-    node f_34 where
-      x_9 := x_4 ⇒ f_35
-    node f_35 where
-      x_10 := x_5 ⇒ f_36
-    node f_36 where
-      guard (step = [0, 0]) ⇒ f_37
-      guard (step ≠ [0, 0]) ⇒ f_38
-    node f_37 where
-      x_1 := [0, 0] ⇒ f_39
-    node f_38 where
-      x_1 := x_9 ⇒ f_39
-    node f_39 where
-      guard (x_1 = [5, 5]) ⇒ f_40
-      guard (x_1 ≠ [5, 5]) ⇒ f_41
-    node f_40 where
-      x_2 := x_5 ⇒ f_42
-    node f_41 where
-      x_2 := [0, 0] ⇒ f_42
-    node f_42 where
-      x_3 := (x_2 + [1, 1]) ⇒ f_43
-    node f_43 where
-      guard (step = [0, 0]) ⇒ f_44
-      guard (step ≠ [0, 0]) ⇒ f_45
-    node f_44 where
-      x_4 := [1, 1] ⇒ f_46
-    node f_45 where
-      x_4 := x_8 ⇒ f_46
-    node f_46 where
-      guard (([0, 0] < [0, 0]) || ([0, 0] < [0, 0])) ⇒ f_47
-      guard (([0, 0] ≥ [0, 0]) && ([0, 0] ≥ [0, 0])) ⇒ f_48
-    node f_47 where
-      x_5 := [1, 1] ⇒ f_49
-    node f_48 where
-      x_5 := [2, 2] ⇒ f_49
-    node f_49 where
-      step := (step + [1, 1]) ⇒ f_31
-      skip ⇒ f_36
-      skip ⇒ f_50
-    node f_50 where
--/
-#guard_msgs in
-lustre
-  node h() = o, i where
-    o = 0 fby 1 fby i+1
-    i =
-      if o = 5 then
-        if 0 ≠ 0 then 1 else 2
-      else
-        0
-/--
-trace: [Lustrean.Elab.Compile] ✅️ elabExpr
     node f()
       where ⏎
         ⏎
     ⇒
     node f_0 where
-      step := [0, 0] ⇒ f_2
+      step := 0 ⇒ f_2
     node f_1 where
       skip ⇒ f_4
     node f_2 where
       skip ⇒ f_2
       skip ⇒ f_1
-      step := (step + [1, 1]) ⇒ f_3
+      step := (step + 1) ⇒ f_3
     node f_3 where
-      step := (step + [1, 1]) ⇒ f_3
+      step := (step + 1) ⇒ f_3
       skip ⇒ f_3
       skip ⇒ f_4
     node f_4 where
