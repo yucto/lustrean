@@ -9,7 +9,7 @@ lustre
   node plus2(x) = o where
     o = inc(inc(x))
 
-/-- error: assert failed, got #[[1; +∞], [-∞; +∞], [2; +∞], [-∞; +∞]] -/
+/-- error: assert failed under #[[1; +∞], [-∞; +∞], [2; +∞], [-∞; +∞]] -/
 #guard_msgs in
 lustre
   node u(x) = o where
@@ -17,7 +17,7 @@ lustre
   assert
     o ≤ 1
 
-/-- error: assert failed, got #[[1; +∞], [-∞; +∞], [-∞; -1], [-∞; +∞]] -/
+/-- error: assert failed under #[[1; +∞], [-∞; +∞], [-∞; -1], [-∞; +∞]] -/
 #guard_msgs in
 lustre
   node u(x) = o where
@@ -52,7 +52,7 @@ lustre
     y = if c = 0 then x else z
 
 /--
-error: assert failed, got #[[1; +∞], [-∞; 1], [-∞; -1], [-∞; 1], [-∞; +∞], [-∞; 1], [-∞; +∞], [-∞; 1], [-∞; +∞]]
+error: assert failed under #[[1; +∞], [-∞; 1], [-∞; -1], [-∞; 1], [-∞; +∞], [-∞; 1], [-∞; +∞], [-∞; 1], [-∞; +∞]]
 -/
 #guard_msgs in
 lustre
@@ -88,11 +88,11 @@ error: variable o could be nil
 ---
 error: variable o could be nil
 ---
-error: assert failed, got #[[1; +∞], [5; +∞], [0; 3], [0; 3]]
+error: assert failed under #[[1; +∞], [5; +∞], [0; 3], [0; 3]]
 ---
-error: assert failed, got #[[1; +∞], [5; 5], [3; 3], [5; 5], [3; 3], [6; 6], [5; 5], [3; 3], [5; 5], [3; 3], [6; 6]]
+error: assert failed under #[[1; +∞], [5; 5], [3; 3], [5; 5], [3; 3], [6; 6], [5; 5], [3; 3], [5; 5], [3; 3], [6; 6]]
 ---
-error: assert failed, got #[[1; +∞], [5; 5], [3; 3], [5; 5], [3; 3], [6; 6], [5; 5], [3; 3], [5; 5], [3; 3], [6; 6]]
+error: assert failed under #[[1; +∞], [5; 5], [3; 3], [5; 5], [3; 3], [6; 6], [5; 5], [3; 3], [5; 5], [3; 3], [6; 6]]
 -/
 #guard_msgs in
 lustre

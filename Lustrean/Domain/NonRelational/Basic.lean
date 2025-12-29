@@ -2,6 +2,11 @@ import Lustrean.Domain.NonRelational.ValueDomain
 import Misc
 
 namespace Lustrean
+
+/--
+  Given an abstract domain `α` over values `C`, constructs a
+  non-relational abstract domain of `Set C`.
+-/
 inductive NonRelational (α : Type) [BEq α][ValueDomain α] (n : Nat) where
 | non_rel (env : { env : Vector α n // ∀ i : Fin n, env.get i ≠ ⊥ }) : NonRelational α n
 | bot : NonRelational α n

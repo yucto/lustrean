@@ -49,7 +49,7 @@ lustre
     o = inc(inc(x))
 
 /--
-error: assert failed, got #[[1; +∞], [-∞; +∞], [2; +∞], [-∞; +∞]]
+error: assert failed under #[[1; +∞], [-∞; +∞], [2; +∞], [-∞; +∞]]
 ---
 trace: [Lustrean.Elab.Reify] ✅️ elabNode
     node u(x) = o where o = x * x + [3, 3] assert o ≤ [1, 1]
@@ -100,7 +100,7 @@ lustre
     o ≤ 1
 
 /--
-error: assert failed, got #[[1; +∞], [-∞; +∞], [-∞; -1], [-∞; +∞]]
+error: assert failed under #[[1; +∞], [-∞; +∞], [-∞; -1], [-∞; +∞]]
 ---
 trace: [Lustrean.Elab.Reify] ✅️ elabNode
     node u(x) = o where
@@ -319,7 +319,7 @@ lustre
 
 
 /--
-error: assert failed, got #[[1; +∞], [-∞; 1], [-∞; -1], [-∞; 1], [-∞; +∞], [-∞; 1], [-∞; +∞], [-∞; 1], [-∞; +∞]]
+error: assert failed under #[[1; +∞], [-∞; 1], [-∞; -1], [-∞; 1], [-∞; +∞], [-∞; 1], [-∞; +∞], [-∞; 1], [-∞; +∞]]
 ---
 trace: [Lustrean.Elab.Reify] ✅️ elabNode
     node l() = o where
@@ -675,11 +675,11 @@ error: variable o could be nil
 ---
 error: variable o could be nil
 ---
-error: assert failed, got #[[1; +∞], [5; +∞], [0; 3], [0; 3]]
+error: assert failed under #[[1; +∞], [5; +∞], [0; 3], [0; 3]]
 ---
-error: assert failed, got #[[1; +∞], [5; 5], [3; 3], [5; 5], [3; 3], [6; 6], [5; 5], [3; 3], [5; 5], [3; 3], [6; 6]]
+error: assert failed under #[[1; +∞], [5; 5], [3; 3], [5; 5], [3; 3], [6; 6], [5; 5], [3; 3], [5; 5], [3; 3], [6; 6]]
 ---
-error: assert failed, got #[[1; +∞], [5; 5], [3; 3], [5; 5], [3; 3], [6; 6], [5; 5], [3; 3], [5; 5], [3; 3], [6; 6]]
+error: assert failed under #[[1; +∞], [5; 5], [3; 3], [5; 5], [3; 3], [6; 6], [5; 5], [3; 3], [5; 5], [3; 3], [6; 6]]
 ---
 trace: [Lustrean.Elab.Reify] ✅️ elabNode
     node f() = o, o where o = o

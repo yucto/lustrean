@@ -4,7 +4,7 @@ import Mathlib.Order.Defs.PartialOrder
 import Mathlib.Data.Set.Defs
 import Mathlib.Algebra.Group.Pointwise.Set.Basic
 
-namespace Lustrean.Domain
+namespace Lustrean
 
 section Auxiliary -- TODO: Move to some other file? Find replacements?
 
@@ -73,7 +73,6 @@ theorem aux4{x y: Int}(h: x / y > 0)
 := (aux2 ∘ Int.mul_pos_of_div_pos) h
 
 end Auxiliary
-
 
 /-- Abstraction over sets of integers. The only
  information retained is the sign of the elements
@@ -306,7 +305,7 @@ def concrete(a: Sign): Set Int := setOf λ z ↦
 -/
 def gc: GaloisConnection Sign.abstract Sign.concrete := by
     rintro X ⟨p,z,n⟩
-    constructor <;> grind [LE.le]
+    constructor <;> grind (splits := 10) [LE.le]
 
 -- TODO: It'd be nice if there was a simproc that propagated
 -- equalities down `match` statements.

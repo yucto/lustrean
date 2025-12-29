@@ -1,5 +1,11 @@
 import Lustrean
 
+lustre (domain := Sign)
+  node f(x₁) = x₂
+  guard  x₁ ≥ 0
+  where  x₂ = x₁ + 1
+  assert x₂ > 0
+
 lustre
   node inc(x) = o where
     o = x + 1
