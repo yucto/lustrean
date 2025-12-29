@@ -1,6 +1,9 @@
 import Lean
 import Lustrean.Elaboration.Syntax
 
+-- TODO: Consider reimplementing using
+-- https://lean-lang.org/doc/api/Lean/Elab/Tactic/Config.html#Lean.Elab.Tactic.configElab
+
 namespace Lustrean.Elaboration
 
 open Lean
